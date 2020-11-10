@@ -2,11 +2,30 @@ on:
   push:
     branches:
       - main
+
 name: build and release-please
+
+env:
+  ACTION_NAME: deploy-cloudrun
+
 jobs:
+  update-fork:
+      runs-on: ubuntu-latest
+      steps:
+        - name: sync fork
+          uses: actions/checkout@v2
+          with:
+            repository: google-github-actions-bot/${{env.ACTION_NAME}}
+            token: ${{ secrets.ACTIONS_BOT_TOKEN }}
+        - run: |-
+            git remote add upstream https://github.com/${GITHUB_REPOSITORY}
+            git fetch upstream
+            git checkout main
+            git reset --hard upstream/main
+            git rebase upstream/main
+            git push origin main -f
   build:
-    env:
-      ACTION_NAME: deploy-cloudrun
+    needs: [update-fork]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
