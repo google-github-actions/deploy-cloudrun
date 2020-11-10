@@ -4,6 +4,7 @@ on: [push]
 
 jobs:
   envvars:
+    if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name }}
     name: with Env Vars
     runs-on: ubuntu-latest
     steps:
@@ -52,6 +53,7 @@ jobs:
         ENV: TEST_ENV=TEST_VAR,TEST_ENV2=TEST_VAR2
 
   yaml:
+    if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name }}
     name: with YAML metadata
     runs-on: ubuntu-latest
     steps:
@@ -83,6 +85,7 @@ jobs:
         URL: ${{ steps.deploy.outputs.url }}
 
   metadata:
+    if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name }}
     name: with full YAML metada
     runs-on: ubuntu-latest
     steps:
