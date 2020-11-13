@@ -19,6 +19,10 @@ import { CloudRun } from './cloudRun';
 import { Service } from './service';
 import { get } from 'lodash';
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 /**
  * Executes the main action. It includes the main business logic and is the
  * primary entry point. It is documented inline.
@@ -44,6 +48,7 @@ async function run(): Promise<void> {
     let serviceResponse = await client.deploy(service);
     while (!get(serviceResponse, 'status.url')) {
       serviceResponse = await client.getService(service.name);
+      await sleep(2000);
     }
     // Set URL as output
     core.setOutput('url', get(serviceResponse, 'status.url'));
