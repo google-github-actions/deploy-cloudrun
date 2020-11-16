@@ -15,9 +15,7 @@
 name: Deploy to Cloud Run
 author: Google LLC
 description: |-
-  Cloud Run is a fully managed compute platform that automatically scales your
-  stateless containers. Use this action to deploy a container that has already
-  been uploaded to the Container Registry repository to Cloud Run.
+  Use this action to deploy a container in the Google Container Registry to Cloud Run.
 
 inputs:
   image:
