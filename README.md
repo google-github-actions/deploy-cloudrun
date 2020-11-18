@@ -37,7 +37,7 @@ available to later build steps via outputs.
 This action requires:
 
 * Google Cloud credentials that are authorized to deploy a
-Cloud Run service. See the Authorization section below for more information.
+Cloud Run service. See the [Credentials](#credentials) below for more information.
 
 * [Enable the Cloud Run API](http://console.cloud.google.com/apis/library/run.googleapis.com?_ga=2.267842766.1374248275.1591025444-475066991.1589991158)
 
