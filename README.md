@@ -61,7 +61,7 @@ steps:
 - `env_vars`: List of key-value pairs to set as environment variables in the format:
   KEY1=VALUE1,KEY2=VALUE2. **All existing environment variables will be retained**.
 
-- `metadata`: YAML serivce description for the Cloud Run service. See
+- `metadata`: YAML service description for the Cloud Run service. See
   [Metadata customizations](#metadata-customizations) for more information.
   **Existing configuration will be retained besides container entrypoint and arguments**.
 
