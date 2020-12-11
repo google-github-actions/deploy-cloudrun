@@ -1,5 +1,12 @@
 # Changelog
 
+### [0.2.1](https://www.github.com/google-github-actions/deploy-cloudrun/compare/v0.2.0...v0.2.1) (2020-12-11)
+
+
+### Bug Fixes
+
+* Fix typo ([#14](https://www.github.com/google-github-actions/deploy-cloudrun/issues/14)) ([a668135](https://www.github.com/google-github-actions/deploy-cloudrun/commit/a66813593867a8bc0060864533692e5c2040ef4a))
+
 ## [0.2.0](https://www.github.com/google-github-actions/deploy-cloudrun/compare/v0.1.0...v0.2.0) (2020-11-17)
 
 
