@@ -1,6 +1,9 @@
 name: deploy-cloudrun Integration
 
-on: [push]
+on:
+  push:
+    branches-ignore: 
+    - 'example-*'
 
 jobs:
   envvars:
