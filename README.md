@@ -194,7 +194,7 @@ Credentials.
 
     - `Service Account User` -  required to deploy to Cloud Run as service account
 
-    - `Storage Admin` - allow push to Google Container Registry
+    - `Storage Admin` - allow push to Google Container Registry (this grants project level access, but recommend reducing this scope to [bucket level permissions](https://cloud.google.com/container-registry/docs/access-control#grant).)
 
 1.  [Download a JSON service account key][create-key] for the service account.
 
@@ -206,7 +206,7 @@ Credentials.
 
 ### Deploy a prebuilt container
 
-To run this workflow, push to the branch named `example-deploy`:
+To run this [workflow](.github/workflows/example-workflow-quickstart.yaml), push to the branch named `example-deploy`:
 
 ```sh
 git push YOUR-FORK main:example-deploy
@@ -214,10 +214,10 @@ git push YOUR-FORK main:example-deploy
 
 ### Build and deploy a container
 
-To run this workflow, push to the branch named `example-build`:
+To run this [workflow](.github/workflows/example-workflow.yaml), push to the branch named `example-build-deploy`:
 
 ```sh
-git push YOUR-FORK main:example-build
+git push YOUR-FORK main:example-build-deploy
 ```
 
 **Reminder: If this is your first deployment of a service, it will reject all unauthenticated requests. Learn more at [allowing unauthenticated requests](#Allow-unauthenticated-requests)**
@@ -239,8 +239,7 @@ Example using `setup-gcloud`:
       --region $REGION \
       --image gcr.io/$PROJECT_ID/$SERVICE \
       --platform managed \
-      --set-env-vars NAME="Hello World" \
-      --allow-unauthenticated
+      --set-env-vars NAME="Hello World"
 ```
 
 Migrated to `deploy-cloudrun`:

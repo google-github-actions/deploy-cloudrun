@@ -15,7 +15,7 @@
 on:
   push:
     branches:
-      - example-build
+      - example-build-deploy
 
 name: Build and Deploy a Container
 env:
