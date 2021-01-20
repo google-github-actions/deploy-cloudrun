@@ -145,15 +145,35 @@ export class Service {
       ...prevService.spec?.template?.metadata?.annotations,
       ...this.request.spec?.template?.metadata?.annotations,
     };
+    let name = this.request.spec?.template?.metadata?.name || "";
     this.request.spec!.template!.metadata = {
       annotations,
       labels,
     };
 
-    // Merge Revision Spec
+    if (!name) {
+      const prevRevisionName = prevService.spec!.template!.metadata!.name;
+      const revisionName = this.name;
+      let num;
+      if (prevRevisionName) {
+        const suffix = prevRevisionName!.split('-');
+        num = (parseInt(suffix[suffix.length - 2]) + 1).toString();
+      } else {
+        num = '1';
+      }
+      const newSuffix = `-${num.padStart(4, '0')}-${Math.random()
+        .toString(36)
+        .replace(/[^a-z]+/g, '')
+        .substring(0, 3)}`;
+      name = revisionName + newSuffix;
+    }
+
+    if (name.length > 63) name = name.substring(0, 63);
+    this.request.spec!.template!.metadata!.name = name;
+
+    // Merge Container spec
     const prevContainer = prevService.spec!.template!.spec!.containers![0];
     const currentContainer = this.request.spec!.template!.spec!.containers![0];
-    // Merge Container spec
     const container = { ...prevContainer, ...currentContainer };
     // Merge Spec
     const spec = {

@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "ncc build src/index.ts",
-    "lint": "eslint . --ext .ts,.tsx",
+    "lint": "eslint src/ --ext .ts,.tsx",
     "format": "prettier --write **/*.ts",
     "test": "mocha -r ts-node/register -t 120s 'tests/unit/*.test.ts' --exit",
     "e2e-tests": "mocha -r ts-node/register -t 120s 'tests/e2e.test.ts' --exit"

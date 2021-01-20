@@ -59,6 +59,8 @@ export class CloudRun {
   private authClient: JWT | Compute | UserRefreshClient | undefined;
   readonly parent: string;
   readonly endpoint: string;
+  readonly projectId: string;
+  readonly region: string;
 
   constructor(region: string, opts?: ClientOptions) {
     let projectId = opts?.projectId;
@@ -71,7 +73,7 @@ export class CloudRun {
         'No method for authentication. Set credentials in this action or export credentials from the setup-gcloud action',
       );
     }
-    // Instatiate Auth Client
+    // Instantiate Auth Client
     // This method looks for the GCLOUD_PROJECT and GOOGLE_APPLICATION_CREDENTIALS
     // environment variables.
     this.auth = new google.auth.GoogleAuth({
@@ -101,6 +103,8 @@ export class CloudRun {
     // this.parent = `projects/${projectId}/locations/${region}`;
     this.parent = `namespaces/${projectId}`;
     this.endpoint = `https://${region}-run.googleapis.com`;
+    this.projectId = projectId || 'test';
+    this.region = region;
     this.methodOptions = { rootUrl: this.endpoint };
   }
 
@@ -196,24 +200,30 @@ export class CloudRun {
       service.merge(prevService);
       core.info('Creating a service revision...');
       // Replace service
-      const createServiceRequest: run_v1.Params$Resource$Namespaces$Services$Replaceservice = {
-        name: this.getResource(service.name),
+      const createServiceRequest: run_v1.Params$Resource$Projects$Locations$Services$Replaceservice = {
+        name: `projects/${this.projectId}/locations/${this.region}/services/${service.name}`,
         auth: authClient,
         requestBody: service.request,
       };
-      serviceResponse = await this.run.namespaces.services.replaceService(
+      // const createServiceRequest: run_v1.Params$Resource$Namespaces$Services$Replaceservice = {
+      //   name: this.getResource(service.name),
+      //   auth: authClient,
+      //   requestBody: service.request,
+      // };
+      // serviceResponse = await this.run.namespaces.services.replaceService(
+      serviceResponse = await this.run.projects.locations.services.replaceService(
         createServiceRequest,
-        this.methodOptions,
+        // this.methodOptions,
       );
     } else {
       core.info('Creating a new service...');
       // Create service
-      const createServiceRequest: run_v1.Params$Resource$Namespaces$Services$Create = {
-        parent: this.parent,
+      const createServiceRequest: run_v1.Params$Resource$Projects$Locations$Services$Create = {
+        parent: `projects/${this.projectId}/locations/${this.region}`,
         auth: authClient,
         requestBody: service.request,
       };
-      serviceResponse = await this.run.namespaces.services.create(
+      serviceResponse = await this.run.projects.locations.services.create(
         createServiceRequest,
         this.methodOptions,
       );
@@ -242,6 +252,33 @@ export class CloudRun {
     } catch (e) {
       core.info(`Error deleting Service ${service.name}: ` + e);
     }
+  }
+
+  /** Get revisions */
+  async listRevisions(): Promise<string[]> {
+    const authClient = await this.getAuthClient();
+    const listRequest: run_v1.Params$Resource$Namespaces$Revisions$List = {
+      parent: this.parent,
+      auth: authClient,
+    };
+    const revisionListResponse: GaxiosResponse<run_v1.Schema$ListRevisionsResponse> = await this.run.namespaces.revisions.list(
+      listRequest,
+      this.methodOptions,
+    );
+    const revisionList: run_v1.Schema$ListRevisionsResponse =
+      revisionListResponse.data;
+    let revisionNames: string[] = [];
+    if (revisionList.items) {
+      revisionNames = revisionList.items.map(
+        (revision: run_v1.Schema$Revision) => {
+          if (revision.metadata) {
+            return revision.metadata.name as string;
+          }
+          return '';
+        },
+      );
+    }
+    return revisionNames;
   }
 
   /**
