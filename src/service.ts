@@ -145,7 +145,7 @@ export class Service {
       ...prevService.spec?.template?.metadata?.annotations,
       ...this.request.spec?.template?.metadata?.annotations,
     };
-    let name = this.request.spec?.template?.metadata?.name || "";
+    let name = this.request.spec?.template?.metadata?.name || '';
     this.request.spec!.template!.metadata = {
       annotations,
       labels,
