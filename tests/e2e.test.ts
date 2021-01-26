@@ -128,7 +128,7 @@ describe('E2E tests', function() {
   it('has the correct revision count', async function() {
     if (COUNT && SERVICE) {
       const revisions = await client.listRevisions();
-      const filtered = revisions.filter((name) => name.includes(SERVICE));
+      const filtered = revisions.filter((name) => name.includes(SERVICE.substring(0, 52)));
       expect(filtered.length).to.equal(parseInt(COUNT));
     }
   });
