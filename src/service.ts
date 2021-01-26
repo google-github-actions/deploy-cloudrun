@@ -136,7 +136,11 @@ export class Service {
    * @param prevService the previous Cloud Run service revision
    */
   public merge(prevService: run_v1.Schema$Service): void {
-    // Merge Revision Metadata
+    // Get Revision names if set
+    const name = get(this.request, 'spec.template.metadata.name');
+    const previousName = get(prevService, 'spec.template.metadata.name');
+
+    // Merge Revision metadata
     const labels = {
       ...prevService.spec?.template?.metadata?.labels,
       ...this.request.spec?.template?.metadata?.labels,
@@ -145,37 +149,23 @@ export class Service {
       ...prevService.spec?.template?.metadata?.annotations,
       ...this.request.spec?.template?.metadata?.annotations,
     };
-    let name = this.request.spec?.template?.metadata?.name || '';
     this.request.spec!.template!.metadata = {
       annotations,
       labels,
     };
 
-    if (!name) {
-      const prevRevisionName = prevService.spec!.template!.metadata!.name;
-      const revisionName = this.name;
-      let num;
-      if (prevRevisionName) {
-        const suffix = prevRevisionName!.split('-');
-        num = (parseInt(suffix[suffix.length - 2]) + 1).toString();
-      } else {
-        num = '1';
-      }
-      const newSuffix = `-${num.padStart(4, '0')}-${Math.random()
-        .toString(36)
-        .replace(/[^a-z]+/g, '')
-        .substring(0, 3)}`;
-      name = revisionName + newSuffix;
-    }
-
-    if (name.length > 63) name = name.substring(0, 63);
-    this.request.spec!.template!.metadata!.name = name;
+    // Force update with Revision name change
+    this.request.spec!.template!.metadata!.name = this.generateRevisionName(
+      name,
+      previousName,
+    );
 
     // Merge Container spec
     const prevContainer = prevService.spec!.template!.spec!.containers![0];
     const currentContainer = this.request.spec!.template!.spec!.containers![0];
     const container = { ...prevContainer, ...currentContainer };
-    // Merge Spec
+
+    // Merge Revision spec
     const spec = {
       ...prevService.spec?.template?.spec,
       ...this.request.spec!.template!.spec,
@@ -185,6 +175,7 @@ export class Service {
       delete container.command;
       delete container.args;
     }
+
     // Merge Env vars
     let env: run_v1.Schema$EnvVar[] = [];
     if (currentContainer.env) {
@@ -201,5 +192,34 @@ export class Service {
     container.env = env;
     spec.containers = [container];
     this.request.spec!.template!.spec = spec;
+  }
+
+  private generateRevisionName(name?: string, prevName?: string): string {
+    const message =
+      'Resource name must use only lowercase letters, numbers and ' +
+      '. Must begin with a letter and cannot end with a ' +
+      '. Maximum length is 63 characters.';
+    if (name && name.length > 63) throw new Error(message);
+
+    if (!name) {
+      // Increment suffix number if set
+      let num;
+      if (prevName) {
+        const suffix = prevName!.split('-');
+        num = (parseInt(suffix[suffix.length - 2]) + 1).toString();
+      } else {
+        num = '1';
+      }
+      // Generate 3 random letters
+      const letters = Math.random()
+        .toString(36)
+        .replace(/[^a-z]+/g, '')
+        .substring(0, 3);
+      // Set revision suffix "-XXXXX-abc"
+      const newSuffix = `-${num.padStart(4, '0')}-${letters}`;
+      const serviceName = this.name.substring(0, 53);
+      name = serviceName + newSuffix;
+    }
+    return name;
   }
 }
