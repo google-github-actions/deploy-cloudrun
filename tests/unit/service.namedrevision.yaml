@@ -1,0 +1,11 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: run-revision-name
+spec:
+  template:
+    metadata:
+      name: run-revision-name-001
+    spec:
+      containers:
+      - image: gcr.io/cloudrun/hello

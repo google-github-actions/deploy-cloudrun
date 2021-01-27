@@ -71,7 +71,7 @@ export class CloudRun {
         'No method for authentication. Set credentials in this action or export credentials from the setup-gcloud action',
       );
     }
-    // Instatiate Auth Client
+    // Instantiate Auth Client
     // This method looks for the GCLOUD_PROJECT and GOOGLE_APPLICATION_CREDENTIALS
     // environment variables.
     this.auth = new google.auth.GoogleAuth({
@@ -242,6 +242,33 @@ export class CloudRun {
     } catch (e) {
       core.info(`Error deleting Service ${service.name}: ` + e);
     }
+  }
+
+  /** Get revisions */
+  async listRevisions(): Promise<string[]> {
+    const authClient = await this.getAuthClient();
+    const listRequest: run_v1.Params$Resource$Namespaces$Revisions$List = {
+      parent: this.parent,
+      auth: authClient,
+    };
+    const revisionListResponse: GaxiosResponse<run_v1.Schema$ListRevisionsResponse> = await this.run.namespaces.revisions.list(
+      listRequest,
+      this.methodOptions,
+    );
+    const revisionList: run_v1.Schema$ListRevisionsResponse =
+      revisionListResponse.data;
+    let revisionNames: string[] = [];
+    if (revisionList.items) {
+      revisionNames = revisionList.items.map(
+        (revision: run_v1.Schema$Revision) => {
+          if (revision.metadata) {
+            return revision.metadata.name as string;
+          }
+          return '';
+        },
+      );
+    }
+    return revisionNames;
   }
 
   /**

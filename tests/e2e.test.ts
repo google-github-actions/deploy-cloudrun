@@ -23,9 +23,18 @@ import 'mocha';
 import { run_v1 } from 'googleapis';
 
 describe('E2E tests', function() {
-  const { PARAMS, ANNOTATIONS, LABELS, ENV, SERVICE } = process.env;
+  const {
+    PARAMS,
+    ANNOTATIONS,
+    LABELS,
+    ENV,
+    SERVICE,
+    COUNT,
+    REVISION,
+  } = process.env;
 
   let URL: string;
+  let client: CloudRun;
   let service: run_v1.Schema$Service;
   before(async function() {
     if (process.env.URL) {
@@ -35,7 +44,7 @@ describe('E2E tests', function() {
     }
 
     if (SERVICE) {
-      const client = new CloudRun('us-central1');
+      client = new CloudRun('us-central1');
       service = await client.getService(SERVICE);
       if (!service) console.log('no service found');
     }
@@ -50,7 +59,7 @@ describe('E2E tests', function() {
     expect(response.data).to.include('Congrat');
   });
 
-  it('it has the correct env vars', function() {
+  it('has the correct env vars', function() {
     if (ENV && service) {
       const expected = parseEnvVars(ENV);
       const containers = _.get(service, 'spec.template.spec.containers');
@@ -65,7 +74,7 @@ describe('E2E tests', function() {
     }
   });
 
-  it('it has the correct params', function() {
+  it('has the correct params', function() {
     if (PARAMS && service) {
       const expected = JSON.parse(PARAMS);
       const actual = _.get(service, 'spec.template.spec');
@@ -88,7 +97,7 @@ describe('E2E tests', function() {
     }
   });
 
-  it('it has the correct annotations', function() {
+  it('has the correct annotations', function() {
     if (ANNOTATIONS && service) {
       const expected = JSON.parse(ANNOTATIONS);
       const actual = _.get(service, 'spec.template.metadata.annotations');
@@ -102,7 +111,7 @@ describe('E2E tests', function() {
     }
   });
 
-  it('it has the correct labels', function() {
+  it('has the correct labels', function() {
     if (LABELS && service) {
       const expected = JSON.parse(LABELS);
       const actual = _.get(service, 'spec.template.metadata.labels');
@@ -113,6 +122,21 @@ describe('E2E tests', function() {
         );
         expect(found).to.not.equal(undefined);
       });
+    }
+  });
+
+  it('has the correct revision count', async function() {
+    if (COUNT && SERVICE) {
+      const revisions = await client.listRevisions();
+      const filtered = revisions.filter((name) => name.includes(SERVICE.substring(0, 52)));
+      expect(filtered.length).to.equal(parseInt(COUNT));
+    }
+  });
+
+  it('has the correct revision name', function() {
+    if (REVISION && service) {
+      const actual = _.get(service, 'spec.template.metadata.name');
+      expect(REVISION).to.equal(actual);
     }
   });
 });
