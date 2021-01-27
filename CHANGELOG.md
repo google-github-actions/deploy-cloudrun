@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.0](https://www.github.com/google-github-actions/deploy-cloudrun/compare/v0.2.0...v0.3.0) (2021-01-27)
+
+
+### Features
+
+* add example workflows ([#18](https://www.github.com/google-github-actions/deploy-cloudrun/issues/18)) ([5652d4b](https://www.github.com/google-github-actions/deploy-cloudrun/commit/5652d4b5c6b4ce9faf3dd378b0ce708e3c5166d1))
+
+
+### Bug Fixes
+
+* Fix typo ([#14](https://www.github.com/google-github-actions/deploy-cloudrun/issues/14)) ([a668135](https://www.github.com/google-github-actions/deploy-cloudrun/commit/a66813593867a8bc0060864533692e5c2040ef4a))
+* force update revision name ([#24](https://www.github.com/google-github-actions/deploy-cloudrun/issues/24)) ([cf303b9](https://www.github.com/google-github-actions/deploy-cloudrun/commit/cf303b9cfd946264794af73a25c0b058a00a1ced))
+
 ## [0.2.0](https://www.github.com/google-github-actions/deploy-cloudrun/compare/v0.1.0...v0.2.0) (2020-11-17)
 
 
