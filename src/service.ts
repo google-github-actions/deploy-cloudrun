@@ -15,7 +15,7 @@
  */
 
 import { run_v1 } from 'googleapis';
-import { get } from 'lodash';
+import { get, merge } from 'lodash';
 import fs from 'fs';
 import YAML from 'yaml';
 
@@ -61,7 +61,7 @@ export function parseEnvVars(envVarInput: string): run_v1.Schema$EnvVar[] {
  * @returns Service.
  */
 export class Service {
-  readonly request: run_v1.Schema$Service;
+  request: run_v1.Schema$Service;
   readonly name: string;
 
   constructor(opts: ServiceOptions) {
@@ -140,58 +140,35 @@ export class Service {
     const name = get(this.request, 'spec.template.metadata.name');
     const previousName = get(prevService, 'spec.template.metadata.name');
 
-    // Merge Revision metadata
-    const labels = {
-      ...prevService.spec?.template?.metadata?.labels,
-      ...this.request.spec?.template?.metadata?.labels,
-    };
-    const annotations = {
-      ...prevService.spec?.template?.metadata?.annotations,
-      ...this.request.spec?.template?.metadata?.annotations,
-    };
-    this.request.spec!.template!.metadata = {
-      annotations,
-      labels,
-    };
+    // Deep Merge Service
+    const mergedServices = merge(prevService, this.request);
 
     // Force update with Revision name change
-    this.request.spec!.template!.metadata!.name = this.generateRevisionName(
+    mergedServices.spec!.template!.metadata!.name = this.generateRevisionName(
       name,
       previousName,
     );
 
     // Merge Container spec
-    const prevContainer = prevService.spec!.template!.spec!.containers![0];
-    const currentContainer = this.request.spec!.template!.spec!.containers![0];
-    const container = { ...prevContainer, ...currentContainer };
-
-    // Merge Revision spec
-    const spec = {
-      ...prevService.spec?.template?.spec,
-      ...this.request.spec!.template!.spec,
-    };
-    if (!currentContainer.command) {
-      // Remove entrypoint cmd and arguments if not specified
-      delete container.command;
-      delete container.args;
-    }
+    const prevEnvVars = prevService.spec!.template!.spec!.containers![0].env;
+    const currentEnvVars = this.request.spec!.template!.spec!.containers![0].env;
 
     // Merge Env vars
     let env: run_v1.Schema$EnvVar[] = [];
-    if (currentContainer.env) {
-      env = currentContainer.env.map(
+    if (currentEnvVars) {
+      env = currentEnvVars.map(
         (envVar) => envVar as run_v1.Schema$EnvVar,
       );
     }
     const keys = env?.map((envVar) => envVar.name);
-    prevContainer.env?.forEach((envVar) => {
-      if (!keys.includes(envVar.name)) {
+    prevEnvVars?.forEach((envVar) => {
+      if (!keys.includes(envVar.name)) { // Add old env vars without duplicating
         return env.push(envVar);
       }
     });
-    container.env = env;
-    spec.containers = [container];
-    this.request.spec!.template!.spec = spec;
+    // Set Env vars
+    mergedServices.spec!.template!.spec!.containers![0].env = env;
+    this.request = mergedServices;
   }
 
   private generateRevisionName(name?: string, prevName?: string): string {
