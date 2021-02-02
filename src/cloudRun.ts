@@ -315,8 +315,11 @@ export class CloudRun {
 
 function getReadyStatus(serviceResponse: run_v1.Schema$Service): boolean {
   const revisionName = get(serviceResponse, 'spec.template.metadata.name');
-  const createdRevision = get(serviceResponse, 'status.latestCreatedRevisionName');
-  const latestRevision = get(serviceResponse, 'status.latestReadyRevisionName')
+  const createdRevision = get(
+    serviceResponse,
+    'status.latestCreatedRevisionName',
+  );
+  const latestRevision = get(serviceResponse, 'status.latestReadyRevisionName');
 
   return revisionName == createdRevision && revisionName == latestRevision;
 }
@@ -341,4 +344,3 @@ function getUrl(serviceResponse: run_v1.Schema$Service): string {
   // Or return service url
   return get(revision, 'url') || get(serviceResponse, 'status.url');
 }
-
