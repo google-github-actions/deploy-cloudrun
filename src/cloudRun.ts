@@ -25,6 +25,7 @@ import {
 } from 'google-auth-library';
 import { Service } from './service';
 import { MethodOptions } from 'googleapis-common';
+import { get } from 'lodash';
 
 /**
  * Available options to create the client.
@@ -185,7 +186,7 @@ export class CloudRun {
    * @param service Service object.
    * @returns Service object.
    */
-  async deploy(service: Service): Promise<run_v1.Schema$Service> {
+  async deploy(service: Service): Promise<string> {
     const authClient = await this.getAuthClient();
     const serviceNames = await this.listServices();
     let serviceResponse: GaxiosResponse<run_v1.Schema$Service>;
@@ -218,8 +219,11 @@ export class CloudRun {
         this.methodOptions,
       );
     }
+
+    const url = await this.pollService(serviceResponse.data);
     core.info(`Service ${service.name} has been successfully deployed.`);
-    return serviceResponse.data;
+    // return serviceResponse.data;
+    return url;
   }
 
   /**
@@ -299,4 +303,42 @@ export class CloudRun {
       this.methodOptions,
     );
   }
+
+  async pollService(serviceResponse: run_v1.Schema$Service): Promise<string> {
+    while (!getReadyStatus(serviceResponse)) {
+      await sleep(1000);
+      serviceResponse = await this.getService(serviceResponse.metadata!.name!);
+    }
+    return getUrl(serviceResponse);
+  }
 }
+
+function getReadyStatus(serviceResponse: run_v1.Schema$Service): boolean {
+  const revisionName = get(serviceResponse, 'spec.template.metadata.name');
+  const createdRevision = get(serviceResponse, 'status.latestCreatedRevisionName');
+  const latestRevision = get(serviceResponse, 'status.latestReadyRevisionName')
+
+  return revisionName == createdRevision && revisionName == latestRevision;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function getUrl(serviceResponse: run_v1.Schema$Service): string {
+  const revisionName = get(serviceResponse, 'spec.template.metadata.name');
+  // Find revision url
+  const traffic: run_v1.Schema$TrafficTarget[] = get(
+    serviceResponse,
+    'status.traffic',
+  );
+  let revision;
+  if (traffic) {
+    revision = traffic.find((revision) => {
+      return revision.revisionName == revisionName && revision.url;
+    });
+  }
+  // Or return service url
+  return get(revision, 'url') || get(serviceResponse, 'status.url');
+}
+

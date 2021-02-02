@@ -17,11 +17,6 @@
 import * as core from '@actions/core';
 import { CloudRun } from './cloudRun';
 import { Service } from './service';
-import { get } from 'lodash';
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 /**
  * Executes the main action. It includes the main business logic and is the
@@ -45,16 +40,15 @@ async function run(): Promise<void> {
     const service = new Service({ image, name, envVars, yaml });
 
     // Deploy service
-    let serviceResponse = await client.deploy(service);
-    while (!get(serviceResponse, 'status.url')) {
-      serviceResponse = await client.getService(service.name);
-      await sleep(2000);
-    }
+    const url = await client.deploy(service);
+
     // Set URL as output
-    core.setOutput('url', get(serviceResponse, 'status.url'));
+    core.setOutput('url', url);
   } catch (error) {
     core.setFailed(error.message);
   }
 }
 
 run();
+
+
