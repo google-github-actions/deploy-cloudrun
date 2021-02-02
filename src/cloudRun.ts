@@ -305,11 +305,14 @@ export class CloudRun {
   }
 
   async pollService(serviceResponse: run_v1.Schema$Service): Promise<string> {
-    while (!getReadyStatus(serviceResponse)) {
-      await sleep(1000);
+    let url = getUrl(serviceResponse);
+    while (!getReadyStatus(serviceResponse) && !url) {
+      await sleep(5000);
       serviceResponse = await this.getService(serviceResponse.metadata!.name!);
+      url = getUrl(serviceResponse);
     }
-    return getUrl(serviceResponse);
+
+    return url;
   }
 }
 
@@ -320,8 +323,19 @@ function getReadyStatus(serviceResponse: run_v1.Schema$Service): boolean {
     'status.latestCreatedRevisionName',
   );
   const latestRevision = get(serviceResponse, 'status.latestReadyRevisionName');
-
-  return revisionName == createdRevision && revisionName == latestRevision;
+  if (revisionName) {
+    return (
+      revisionName &&
+      createdRevision &&
+      latestRevision &&
+      revisionName == createdRevision &&
+      revisionName == latestRevision
+    );
+  } else {
+    return (
+      createdRevision && latestRevision && latestRevision == createdRevision
+    );
+  }
 }
 
 function sleep(ms: number): Promise<void> {
@@ -342,5 +356,5 @@ function getUrl(serviceResponse: run_v1.Schema$Service): string {
     });
   }
   // Or return service url
-  return get(revision, 'url') || get(serviceResponse, 'status.url');
+  return get(revision, 'url') || get(serviceResponse, 'status.url') || '';
 }
