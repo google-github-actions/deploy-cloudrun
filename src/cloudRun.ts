@@ -306,7 +306,11 @@ export class CloudRun {
 
   async pollService(serviceResponse: run_v1.Schema$Service): Promise<string> {
     let url = getUrl(serviceResponse);
-    while (!getReadyStatus(serviceResponse) && !url) {
+    const maxAttempts = 12; // Timeout after 60 seconds
+    let attempt = 0;
+    // Revision is ready and url is found before timeout
+    while (!getReadyStatus(serviceResponse) && !url && attempt < maxAttempts) {
+      attempt += 1;
       await sleep(5000);
       serviceResponse = await this.getService(serviceResponse.metadata!.name!);
       url = getUrl(serviceResponse);
@@ -317,13 +321,17 @@ export class CloudRun {
 }
 
 function getReadyStatus(serviceResponse: run_v1.Schema$Service): boolean {
+  // Retrieve the revision name
   const revisionName = get(serviceResponse, 'spec.template.metadata.name');
+  // Retrieve the revision statuses
   const createdRevision = get(
     serviceResponse,
     'status.latestCreatedRevisionName',
   );
   const latestRevision = get(serviceResponse, 'status.latestReadyRevisionName');
+  // Latest created revision must equal latest ready revision
   if (revisionName) {
+    // After first deployment, revision name is set
     return (
       revisionName &&
       createdRevision &&
@@ -332,6 +340,7 @@ function getReadyStatus(serviceResponse: run_v1.Schema$Service): boolean {
       revisionName == latestRevision
     );
   } else {
+    // First deployment will not have a revision name
     return (
       createdRevision && latestRevision && latestRevision == createdRevision
     );
