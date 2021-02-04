@@ -151,18 +151,18 @@ export class Service {
 
     // Merge Container spec
     const prevEnvVars = prevService.spec!.template!.spec!.containers![0].env;
-    const currentEnvVars = this.request.spec!.template!.spec!.containers![0].env;
+    const currentEnvVars = this.request.spec!.template!.spec!.containers![0]
+      .env;
 
     // Merge Env vars
     let env: run_v1.Schema$EnvVar[] = [];
     if (currentEnvVars) {
-      env = currentEnvVars.map(
-        (envVar) => envVar as run_v1.Schema$EnvVar,
-      );
+      env = currentEnvVars.map((envVar) => envVar as run_v1.Schema$EnvVar);
     }
     const keys = env?.map((envVar) => envVar.name);
     prevEnvVars?.forEach((envVar) => {
-      if (!keys.includes(envVar.name)) { // Add old env vars without duplicating
+      if (!keys.includes(envVar.name)) {
+        // Add old env vars without duplicating
         return env.push(envVar);
       }
     });
