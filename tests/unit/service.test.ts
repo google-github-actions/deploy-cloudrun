@@ -79,6 +79,14 @@ describe('Service', function() {
     const containers2 = get(service2, 'request.spec.template.spec.containers');
     const actual2 = containers2[0]?.env;
     expect(actual2.length).equal(2);
+    const expected2: run_v1.Schema$EnvVar = {
+      name: 'KEY2',
+      value: 'VALUE2',
+    };
+    expect(actual2[1].name).equal(expected2.name);
+
+    const revisionName = get(service2, 'request.spec.template.metadata.name');
+    expect(revisionName).to.not.be.undefined;
   });
 
   it('parses yaml', function() {

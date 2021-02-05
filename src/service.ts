@@ -15,7 +15,7 @@
  */
 
 import { run_v1 } from 'googleapis';
-import { get, merge } from 'lodash';
+import { get, merge, cloneDeep } from 'lodash';
 import fs from 'fs';
 import YAML from 'yaml';
 
@@ -136,15 +136,20 @@ export class Service {
    * @param prevService the previous Cloud Run service revision
    */
   public merge(prevService: run_v1.Schema$Service): void {
+    const currentService = cloneDeep(this.request);
+
     // Get Revision names if set
-    const name = get(this.request, 'spec.template.metadata.name');
+    const name = get(currentService, 'spec.template.metadata.name');
     const previousName = get(prevService, 'spec.template.metadata.name');
+    const generatedName = this.generateRevisionName(name, previousName);
 
     // Merge Env vars
     const prevEnvVars = get(prevService, 'spec.template.spec.containers')[0]
       .env;
-    const currentEnvVars = get(this.request, 'spec.template.spec.containers')[0]
-      .env;
+    const currentEnvVars = get(
+      currentService,
+      'spec.template.spec.containers',
+    )[0].env;
     let env: run_v1.Schema$EnvVar[] = [];
     if (currentEnvVars) {
       env = currentEnvVars.map(
@@ -158,12 +163,12 @@ export class Service {
         env.push(envVar);
       }
     });
+    const newEnv = cloneDeep(env);
 
     // Deep Merge Service
-    const mergedServices = merge(prevService, this.request);
+    const mergedServices = merge(prevService, currentService);
 
     // Force update with Revision name change
-    const generatedName = this.generateRevisionName(name, previousName);
     if (!get(mergedServices, 'spec.template.metadata')) {
       mergedServices.spec!.template!.metadata = {
         name: generatedName,
@@ -173,7 +178,7 @@ export class Service {
     }
 
     // Merge Container spec
-    mergedServices.spec!.template!.spec!.containers![0].env = env;
+    mergedServices.spec!.template!.spec!.containers![0].env = newEnv;
     this.request = mergedServices;
   }
 
