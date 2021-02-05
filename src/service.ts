@@ -140,33 +140,39 @@ export class Service {
     const name = get(this.request, 'spec.template.metadata.name');
     const previousName = get(prevService, 'spec.template.metadata.name');
 
+    // Merge Env vars
+    const prevEnvVars = get(prevService, 'spec.template.spec.containers')[0]
+      .env;
+    const currentEnvVars = get(this.request, 'spec.template.spec.containers')[0]
+      .env;
+    let env: run_v1.Schema$EnvVar[] = [];
+    if (currentEnvVars) {
+      env = currentEnvVars.map(
+        (envVar: run_v1.Schema$EnvVar) => envVar as run_v1.Schema$EnvVar,
+      );
+    }
+    const keys = env?.map((envVar) => envVar.name);
+    prevEnvVars?.forEach((envVar: run_v1.Schema$EnvVar) => {
+      if (!keys.includes(envVar.name)) {
+        // Add old env vars without duplicating
+        env.push(envVar);
+      }
+    });
+
     // Deep Merge Service
     const mergedServices = merge(prevService, this.request);
 
     // Force update with Revision name change
-    mergedServices.spec!.template!.metadata!.name = this.generateRevisionName(
-      name,
-      previousName,
-    );
+    const generatedName = this.generateRevisionName(name, previousName);
+    if (!get(mergedServices, 'spec.template.metadata')) {
+      mergedServices.spec!.template!.metadata = {
+        name: generatedName,
+      };
+    } else {
+      mergedServices.spec!.template!.metadata!.name = generatedName;
+    }
 
     // Merge Container spec
-    const prevEnvVars = prevService.spec!.template!.spec!.containers![0].env;
-    const currentEnvVars = this.request.spec!.template!.spec!.containers![0]
-      .env;
-
-    // Merge Env vars
-    let env: run_v1.Schema$EnvVar[] = [];
-    if (currentEnvVars) {
-      env = currentEnvVars.map((envVar) => envVar as run_v1.Schema$EnvVar);
-    }
-    const keys = env?.map((envVar) => envVar.name);
-    prevEnvVars?.forEach((envVar) => {
-      if (!keys.includes(envVar.name)) {
-        // Add old env vars without duplicating
-        return env.push(envVar);
-      }
-    });
-    // Set Env vars
     mergedServices.spec!.template!.spec!.containers![0].env = env;
     this.request = mergedServices;
   }
