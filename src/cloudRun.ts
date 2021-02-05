@@ -304,6 +304,11 @@ export class CloudRun {
     );
   }
 
+  /**
+   * Poll service revision until ready
+   * @param serviceResponse 
+   * @returns service url or revision url
+   */
   async pollService(serviceResponse: run_v1.Schema$Service): Promise<string> {
     let url = getUrl(serviceResponse);
     const maxAttempts = 12; // Timeout after 60 seconds
@@ -320,6 +325,7 @@ export class CloudRun {
   }
 }
 
+/** Retrieve status of new revision */
 function getReadyStatus(serviceResponse: run_v1.Schema$Service): boolean {
   // Retrieve the revision name
   const revisionName = get(serviceResponse, 'spec.template.metadata.name');
@@ -351,6 +357,7 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/** Get service url or tagged revision url */
 function getUrl(serviceResponse: run_v1.Schema$Service): string {
   const revisionName = get(serviceResponse, 'spec.template.metadata.name');
   // Find revision url
