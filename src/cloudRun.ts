@@ -306,12 +306,12 @@ export class CloudRun {
 
   /**
    * Poll service revision until ready
-   * @param serviceResponse 
+   * @param serviceResponse
    * @returns service url or revision url
    */
   async pollService(serviceResponse: run_v1.Schema$Service): Promise<string> {
     let url = getUrl(serviceResponse);
-    const maxAttempts = 12; // Timeout after 60 seconds
+    const maxAttempts = 60; // Timeout after 300 seconds
     let attempt = 0;
     // Revision is ready and url is found before timeout
     while (!getReadyStatus(serviceResponse) && !url && attempt < maxAttempts) {
@@ -320,7 +320,7 @@ export class CloudRun {
       serviceResponse = await this.getService(serviceResponse.metadata!.name!);
       url = getUrl(serviceResponse);
     }
-
+    if (!url) throw new Error('Timeout error: service revision is not ready.');
     return url;
   }
 }
