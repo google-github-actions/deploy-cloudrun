@@ -315,6 +315,7 @@ export class CloudRun {
     let attempt = 0;
     // Revision is ready and url is found before timeout
     while (!getReadyStatus(serviceResponse) && !url && attempt < maxAttempts) {
+      console.log(JSON.stringify(serviceResponse, null, 2))
       attempt += 1;
       await sleep(5000);
       serviceResponse = await this.getService(serviceResponse.metadata!.name!);
