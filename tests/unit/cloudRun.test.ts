@@ -28,10 +28,6 @@ const image = 'gcr.io/cloudrun/hello';
 const name = `test-${Math.round(Math.random() * 100000)}`; // Cloud Run currently has name length restrictions
 const service = new Service({ image, name });
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 describe('CloudRun', function() {
   it('initializes with JSON creds', function() {
     const client = new CloudRun(region, {
@@ -62,8 +58,13 @@ describe('CloudRun', function() {
       credentials: credentials,
       projectId: project,
     });
-    let result = await client.deploy(service);
-    expect(result).to.include('run.app');
+    try {
+      let result = await client.deploy(service);
+      expect(result).to.include('run.app');
+    } catch (err) {
+      let result = await client.getService(service.name);
+      expect(result).to.not.be.undefined;
+    }
     await client.delete(service);
   });
 });
