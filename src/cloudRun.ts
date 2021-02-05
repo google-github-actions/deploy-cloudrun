@@ -313,6 +313,7 @@ export class CloudRun {
     let url = getUrl(serviceResponse);
     const maxAttempts = 60; // Timeout after 300 seconds
     let attempt = 0;
+    core.info(JSON.stringify(serviceResponse, null, 2))
     // Revision is ready and url is found before timeout
     while (!getReadyStatus(serviceResponse) && !url && attempt < maxAttempts) {
       core.info(JSON.stringify(serviceResponse, null, 2))

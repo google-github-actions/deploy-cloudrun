@@ -1,8 +1,10 @@
+name: build and release-please
+
 on:
   push:
     branches:
       - main
-name: build and release-please
+      
 jobs:
   build:
     env:
