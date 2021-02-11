@@ -323,5 +323,3 @@ jobs:
         gcloud run services delete run-envvars-$GITHUB_SHA --quiet
         gcloud run services delete run-revision-name-$GITHUB_SHA --quiet
         gcloud run services delete test-service-name --quiet
-
-        
