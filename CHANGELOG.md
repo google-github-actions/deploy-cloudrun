@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.4.0](https://www.github.com/google-github-actions/deploy-cloudrun/compare/v0.3.0...v0.4.0) (2021-02-11)
+
+
+### Features
+
+* **deps:** update dependencies ([#27](https://www.github.com/google-github-actions/deploy-cloudrun/issues/27)) ([0751aed](https://www.github.com/google-github-actions/deploy-cloudrun/commit/0751aed08ff283f784c4716030a75195098edaa8))
+
+
+### Bug Fixes
+
+* **testing:** run IT tests cleanup only when needed ([#37](https://www.github.com/google-github-actions/deploy-cloudrun/issues/37)) ([9de5186](https://www.github.com/google-github-actions/deploy-cloudrun/commit/9de5186fe826371613a003a2c22ae38be0994d22))
+* update merging of services ([#30](https://www.github.com/google-github-actions/deploy-cloudrun/issues/30)) ([7d88f7a](https://www.github.com/google-github-actions/deploy-cloudrun/commit/7d88f7a4c9f15186916068e190b0de7eaf8a792e))
+* Update service polling ([#31](https://www.github.com/google-github-actions/deploy-cloudrun/issues/31)) ([75b3108](https://www.github.com/google-github-actions/deploy-cloudrun/commit/75b31080b36d9abc33f5e2bdf6133aaa59103b78))
+
 ## [0.3.0](https://www.github.com/google-github-actions/deploy-cloudrun/compare/v0.2.0...v0.3.0) (2021-01-27)
 
 
