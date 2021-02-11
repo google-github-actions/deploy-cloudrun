@@ -25,6 +25,7 @@ import {
 } from 'google-auth-library';
 import { Service } from './service';
 import { MethodOptions } from 'googleapis-common';
+import { get } from 'lodash';
 
 /**
  * Available options to create the client.
@@ -185,7 +186,7 @@ export class CloudRun {
    * @param service Service object.
    * @returns Service object.
    */
-  async deploy(service: Service): Promise<run_v1.Schema$Service> {
+  async deploy(service: Service): Promise<string> {
     const authClient = await this.getAuthClient();
     const serviceNames = await this.listServices();
     let serviceResponse: GaxiosResponse<run_v1.Schema$Service>;
@@ -218,8 +219,11 @@ export class CloudRun {
         this.methodOptions,
       );
     }
+
+    const url = await this.pollService(serviceResponse.data);
     core.info(`Service ${service.name} has been successfully deployed.`);
-    return serviceResponse.data;
+    // return serviceResponse.data;
+    return url;
   }
 
   /**
@@ -299,4 +303,74 @@ export class CloudRun {
       this.methodOptions,
     );
   }
+
+  /**
+   * Poll service revision until ready
+   * @param serviceResponse
+   * @returns service url or revision url
+   */
+  async pollService(serviceResponse: run_v1.Schema$Service): Promise<string> {
+    let url = getUrl(serviceResponse);
+    const maxAttempts = 60; // Timeout after 300 seconds
+    let attempt = 0;
+    // Revision is ready and url is found before timeout
+    while (!getReadyStatus(serviceResponse) && !url && attempt < maxAttempts) {
+      attempt += 1;
+      await sleep(5000);
+      serviceResponse = await this.getService(serviceResponse.metadata!.name!);
+      url = getUrl(serviceResponse);
+    }
+    if (!url) throw new Error('Timeout error: service revision is not ready.');
+    return url;
+  }
+}
+
+/** Retrieve status of new revision */
+function getReadyStatus(serviceResponse: run_v1.Schema$Service): boolean {
+  // Retrieve the revision name
+  const revisionName = get(serviceResponse, 'spec.template.metadata.name');
+  // Retrieve the revision statuses
+  const createdRevision = get(
+    serviceResponse,
+    'status.latestCreatedRevisionName',
+  );
+  const latestRevision = get(serviceResponse, 'status.latestReadyRevisionName');
+  // Latest created revision must equal latest ready revision
+  if (revisionName) {
+    // After first deployment, revision name is set
+    return (
+      revisionName &&
+      createdRevision &&
+      latestRevision &&
+      revisionName == createdRevision &&
+      revisionName == latestRevision
+    );
+  } else {
+    // First deployment will not have a revision name
+    return (
+      createdRevision && latestRevision && latestRevision == createdRevision
+    );
+  }
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/** Get service url or tagged revision url */
+function getUrl(serviceResponse: run_v1.Schema$Service): string {
+  const revisionName = get(serviceResponse, 'spec.template.metadata.name');
+  // Find revision url
+  const traffic: run_v1.Schema$TrafficTarget[] = get(
+    serviceResponse,
+    'status.traffic',
+  );
+  let revision;
+  if (traffic) {
+    revision = traffic.find((revision) => {
+      return revision.revisionName == revisionName && revision.url;
+    });
+  }
+  // Or return service url
+  return get(revision, 'url') || get(serviceResponse, 'status.url') || '';
 }

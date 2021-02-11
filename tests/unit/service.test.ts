@@ -62,6 +62,33 @@ describe('Service', function() {
     );
   });
 
+  it('retains env vars', function()  {
+    const envVars = 'KEY1=VALUE1';
+    const service = new Service({ image, name, envVars });
+    const containers = get(service, 'request.spec.template.spec.containers');
+    const actual = containers[0]?.env[0];
+    const expected: run_v1.Schema$EnvVar = {
+      name: 'KEY1',
+      value: 'VALUE1',
+    };
+    expect(actual.name).equal(expected.name);
+
+    const envVars2 = 'KEY2=VALUE2';
+    const service2 = new Service({ image, name, envVars: envVars2 });
+    service.merge(service2.request);
+    const containers2 = get(service2, 'request.spec.template.spec.containers');
+    const actual2 = containers2[0]?.env;
+    expect(actual2.length).equal(2);
+    const expected2: run_v1.Schema$EnvVar = {
+      name: 'KEY2',
+      value: 'VALUE2',
+    };
+    expect(actual2[1].name).equal(expected2.name);
+
+    const revisionName = get(service2, 'request.spec.template.metadata.name');
+    expect(revisionName).to.not.be.undefined;
+  });
+
   it('parses yaml', function() {
     const yaml = './tests/unit/service.basic.yaml';
     const service = new Service({ image, name, yaml });
