@@ -18,6 +18,9 @@ import * as core from '@actions/core';
 import { CloudRun } from './cloudRun';
 import { Service } from './service';
 
+const ACTION_DEPLOY = 'deploy';
+const ACTION_DELETE = 'delete';
+
 /**
  * Executes the main action. It includes the main business logic and is the
  * primary entry point. It is documented inline.
@@ -31,7 +34,12 @@ async function run(): Promise<void> {
     const yaml = core.getInput('metadata');
     const credentials = core.getInput('credentials');
     const projectId = core.getInput('project_id');
+    const action = core.getInput('action') || 'deploy';
     const region = core.getInput('region') || 'us-central1';
+
+    if (![ACTION_DELETE, ACTION_DEPLOY].includes(action)) {
+      throw new Error(`Invalid action: ${action}`);
+    }
 
     // Create Cloud Run client
     const client = new CloudRun(region, { projectId, credentials });
@@ -39,8 +47,13 @@ async function run(): Promise<void> {
     // Initialize service
     const service = new Service({ image, name, envVars, yaml });
 
-    // Deploy service
-    const url = await client.deploy(service);
+    let url = null;
+    if (action === ACTION_DELETE) {
+      await client.delete(service);
+    } else {
+      // Deploy service
+      url = await client.deploy(service);
+    }
 
     // Set URL as output
     core.setOutput('url', url);

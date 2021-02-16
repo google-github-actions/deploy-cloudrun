@@ -18,6 +18,11 @@ description: |-
   Use this action to deploy a container in the Google Container Registry to Cloud Run.
 
 inputs:
+  action:
+    description: |-
+      TBD
+    required: true
+
   image:
     description: |-
       Name of the container image to deploy (e.g. gcr.io/cloudrun/hello:latest).

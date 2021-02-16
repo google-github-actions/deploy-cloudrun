@@ -34,6 +34,7 @@ steps:
 - id: deploy
   uses: google-github-actions/deploy-cloudrun@main
   with:
+    action: deploy
     image: gcr.io/cloudrun/hello
     service: hello-cloud-run
     credentials: ${{ secrets.gcp_credentials }}
