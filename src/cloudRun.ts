@@ -311,7 +311,7 @@ export class CloudRun {
    */
   async pollService(serviceResponse: run_v1.Schema$Service): Promise<string> {
     let url = getUrl(serviceResponse);
-    const maxAttempts = 60; // Timeout after 300 seconds
+    const maxAttempts = 120; // Timeout after 300 seconds
     let attempt = 0;
     // Revision is ready and url is found before timeout
     while (!getReadyStatus(serviceResponse) && !url && attempt < maxAttempts) {
