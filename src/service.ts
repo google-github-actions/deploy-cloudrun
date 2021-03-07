@@ -28,6 +28,7 @@ import YAML from 'yaml';
  * @param yaml Path to YAML file.
  */
 export type ServiceOptions = {
+  action: 'deploy' | 'delete';
   image?: string;
   name?: string;
   envVars?: string;
@@ -65,7 +66,10 @@ export class Service {
   readonly name: string;
 
   constructor(opts: ServiceOptions) {
-    if ((!opts.name || !opts.image) && !opts.yaml) {
+    if (
+      (!opts.name || (opts.action === 'deploy' && !opts.image)) &&
+      !opts.yaml
+    ) {
       throw new Error('Provide image and services names or a YAML file.');
     }
 
