@@ -20,7 +20,7 @@ description: |-
 inputs:
   action:
     description: |-
-      TBD
+      Action to take upon the Cloud Run service, either to "deploy" or "delete".
     required: true
 
   image:
