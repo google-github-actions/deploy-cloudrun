@@ -98,7 +98,7 @@ describe('#run', function() {
     this.stubs.getInput.withArgs('credentials').returns('');
     this.stubs.getInput.withArgs('project_id').returns('');
     await run();
-    expect(this.stubs.setFailed.callCount).to.eq(1);
+    expect(this.stubs.setFailed.callCount).to.eq(2);
   });
   it('installs beta components with metadata', async function() {
     this.stubs.getInput.withArgs('metadata').returns('yaml');

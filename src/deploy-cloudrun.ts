@@ -96,6 +96,8 @@ export async function run(): Promise<void> {
       await setupGcloud.setProject(projectId);
     } else if (credentials) {
       projectId = await setupGcloud.setProjectWithKey(credentials);
+    } else if (process.env.GCLOUD_PROJECT) {
+      await setupGcloud.setProject(process.env.GCLOUD_PROJECT);
     }
     // Fail if no Project Id is provided if not already set.
     const projectIdSet = await setupGcloud.isProjectIdSet();

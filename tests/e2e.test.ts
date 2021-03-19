@@ -126,7 +126,7 @@ describe('E2E tests', function () {
     if (ANNOTATIONS && service) {
       const expected = JSON.parse(ANNOTATIONS);
       const actual = _.get(service, 'spec.template.metadata.annotations');
-      console.log(actual);
+
       Object.entries(expected).forEach((annot: object) => {
         const found = Object.entries(actual).find((actualAnnot: object) =>
           _.isEqual(annot, actualAnnot),
