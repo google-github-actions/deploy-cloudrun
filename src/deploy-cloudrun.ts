@@ -37,7 +37,7 @@ export async function run(): Promise<void> {
 
     let installBeta = false; // Flag for installing gcloud beta components
     let cmd;
-    
+
     // Find base command
     if (metadata) {
       // Deploy service from metadata
