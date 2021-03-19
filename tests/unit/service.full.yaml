@@ -8,7 +8,7 @@ spec:
       labels:
         test_label: test_value
       annotations:
-        run.googleapis.com/cloudsql-instances: '1:2:3'
+        run.googleapis.com/cloudsql-instances: 'my-test-instnace'
     spec:
       containerConcurrency: 20
       containers:
