@@ -13,18 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-{
-  "compilerOptions": {
-    "target": "es6",
-    "module": "commonjs",
-    "lib": [
-      "es6"
-    ],
-    "outDir": "./dist",
-    "rootDirs": ["./src", "./setup-google-cloud-sdk"],
-    "strict": true,
-    "noImplicitAny": true,
-    "esModuleInterop": true
-  },
-  "exclude": ["node_modules", "**/*.test.ts"]
-}
+
+/*
+ * Tests version-util.
+ */
+// import * as mocha from 'mocha';
+import { expect } from 'chai';
+
+import { getLatestGcloudSDKVersion } from '../src/version-util';
+
+describe('#getLatestGcloudSDKVersion', function() {
+  it('retrieves latest', async function() {
+    const semVerPattern = /^[0-9]+\.[0-9]+\.[0-9]+$/;
+    const result = await getLatestGcloudSDKVersion();
+    expect(result).to.be;
+    expect(result).to.match(semVerPattern);
+  });
+});

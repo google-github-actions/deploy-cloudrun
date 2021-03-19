@@ -78,7 +78,8 @@ jobs:
         npm install
         npm run build
 
-    - run: sed -i "s/test-basic-yaml/${{ steps.service.outputs.service }}/" ./tests/unit/service.basic.yaml
+    - name: Set service name in metadata YAML
+      run: sed -i "s/test-basic-yaml/${{ steps.service.outputs.service }}/" ./tests/unit/service.basic.yaml
 
     - name: Deploy Service
       id: deploy
@@ -114,7 +115,8 @@ jobs:
         npm install
         npm run build
 
-    - run: |-
+    - name: Set service name in metadata YAML
+      run: |-
         sed -i "s/run-full-yaml/${{ steps.service.outputs.service }}/" ./tests/unit/service.full.yaml
 
     - name: Create service from metadata yaml
@@ -134,6 +136,7 @@ jobs:
       run: npm run e2e-tests
       env:
         URL: ${{ steps.deploy_1.outputs.url }}
+        SERVICE: ${{ steps.service.outputs.service }}
         PARAMS: "{\"cpu\": 2,\"memory\": \"1Gi\", \"containerConcurrency\": 20}"
         ANNOTATIONS: "{\"run.googleapis.com/cloudsql-instances\": \"1:2:3\"}"
         LABELS: "{\"test_label\": \"test_value\"}"
@@ -192,9 +195,11 @@ jobs:
       run: npm run e2e-tests
       env:
         URL: ${{ steps.deploy_1.outputs.url }}
+        SERVICE: ${{ steps.service.outputs.service }}
         REVISION: ${{ steps.service.outputs.service }}-001
 
-    - run: |-
+    - name: Update service revision name
+      run: |-
         sed -i "s/-001/-002/" ./tests/unit/service.namedrevision.yaml
 
     - name: Update service with new revision name
