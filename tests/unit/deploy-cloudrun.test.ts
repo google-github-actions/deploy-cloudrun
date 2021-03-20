@@ -100,10 +100,10 @@ describe('#run', function() {
     await run();
     expect(this.stubs.setFailed.callCount).to.be.at.least(1);
   });
-  it('installs beta components with metadata', async function() {
+  it('installs beta components with metadata', function() {
     this.stubs.getInput.withArgs('metadata').returns('yaml');
-    await run();
-    expect(this.stubs.installComponent.withArgs('beta').callCount).to.eq(1);
+    run().then(() => expect(this.stubs.installComponent.withArgs('beta').callCount).to.eq(1));
+    
   });
   
 });
