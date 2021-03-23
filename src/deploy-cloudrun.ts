@@ -16,7 +16,9 @@
 
 import * as core from '@actions/core';
 import * as exec from '@actions/exec';
+import * as toolCache from '@actions/tool-cache';
 import * as setupGcloud from '../setup-google-cloud-sdk/src/';
+import path from 'path';
 
 /**
  * Executes the main action. It includes the main business logic and is the
@@ -31,6 +33,7 @@ export async function run(): Promise<void> {
     const metadata = core.getInput('metadata'); // YAML file
     const credentials = core.getInput('credentials'); // Service account key
     let projectId = core.getInput('project_id');
+    let gcloudVersion = core.getInput('gcloud_version');
     // Flags
     const envVars = core.getInput('env_vars'); // String of env vars KEY=VALUE,...
     const region = core.getInput('region') || 'us-central1';
@@ -79,9 +82,14 @@ export async function run(): Promise<void> {
     }
 
     // Install gcloud if not already installed.
-    if (!setupGcloud.isInstalled()) {
-      const gcloudVersion = await setupGcloud.getLatestGcloudSDKVersion();
+    if (!gcloudVersion || gcloudVersion == 'latest') {
+      gcloudVersion = await setupGcloud.getLatestGcloudSDKVersion();
+    }
+    if (!setupGcloud.isInstalled(gcloudVersion)) {
       await setupGcloud.installGcloudSDK(gcloudVersion);
+    } else {
+      const toolPath = toolCache.find('gcloud', gcloudVersion);
+      core.addPath(path.join(toolPath, 'bin'));
     }
 
     // Authenticate gcloud SDK.
@@ -143,14 +151,15 @@ export async function run(): Promise<void> {
   }
 }
 
-function setUrlOutput(output: string): void {
+export function setUrlOutput(output: string): string | undefined {
   const urlMatch = output.match(
     /https:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.app/g,
   );
   if (!urlMatch) {
     core.warning('Can not find URL.');
-    return;
+    return undefined;
   }
   const url = urlMatch!.length > 1 ? urlMatch![1] : urlMatch![0];
   core.setOutput('url', url);
+  return url;
 }

@@ -19,7 +19,7 @@ import * as sinon from 'sinon';
 import * as core from '@actions/core';
 import * as setupGcloud from '../../setup-google-cloud-sdk/src';
 import { expect } from 'chai';
-import { run } from '../../src/deploy-cloudrun';
+import { run, setUrlOutput } from '../../src/deploy-cloudrun';
 
 /* eslint-disable @typescript-eslint/camelcase */
 // These are mock data for github actions inputs, where camel case is expected.
@@ -37,12 +37,6 @@ function getInputMock(name: string): string {
   return fakeInputs[name];
 }
 
-const credentials = process.env.TEST_DEPLOY_CLOUDRUN_CREDENTIALS;
-const project = process.env.TEST_DEPLOY_CLOUDRUN_PROJECT;
-const region = 'us-central1';
-const image = 'gcr.io/cloudrun/hello';
-const name = `test-${Math.round(Math.random() * 100000)}`; // Cloud Run currently has name length restrictions
-
 describe('#run', function() {
   beforeEach(async function() {
     this.stubs = {
@@ -54,7 +48,7 @@ describe('#run', function() {
       isInstalled: sinon.stub(setupGcloud, 'isInstalled').returns(false),
       setProject: sinon.stub(setupGcloud, 'setProject'),
       setProjectWithKey: sinon.stub(setupGcloud, 'setProjectWithKey'),
-      installComponent: sinon.stub(setupGcloud, 'installComponent')
+      installComponent: sinon.stub(setupGcloud, 'installComponent'),
     };
   });
 
@@ -102,8 +96,81 @@ describe('#run', function() {
   });
   it('installs beta components with metadata', function() {
     this.stubs.getInput.withArgs('metadata').returns('yaml');
-    run().then(() => expect(this.stubs.installComponent.withArgs('beta').callCount).to.eq(1));
-    
+    run().then(() =>
+      expect(this.stubs.installComponent.withArgs('beta').callCount).to.eq(1),
+    );
   });
-  
+});
+
+describe('#setUrlOutput', function() {
+  it('correctly parses the URL', function() {
+    const output = `
+    Allow unauthenticated invocations to [action-test] (y/N)?  
+    Deploying container to Cloud Run service [action-test] in project [PROJECT] region [us-central1]
+    ✓ Deploying new service... Done.                                                                                                      
+    ✓ Creating Revision...                                                                                                              
+    ✓ Routing traffic...                                                                                                                
+    Done.                                                                                                                                 
+    Service [action-test] revision [action-test-00001-guw] has been deployed and is serving 100 percent of traffic.
+    Service URL: https://action-test-cy7cdwrvha-uc.a.run.app
+    `;
+    const url = setUrlOutput(output);
+    expect(url).to.eq('https://action-test-cy7cdwrvha-uc.a.run.app');
+  });
+
+  it('correctly parses 2 URLs', function() {
+    const output = `
+    Deploying container to Cloud Run service [action-test] in project [PROJECT] region [us-central1]
+    ✓ Deploying... Done.                                                                                                                                                                                                                                                           
+    ✓ Creating Revision...                                                                                                                                                                                                                                                       
+    ✓ Routing traffic...                                                                                                                                                                                                                                                         
+    Done.                                                                                                                                                                                                                                                                          
+    Service [action-test] revision [action-test-00002-gaw] has been deployed and is serving 100 percent of traffic.
+    Service URL: https://action-test-cy7cdwrvha-uc.a.run.app
+    The revision can be reached directly at https://actions-tag---action-test-cy7cdwrvha-uc.a.run.app
+    `;
+    const url = setUrlOutput(output);
+    expect(url).to.eq(
+      'https://actions-tag---action-test-cy7cdwrvha-uc.a.run.app',
+    );
+  });
+
+  it('returns undefined', function() {
+    const output = `
+    Deploying container to Cloud Run service [action-test] in project [PROJECT] region [us-central1]
+    ⠹ Deploying... Invalid ENTRYPOINT.
+    `;
+    const url = setUrlOutput(output);
+    expect(url).to.eq(undefined);
+  });
+
+  it('correctly parses updated traffic', function() {
+    const output = `
+    ✓ Updating traffic... Done.                                                                                                                                                                                                                                                    
+    ✓ Routing traffic...                                                                                                                                                                                                                                                         
+    Done.                                                                                                                                                                                                                                                                          
+    URL: https://action-test-cy7cdwrvha-uc.a.run.app
+    Traffic:
+      100% action-test-00002-gaw
+            actions-tag: https://actions-tag---action-test-cy7cdwrvha-uc.a.run.app
+    `;
+    const url = setUrlOutput(output);
+    expect(url).to.eq(
+      'https://actions-tag---action-test-cy7cdwrvha-uc.a.run.app',
+    );
+  });
+
+  it('correctly parses metadata updates', function() {
+    const output = `
+    Applying new configuration to Cloud Run service [run-full-yaml] in project [PROJECT] region [us-central1]
+    ✓ Deploying new service... Done.                                                                                                                                                                                                                                               
+    ✓ Creating Revision...                                                                                                                                                                                                                                                       
+    ✓ Routing traffic...                                                                                                                                                                                                                                                         
+    Done.                                                                                                                                                                                                                                                                          
+    New configuration has been applied to service [run-full-yaml].
+    URL: https://run-full-yaml-cy7cdwrvha-uc.a.run.app
+    `;
+    const url = setUrlOutput(output);
+    expect(url).to.eq('https://run-full-yaml-cy7cdwrvha-uc.a.run.app');
+  });
 });
