@@ -22,6 +22,10 @@ import 'mocha';
 import { run_v1 } from 'googleapis';
 import yaml = require('js-yaml');
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 describe('E2E tests', function () {
   const {
     PARAMS,
@@ -154,33 +158,38 @@ describe('E2E tests', function () {
 
   it('has the correct revision count', async function () {
     if (COUNT && SERVICE) {
-      let output = '';
-      const stdout = (data: Buffer): void => {
-        output += data.toString();
-      };
-      const options = {
-        listeners: {
-          stdout,
-        },
-        silent: true,
-      };
-      let cmd = [
-        'run',
-        'revisions',
-        'list',
-        '--service',
-        SERVICE,
-        '--format',
-        'json',
-        '--platform',
-        'managed',
-        '--region',
-        'us-central1',
-      ];
-      await exec.exec(toolCommand, cmd, options);
-      console.log(output)
-      const revisions = JSON.parse(output);
-      console.log(revisions)
+      const max = 3;
+      let attempt = 0;
+      let revisions = [];
+      while (attempt < max && revisions.length < parseInt(COUNT)) {
+        await sleep(1000);
+        let output = '';
+        const stdout = (data: Buffer): void => {
+          output += data.toString();
+        };
+        const options = {
+          listeners: {
+            stdout,
+          },
+          silent: true,
+        };
+        let cmd = [
+          'run',
+          'revisions',
+          'list',
+          '--service',
+          SERVICE,
+          '--format',
+          'json',
+          '--platform',
+          'managed',
+          '--region',
+          'us-central1',
+        ];
+        await exec.exec(toolCommand, cmd, options);
+        revisions = JSON.parse(output);
+      }
+
       expect(revisions.length).to.equal(parseInt(COUNT));
     }
   });
