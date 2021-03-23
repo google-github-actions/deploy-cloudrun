@@ -178,7 +178,9 @@ describe('E2E tests', function () {
         'us-central1',
       ];
       await exec.exec(toolCommand, cmd, options);
+      console.log(output)
       const revisions = JSON.parse(output);
+      console.log(revisions)
       expect(revisions.length).to.equal(parseInt(COUNT));
     }
   });
