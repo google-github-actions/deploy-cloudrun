@@ -22,7 +22,7 @@ import 'mocha';
 import { run_v1 } from 'googleapis';
 import yaml = require('js-yaml');
 
-function sleep(ms) {
+function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
