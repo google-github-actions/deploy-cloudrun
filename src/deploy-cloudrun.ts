@@ -37,12 +37,61 @@ export async function run(): Promise<void> {
     // Flags
     const envVars = core.getInput('env_vars'); // String of env vars KEY=VALUE,...
     const region = core.getInput('region') || 'us-central1';
+    const source = core.getInput('source'); // Source directory
+    const suffix = core.getInput('suffix');
+    const tag = core.getInput('tag');
+    const noTraffic =
+      core.getInput('no_traffic').toLowerCase() == 'true' ? true : false;
+    const revTraffic = core.getInput('revision_traffic');
+    const tagTraffic = core.getInput('tag_traffic');
+    const flags = core.getInput('flags');
 
     let installBeta = false; // Flag for installing gcloud beta components
     let cmd;
+    // Throw errors if inputs aren't valid
+    if (revTraffic && tagTraffic) {
+      throw new Error(
+        'Both `revision_traffic` and `tag_traffic` inputs set - Please select one.',
+      );
+    }
+    if ((revTraffic || tagTraffic) && !name) {
+      throw new Error('No service name set.');
+    }
 
     // Find base command
-    if (metadata) {
+    if (revTraffic || tagTraffic) {
+      // Update traffic
+      cmd = [
+        'beta',
+        'run',
+        'services',
+        'update-traffic',
+        name,
+        '--platform',
+        'managed',
+        '--region',
+        region,
+      ];
+      installBeta = true;
+      if (revTraffic) cmd.push('--to-revisions', revTraffic);
+      if (tagTraffic) cmd.push('--to-tags', tagTraffic);
+    } else if (source) {
+      // Deploy service from source
+      cmd = [
+        'beta',
+        'run',
+        'deploy',
+        name,
+        '--quiet',
+        '--platform',
+        'managed',
+        '--region',
+        region,
+        '--source',
+        source,
+      ];
+      installBeta = true;
+    } else if (metadata) {
       // Deploy service from metadata
       if (image || name || envVars) {
         core.warning(
@@ -79,6 +128,17 @@ export async function run(): Promise<void> {
     if (!metadata) {
       // Set optional flags from inputs
       if (envVars) cmd.push('--update-env-vars', envVars);
+      if (tag) {
+        cmd.push('--tag', tag);
+        cmd.unshift('beta');
+        installBeta = true;
+      }
+      if (suffix) cmd.push('--revision-suffix', suffix);
+      if (noTraffic) cmd.push('--no-traffic');
+    }
+    // Add optional flags
+    if (flags) {
+      cmd.concat(flags.split(/[\s=]+/));
     }
 
     // Install gcloud if not already installed.
@@ -96,7 +156,7 @@ export async function run(): Promise<void> {
     if (credentials) await setupGcloud.authenticateGcloudSDK(credentials);
     const authenticated = await setupGcloud.isAuthenticated();
     if (!authenticated) {
-      core.setFailed('Error authenticating the Cloud SDK.');
+      throw new Error('Error authenticating the Cloud SDK.');
     }
 
     // set PROJECT ID
@@ -109,7 +169,7 @@ export async function run(): Promise<void> {
     }
     // Fail if no Project Id is provided if not already set.
     const projectIdSet = await setupGcloud.isProjectIdSet();
-    if (!projectIdSet) core.setFailed('No project Id provided.');
+    if (!projectIdSet) throw new Error('No project Id provided. Ensure you have set either the project_id or credentials fields.');
 
     // Install beta components if needed
     if (installBeta) await setupGcloud.installComponent('beta');
@@ -152,6 +212,7 @@ export async function run(): Promise<void> {
 }
 
 export function setUrlOutput(output: string): string | undefined {
+  // regex to match Cloud Run URLs
   const urlMatch = output.match(
     /https:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.app/g,
   );
@@ -159,6 +220,7 @@ export function setUrlOutput(output: string): string | undefined {
     core.warning('Can not find URL.');
     return undefined;
   }
+  // Match "tagged" URL or default to service URL
   const url = urlMatch!.length > 1 ? urlMatch![1] : urlMatch![0];
   core.setOutput('url', url);
   return url;

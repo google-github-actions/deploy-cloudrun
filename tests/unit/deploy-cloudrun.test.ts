@@ -30,6 +30,12 @@ const fakeInputs: { [key: string]: string } = {
   credentials: '',
   project_id: '',
   env_vars: '',
+  source: '',
+  suffix: '',
+  tag: '',
+  no_traffic: '',
+  revision_traffic: '',
+  tag_traffic: ''
 };
 /* eslint-enable @typescript-eslint/camelcase */
 
@@ -57,13 +63,21 @@ describe('#run', function() {
   });
 
   it('sets the project ID if provided', async function() {
-    this.stubs.getInput.withArgs('project_id').returns('test');
+    this.stubs.getInput.withArgs('project_id').returns('my-test-project');
     await run();
-    expect(this.stubs.setProject.withArgs('test').callCount).to.eq(1);
+    expect(this.stubs.setProject.withArgs('my-test-project').callCount).to.eq(1);
   });
-
+  it('sets the project ID if GCLOUD_PROJECT is provided', async function() {
+    this.stubs.getInput.withArgs('project_id').returns('');
+    this.stubs.getInput.withArgs('credentials').returns('');
+    process.env.GCLOUD_PROJECT = 'my-test-project';
+    await run();
+    expect(this.stubs.setProject.withArgs('my-test-project').callCount).to.eq(1);
+  });
   it('does not set the project ID if not provided', async function() {
     this.stubs.getInput.withArgs('project_id').returns('');
+    this.stubs.getInput.withArgs('credentials').returns('');
+    process.env.GCLOUD_PROJECT = '';
     await run();
     expect(this.stubs.setProject.callCount).to.eq(0);
   });
@@ -94,11 +108,44 @@ describe('#run', function() {
     await run();
     expect(this.stubs.setFailed.callCount).to.be.at.least(1);
   });
-  it('installs beta components with metadata', function() {
+  it('installs beta components with source', async function() {
+    this.stubs.getInput.withArgs('source').returns('.');
+    await run();
+    expect(this.stubs.installComponent.withArgs('beta').callCount).to.eq(1);
+  });
+  it('installs beta components with metadata', async function() {
     this.stubs.getInput.withArgs('metadata').returns('yaml');
-    run().then(() =>
-      expect(this.stubs.installComponent.withArgs('beta').callCount).to.eq(1),
-    );
+    await run();
+    expect(this.stubs.installComponent.withArgs('beta').callCount).to.eq(1);
+  });
+  it('installs beta components with tag', async function() {
+    this.stubs.getInput.withArgs('tag').returns('test');
+    await run();
+    expect(this.stubs.installComponent.withArgs('beta').callCount).to.eq(1);
+  });
+  it('installs beta components with tag traffic', async function() {
+    this.stubs.getInput.withArgs('tag').returns('test');
+    this.stubs.getInput.withArgs('name').returns('service-name');
+    await run();
+    expect(this.stubs.installComponent.withArgs('beta').callCount).to.eq(1);
+  });
+  it('fails if tag traffic and revision traffic are provided', async function() {
+    this.stubs.getInput.withArgs('revision_traffic').returns('TEST=100');
+    this.stubs.getInput.withArgs('tag_traffic').returns('TEST=100');
+    await run();
+    expect(this.stubs.setFailed.callCount).to.eq(1);
+  });
+  it('fails if name is not provided with tag traffic', async function() {
+    this.stubs.getInput.withArgs('tag_traffic').returns('TEST=100');
+    this.stubs.getInput.withArgs('name').returns('service-name');
+    await run();
+    expect(this.stubs.setFailed.callCount).to.eq(1);
+  });
+  it('fails if name is not provided with revision traffic', async function() {
+    this.stubs.getInput.withArgs('revision_traffic').returns('TEST=100');
+    this.stubs.getInput.withArgs('name').returns('service-name');
+    await run();
+    expect(this.stubs.setFailed.callCount).to.eq(1);
   });
 });
 
