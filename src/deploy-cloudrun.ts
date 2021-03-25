@@ -169,7 +169,10 @@ export async function run(): Promise<void> {
     }
     // Fail if no Project Id is provided if not already set.
     const projectIdSet = await setupGcloud.isProjectIdSet();
-    if (!projectIdSet) throw new Error('No project Id provided. Ensure you have set either the project_id or credentials fields.');
+    if (!projectIdSet)
+      throw new Error(
+        'No project Id provided. Ensure you have set either the project_id or credentials fields.',
+      );
 
     // Install beta components if needed
     if (installBeta) await setupGcloud.installComponent('beta');
@@ -193,12 +196,12 @@ export async function run(): Promise<void> {
       },
       silent: true,
     };
-
+    core.info(`running: ${toolCommand} ${cmd.join(' ')}`);
     // Run gcloud cmd.
     try {
       await exec.exec(toolCommand, cmd, options);
       // Set url as output.
-      setUrlOutput(errOutput);
+      setUrlOutput(output + errOutput);
     } catch (error) {
       if (errOutput) {
         throw new Error(errOutput);

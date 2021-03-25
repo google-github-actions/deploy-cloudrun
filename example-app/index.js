@@ -12,17 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+const package = require('./package.json')
 const express = require('express');
 const app = express();
 
 app.get('/', (req, res) => {
-  console.log('Hello world received a request.');
-
-  const target = process.env.TARGET || 'World';
-  res.send(`Hello ${target}!`);
+  console.log(`${package.name} received a request.`);
+  res.send(`Congratulations, you successfully deployed a container image to Cloud Run!`);
 });
 
 const port = process.env.PORT || 8080;
 app.listen(port, () => {
-  console.log('Hello world listening on port', port);
+  console.log(`${package.name} listening on port: ${port}`);
 });

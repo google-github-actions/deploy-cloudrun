@@ -25,10 +25,10 @@ import { run, setUrlOutput } from '../../src/deploy-cloudrun';
 // These are mock data for github actions inputs, where camel case is expected.
 const fakeInputs: { [key: string]: string } = {
   image: 'gcr.io/cloudrun/hello',
-  service: '',
+  service: 'test',
   metadata: '',
-  credentials: '',
-  project_id: '',
+  credentials: 'test',
+  project_id: 'test',
   env_vars: '',
   source: '',
   suffix: '',
@@ -105,16 +105,19 @@ describe('#run', function() {
   it('fails if credentials and project_id are not provided', async function() {
     this.stubs.getInput.withArgs('credentials').returns('');
     this.stubs.getInput.withArgs('project_id').returns('');
+    process.env.GCLOUD_PROJECT = '';
     await run();
     expect(this.stubs.setFailed.callCount).to.be.at.least(1);
   });
   it('installs beta components with source', async function() {
     this.stubs.getInput.withArgs('source').returns('.');
+    this.stubs.getInput.withArgs('image').returns('');
     await run();
     expect(this.stubs.installComponent.withArgs('beta').callCount).to.eq(1);
   });
   it('installs beta components with metadata', async function() {
     this.stubs.getInput.withArgs('metadata').returns('yaml');
+    this.stubs.getInput.withArgs('image').returns('');
     await run();
     expect(this.stubs.installComponent.withArgs('beta').callCount).to.eq(1);
   });

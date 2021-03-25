@@ -59,7 +59,7 @@ jobs:
         URL: ${{ steps.deploy_2.outputs.url }}
         SERVICE: ${{ steps.service.outputs.service }}
         ENV: TEST_ENV=TEST_VAR
-        PARAMS: "{\"cpu\": 2,\"memory\": \"1Gi\", \"containerConcurrency\": 20}"
+        PARAMS: "{\"cpu\": \"2000m\",\"memory\": \"1Gi\", \"containerConcurrency\": 20}"
         COUNT: 2
 
   suffix:
@@ -192,24 +192,24 @@ jobs:
       env:
         URL: ${{ steps.traffic_2.outputs.url }}
         SERVICE: ${{ steps.service.outputs.service }}
-        TAG: no-tag
+        TAG: no-traffic
         TRAFFIC: 0
 
-  cleanup:
-    name: Clean Up
-    if: ${{ always() }}
-    runs-on: ubuntu-latest
-    needs: [source, suffix, tag]
-    steps:
-    - uses: google-github-actions/setup-gcloud@master
-      with:
-        service_account_key: ${{ secrets.DEPLOY_CLOUDRUN_SA_KEY_B64 }}
-        project_id: ${{ secrets.DEPLOY_CLOUDRUN_PROJECT_ID }}
+  # cleanup:
+  #   name: Clean Up
+  #   if: ${{ always() }}
+  #   runs-on: ubuntu-latest
+  #   needs: [source, suffix, tag]
+  #   steps:
+  #   - uses: google-github-actions/setup-gcloud@master
+  #     with:
+  #       service_account_key: ${{ secrets.DEPLOY_CLOUDRUN_SA_KEY_B64 }}
+  #       project_id: ${{ secrets.DEPLOY_CLOUDRUN_PROJECT_ID }}
 
-    - name: Delete services
-      run: |-
-        gcloud config set run/platform managed
-        gcloud config set run/region us-central1
-        gcloud run services delete run-source-$GITHUB_SHA --quiet
-        gcloud run services delete run-suffix-$GITHUB_SHA --quiet
-        gcloud run services delete run-tag-$(echo $GITHUB_SHA | cut -c1-6) --quiet
+  #   - name: Delete services
+  #     run: |-
+  #       gcloud config set run/platform managed
+  #       gcloud config set run/region us-central1
+  #       gcloud run services delete run-source-$GITHUB_SHA --quiet
+  #       gcloud run services delete run-suffix-$GITHUB_SHA --quiet
+  #       gcloud run services delete run-tag-$(echo $GITHUB_SHA | cut -c1-6) --quiet

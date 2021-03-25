@@ -45,7 +45,7 @@ inputs:
 
   metadata:
     description: |-
-      YAML serivce description for the Cloud Run service.
+      YAML service description for the Cloud Run service.
     required: false
 
   project_id:
@@ -116,6 +116,13 @@ inputs:
       Space separated list of other Cloud Run flags, examples can be found:
       https://cloud.google.com/sdk/gcloud/reference/run/deploy#FLAGS. Ex 
       --service-account=my-account@project.iam.gserviceaccount.com --concurrency=10
+    required: false
+
+  gcloud_version:
+    description: |-
+      Version of the gcloud SDK to install. If unspecified or set to "latest",
+      the latest available gcloud SDK version for the target platform will be
+      installed. Example: "290.0.1".
     required: false
 
 outputs:
