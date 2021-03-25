@@ -59,7 +59,7 @@ jobs:
         URL: ${{ steps.deploy_2.outputs.url }}
         SERVICE: ${{ steps.service.outputs.service }}
         ENV: TEST_ENV=TEST_VAR
-        PARAMS: "{\"cpu\": \"2000m\",\"memory\": \"1Gi\", \"containerConcurrency\": 20}"
+        PARAMS: "{\"cpu\": 2,\"memory\": \"1Gi\", \"containerConcurrency\": 20}"
         COUNT: 2
 
   suffix:
@@ -190,10 +190,10 @@ jobs:
     - name: Integration Tests
       run: npm run e2e-tests
       env:
-        URL: ${{ steps.traffic_2.outputs.url }}
+        URL: ${{ steps.deploy_3.outputs.url }}
         SERVICE: ${{ steps.service.outputs.service }}
-        TAG: no-traffic
-        TRAFFIC: 0
+        TAG: test-tag
+        TRAFFIC: 80
 
   # cleanup:
   #   name: Clean Up

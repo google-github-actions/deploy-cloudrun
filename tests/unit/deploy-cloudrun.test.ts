@@ -110,14 +110,15 @@ describe('#run', function() {
     expect(this.stubs.setFailed.callCount).to.be.at.least(1);
   });
   it('installs beta components with source', async function() {
-    this.stubs.getInput.withArgs('source').returns('.');
+    this.stubs.getInput.withArgs('source').returns('example-app');
     this.stubs.getInput.withArgs('image').returns('');
     await run();
-    expect(this.stubs.installComponent.withArgs('beta').callCount).to.eq(1);
+    expect(this.stubs.installComponent.callCount).to.eq(1);
   });
   it('installs beta components with metadata', async function() {
     this.stubs.getInput.withArgs('metadata').returns('yaml');
     this.stubs.getInput.withArgs('image').returns('');
+    this.stubs.getInput.withArgs('service').returns('');
     await run();
     expect(this.stubs.installComponent.withArgs('beta').callCount).to.eq(1);
   });

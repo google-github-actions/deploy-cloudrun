@@ -76,7 +76,7 @@ inputs:
       Traffic tag to assign to the newly created revision.
     required: false
 
-  no-traffic:
+  no_traffic:
     description: |-
       True to avoid sending traffic to the revision being deployed. Setting
       this flag assigns any traffic assigned to the LATEST revision to the 

@@ -50,6 +50,7 @@ describe('E2E tests', function () {
     }
     toolCommand = 'gcloud';
     if (SERVICE) {
+      sleep(10000);
       // get Service yaml
       let output = '';
       const stdout = (data: Buffer): void => {
@@ -227,7 +228,7 @@ describe('E2E tests', function () {
       const actual = traffic.find((rev: run_v1.Schema$TrafficTarget) => {
         return rev['revisionName'] == tagged['revisionName'];
       });
-      expect(TRAFFIC).to.equal(actual['percent'].toString());
+      expect(parseInt(TRAFFIC)).to.equal(parseInt(actual['percent']));
     }
   });
 

@@ -138,7 +138,7 @@ export async function run(): Promise<void> {
     }
     // Add optional flags
     if (flags) {
-      cmd.concat(flags.split(/[\s=]+/));
+      cmd = cmd.concat(flags.split(/[\s=]+/));
     }
 
     // Install gcloud if not already installed.
