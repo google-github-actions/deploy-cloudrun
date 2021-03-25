@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Google LLC
+ * Copyright 2021 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,39 +14,6 @@
  * limitations under the License.
  */
 
-import * as core from '@actions/core';
-import { CloudRun } from './cloudRun';
-import { Service } from './service';
-
-/**
- * Executes the main action. It includes the main business logic and is the
- * primary entry point. It is documented inline.
- */
-async function run(): Promise<void> {
-  try {
-    // Get inputs
-    const image = core.getInput('image');
-    const name = core.getInput('service');
-    const envVars = core.getInput('env_vars');
-    const yaml = core.getInput('metadata');
-    const credentials = core.getInput('credentials');
-    const projectId = core.getInput('project_id');
-    const region = core.getInput('region') || 'us-central1';
-
-    // Create Cloud Run client
-    const client = new CloudRun(region, { projectId, credentials });
-
-    // Initialize service
-    const service = new Service({ image, name, envVars, yaml });
-
-    // Deploy service
-    const url = await client.deploy(service);
-
-    // Set URL as output
-    core.setOutput('url', url);
-  } catch (error) {
-    core.setFailed(error.message);
-  }
-}
+import { run } from './deploy-cloudrun';
 
 run();
