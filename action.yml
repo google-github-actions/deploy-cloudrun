@@ -68,7 +68,9 @@ inputs:
 
   suffix:
     description: |-
-      .
+      Specify the suffix of the revision name. Revision names always start with
+      the service name automatically. For example, specifying 'v1' for a service
+      named 'helloworld', would lead to a revision named 'helloworld-v1'.
     required: false
 
   tag:

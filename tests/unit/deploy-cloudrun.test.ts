@@ -109,30 +109,30 @@ describe('#run', function() {
     await run();
     expect(this.stubs.setFailed.callCount).to.be.at.least(1);
   });
-  it('installs beta components with source', async function() {
-    this.stubs.getInput.withArgs('source').returns('example-app');
-    this.stubs.getInput.withArgs('image').returns('');
-    await run();
-    expect(this.stubs.installComponent.callCount).to.eq(1);
-  });
-  it('installs beta components with metadata', async function() {
-    this.stubs.getInput.withArgs('metadata').returns('yaml');
-    this.stubs.getInput.withArgs('image').returns('');
-    this.stubs.getInput.withArgs('service').returns('');
-    await run();
-    expect(this.stubs.installComponent.withArgs('beta').callCount).to.eq(1);
-  });
-  it('installs beta components with tag', async function() {
-    this.stubs.getInput.withArgs('tag').returns('test');
-    await run();
-    expect(this.stubs.installComponent.withArgs('beta').callCount).to.eq(1);
-  });
-  it('installs beta components with tag traffic', async function() {
-    this.stubs.getInput.withArgs('tag').returns('test');
-    this.stubs.getInput.withArgs('name').returns('service-name');
-    await run();
-    expect(this.stubs.installComponent.withArgs('beta').callCount).to.eq(1);
-  });
+  // it('installs beta components with source', async function() {
+  //   this.stubs.getInput.withArgs('source').returns('example-app');
+  //   this.stubs.getInput.withArgs('image').returns('');
+  //   await run();
+  //   expect(this.stubs.installComponent.withArgs('beta').callCount).to.eq(1);
+  // });
+  // it('installs beta components with metadata', async function() {
+  //   this.stubs.getInput.withArgs('metadata').returns('yaml');
+  //   this.stubs.getInput.withArgs('image').returns('');
+  //   this.stubs.getInput.withArgs('service').returns('');
+  //   await run();
+  //   expect(this.stubs.installComponent.withArgs('beta').callCount).to.eq(1);
+  // });
+  // it('installs beta components with tag', async function() {
+  //   this.stubs.getInput.withArgs('tag').returns('test');
+  //   await run();
+  //   expect(this.stubs.installComponent.withArgs('beta').callCount).to.eq(1);
+  // });
+  // it('installs beta components with tag traffic', async function() {
+  //   this.stubs.getInput.withArgs('tag').returns('test');
+  //   this.stubs.getInput.withArgs('name').returns('service-name');
+  //   await run();
+  //   expect(this.stubs.installComponent.withArgs('beta').callCount).to.eq(1);
+  // });
   it('fails if tag traffic and revision traffic are provided', async function() {
     this.stubs.getInput.withArgs('revision_traffic').returns('TEST=100');
     this.stubs.getInput.withArgs('tag_traffic').returns('TEST=100');
