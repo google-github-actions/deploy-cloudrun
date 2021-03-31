@@ -27,8 +27,8 @@ const fakeInputs: { [key: string]: string } = {
   image: 'gcr.io/cloudrun/hello',
   service: 'test',
   metadata: '',
-  credentials: 'test',
-  project_id: 'test',
+  credentials: '{}',
+  project_id: 'my-test-project',
   env_vars: '',
   source: '',
   suffix: '',
@@ -51,9 +51,11 @@ describe('#run', function() {
       setFailed: sinon.stub(core, 'setFailed'),
       installGcloudSDK: sinon.stub(setupGcloud, 'installGcloudSDK'),
       authenticateGcloudSDK: sinon.stub(setupGcloud, 'authenticateGcloudSDK'),
+      isAuthenticated: sinon.stub(setupGcloud, 'isAuthenticated').resolves(true),
       isInstalled: sinon.stub(setupGcloud, 'isInstalled').returns(false),
       setProject: sinon.stub(setupGcloud, 'setProject'),
       setProjectWithKey: sinon.stub(setupGcloud, 'setProjectWithKey'),
+      isProjectIdSet: sinon.stub(setupGcloud, 'isProjectIdSet').resolves(true),
       installComponent: sinon.stub(setupGcloud, 'installComponent'),
     };
   });
