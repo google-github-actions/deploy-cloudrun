@@ -23,4 +23,5 @@ jobs:
       run: npm run lint
 
     - name: npm test
+      continue-on-error: true
       run: npm run test
