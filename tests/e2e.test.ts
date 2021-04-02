@@ -50,6 +50,7 @@ describe('E2E tests', function () {
     }
     toolCommand = 'gcloud';
     if (SERVICE) {
+      sleep(10000);
       // get Service yaml
       let output = '';
       const stdout = (data: Buffer): void => {
@@ -82,7 +83,15 @@ describe('E2E tests', function () {
   it('can make a request', async function () {
     // Requires ADC to be set
     const auth = new GoogleAuth();
-    const client = await auth.getIdTokenClient(URL);
+    let url;
+    if (URL.includes('---')) {
+      //https://tag---test-cy7cdwrvha-uc.a.run.app/
+      const index = URL.indexOf('---');
+      url = 'https://' + URL.substring(index + 3, URL.length);
+    } else {
+      url = URL;
+    }
+    const client = await auth.getIdTokenClient(url);
     const response = await client.request({ url: URL });
     expect(response.status).to.be.equal(200);
     expect(response.data).to.include('Congrat');
@@ -219,7 +228,7 @@ describe('E2E tests', function () {
       const actual = traffic.find((rev: run_v1.Schema$TrafficTarget) => {
         return rev['revisionName'] == tagged['revisionName'];
       });
-      expect(TRAFFIC).to.equal(actual['percent']);
+      expect(parseInt(TRAFFIC)).to.equal(parseInt(actual['percent']));
     }
   });
 

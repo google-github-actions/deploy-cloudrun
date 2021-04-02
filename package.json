@@ -8,7 +8,7 @@
     "lint": "eslint src/ --ext .ts,.tsx",
     "format": "prettier --write **/*.ts",
     "test": "mocha -r ts-node/register -t 150s 'tests/unit/*.test.ts' --exit",
-    "e2e-tests": "mocha -r ts-node/register -t 120s 'tests/e2e.test.ts' --exit"
+    "e2e-tests": "mocha -r ts-node/register -t 150s 'tests/e2e.test.ts' --exit"
   },
   "repository": {
     "type": "git",

@@ -19,17 +19,23 @@ import * as sinon from 'sinon';
 import * as core from '@actions/core';
 import * as setupGcloud from '../../setup-google-cloud-sdk/src';
 import { expect } from 'chai';
-import { run, setUrlOutput } from '../../src/deploy-cloudrun';
+import { run, setUrlOutput, parseFlags } from '../../src/deploy-cloudrun';
 
 /* eslint-disable @typescript-eslint/camelcase */
 // These are mock data for github actions inputs, where camel case is expected.
 const fakeInputs: { [key: string]: string } = {
   image: 'gcr.io/cloudrun/hello',
-  service: '',
+  service: 'test',
   metadata: '',
-  credentials: '',
-  project_id: '',
+  credentials: '{}',
+  project_id: 'my-test-project',
   env_vars: '',
+  source: '',
+  suffix: '',
+  tag: '',
+  no_traffic: '',
+  revision_traffic: '',
+  tag_traffic: ''
 };
 /* eslint-enable @typescript-eslint/camelcase */
 
@@ -45,9 +51,11 @@ describe('#run', function() {
       setFailed: sinon.stub(core, 'setFailed'),
       installGcloudSDK: sinon.stub(setupGcloud, 'installGcloudSDK'),
       authenticateGcloudSDK: sinon.stub(setupGcloud, 'authenticateGcloudSDK'),
+      isAuthenticated: sinon.stub(setupGcloud, 'isAuthenticated').resolves(true),
       isInstalled: sinon.stub(setupGcloud, 'isInstalled').returns(false),
       setProject: sinon.stub(setupGcloud, 'setProject'),
       setProjectWithKey: sinon.stub(setupGcloud, 'setProjectWithKey'),
+      isProjectIdSet: sinon.stub(setupGcloud, 'isProjectIdSet').resolves(true),
       installComponent: sinon.stub(setupGcloud, 'installComponent'),
     };
   });
@@ -57,13 +65,21 @@ describe('#run', function() {
   });
 
   it('sets the project ID if provided', async function() {
-    this.stubs.getInput.withArgs('project_id').returns('test');
+    this.stubs.getInput.withArgs('project_id').returns('my-test-project');
     await run();
-    expect(this.stubs.setProject.withArgs('test').callCount).to.eq(1);
+    expect(this.stubs.setProject.withArgs('my-test-project').callCount).to.eq(1);
   });
-
+  it('sets the project ID if GCLOUD_PROJECT is provided', async function() {
+    this.stubs.getInput.withArgs('project_id').returns('');
+    this.stubs.getInput.withArgs('credentials').returns('');
+    process.env.GCLOUD_PROJECT = 'my-test-project';
+    await run();
+    expect(this.stubs.setProject.withArgs('my-test-project').callCount).to.eq(1);
+  });
   it('does not set the project ID if not provided', async function() {
     this.stubs.getInput.withArgs('project_id').returns('');
+    this.stubs.getInput.withArgs('credentials').returns('');
+    process.env.GCLOUD_PROJECT = '';
     await run();
     expect(this.stubs.setProject.callCount).to.eq(0);
   });
@@ -91,16 +107,86 @@ describe('#run', function() {
   it('fails if credentials and project_id are not provided', async function() {
     this.stubs.getInput.withArgs('credentials').returns('');
     this.stubs.getInput.withArgs('project_id').returns('');
+    process.env.GCLOUD_PROJECT = '';
     await run();
     expect(this.stubs.setFailed.callCount).to.be.at.least(1);
   });
-  it('installs beta components with metadata', function() {
+  it('installs beta components with source', async function() {
+    this.stubs.getInput.withArgs('source').returns('example-app');
+    this.stubs.getInput.withArgs('image').returns('');
+    await run();
+    expect(this.stubs.installComponent.withArgs('beta').callCount).to.eq(1);
+  });
+  it('installs beta components with metadata', async function() {
     this.stubs.getInput.withArgs('metadata').returns('yaml');
-    run().then(() =>
-      expect(this.stubs.installComponent.withArgs('beta').callCount).to.eq(1),
-    );
+    this.stubs.getInput.withArgs('image').returns('');
+    this.stubs.getInput.withArgs('service').returns('');
+    await run();
+    expect(this.stubs.installComponent.withArgs('beta').callCount).to.eq(1);
+  });
+  it('installs beta components with tag', async function() {
+    this.stubs.getInput.withArgs('tag').returns('test');
+    await run();
+    expect(this.stubs.installComponent.withArgs('beta').callCount).to.eq(1);
+  });
+  it('installs beta components with tag traffic', async function() {
+    this.stubs.getInput.withArgs('tag').returns('test');
+    this.stubs.getInput.withArgs('name').returns('service-name');
+    await run();
+    expect(this.stubs.installComponent.withArgs('beta').callCount).to.eq(1);
+  });
+  it('fails if tag traffic and revision traffic are provided', async function() {
+    this.stubs.getInput.withArgs('revision_traffic').returns('TEST=100');
+    this.stubs.getInput.withArgs('tag_traffic').returns('TEST=100');
+    await run();
+    expect(this.stubs.setFailed.callCount).to.eq(1);
+  });
+  it('fails if name is not provided with tag traffic', async function() {
+    this.stubs.getInput.withArgs('tag_traffic').returns('TEST=100');
+    this.stubs.getInput.withArgs('name').returns('service-name');
+    await run();
+    expect(this.stubs.setFailed.callCount).to.eq(1);
+  });
+  it('fails if name is not provided with revision traffic', async function() {
+    this.stubs.getInput.withArgs('revision_traffic').returns('TEST=100');
+    this.stubs.getInput.withArgs('name').returns('service-name');
+    await run();
+    expect(this.stubs.setFailed.callCount).to.eq(1);
   });
 });
+
+describe('#parseFlags', function() {
+  it('parses flags using equals', async function() {
+    const input = '--concurrency=2 --memory=2Gi';
+    const results = parseFlags(input);
+    expect(results).to.eql(["--concurrency", "2", "--memory", "2Gi"])
+  })
+  it('parses flags using spaces', async function() {
+    const input = '--concurrency 2 --memory 2Gi';
+    const results = parseFlags(input);
+    expect(results).to.eql(["--concurrency", "2", "--memory", "2Gi"])
+  })
+  it('parses flags using combo', async function() {
+    const input = '--concurrency 2 --memory=2Gi';
+    const results = parseFlags(input);
+    expect(results).to.eql(["--concurrency", "2", "--memory", "2Gi"])
+  })
+  it('parses flags using space and quotes combo', async function() {
+    const input = '--concurrency 2 --memory="2 Gi"';
+    const results = parseFlags(input);
+    expect(results).to.eql(["--concurrency", "2", "--memory", "\"2 Gi\""])
+  })
+  it('parses flags using space and quotes', async function() {
+    const input = '--entry-point "node index.js"';
+    const results = parseFlags(input);
+    expect(results).to.eql(["--entry-point", "\"node index.js\""])
+  })
+  it('parses flags using equals and quotes', async function() {
+    const input = '--entry-point="node index.js"';
+    const results = parseFlags(input);
+    expect(results).to.eql(["--entry-point", "\"node index.js\""])
+  })
+})
 
 describe('#setUrlOutput', function() {
   it('correctly parses the URL', function() {
