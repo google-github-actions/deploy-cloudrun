@@ -138,7 +138,8 @@ export async function run(): Promise<void> {
     }
     // Add optional flags
     if (flags) {
-      cmd = cmd.concat(flags.split(/[\s=]+/));
+      const flagList = parseFlags(flags);
+      if (flagList) cmd = cmd.concat(flagList);
     }
 
     // Install gcloud if not already installed.
@@ -227,4 +228,8 @@ export function setUrlOutput(output: string): string | undefined {
   const url = urlMatch!.length > 1 ? urlMatch![1] : urlMatch![0];
   core.setOutput('url', url);
   return url;
+}
+
+export function parseFlags(flags: string): RegExpMatchArray {
+  return flags.match(/(".*?"|[^"\s=]+)+(?=\s*|\s*$)/g)!; // Split on space or "=" if not in quotes
 }

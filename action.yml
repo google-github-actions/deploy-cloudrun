@@ -64,6 +64,7 @@ inputs:
     description: |-
       The location of the source to build. The location can be a directory on
       a local disk or a gzipped archive file (.tar.gz) in Google Cloud Storage.
+      The role `Cloud Build Service Account` is required.
     required: false
 
   suffix:
@@ -122,7 +123,7 @@ inputs:
 
   gcloud_version:
     description: |-
-      Version of the gcloud SDK to install. If unspecified or set to "latest",
+      Version of the Cloud SDK to install. If unspecified or set to "latest",
       the latest available gcloud SDK version for the target platform will be
       installed. Example: "290.0.1".
     required: false

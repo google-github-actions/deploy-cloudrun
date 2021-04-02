@@ -13,60 +13,71 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -->
-# deploy-cloudrun
+# `deploy-cloudrun` GitHub Action
 
-This action deploys your container image to [Cloud Run][cloud-run] and makes the URL
+Deploys your container image to [Cloud Run][cloud-run] and makes the URL
 available to later build steps via outputs.
+
+## Table of Contents
+
+* [Prerequisites](#prerequisites)
+* [Usage](#usage)
+* [Inputs](#inputs)
+  * [Metadata customizations](#metadata-customizations)
+  * [Allow unauthenticated requests](#Allow-unauthenticated-requests)
+* [Outputs](#outputs)
+* [Credentials](#credentials)
+  * [Used with `setup-gcloud`](#Used-with-setup-gcloud)
+  * [Via Credentials](#Via-Credentials)
+  * [Via Application Default Credentials](#Via-Application-Default-Credentials)
+* [Example Workflows](#example-workflows)
+* [Migrating from `setup-gcloud`](#migrating-from-setup-gcloud)
+* [Contributing](#contributing)
+* [License](#License)
 
 ## Prerequisites
 
 This action requires:
 
-- Google Cloud credentials that are authorized to deploy a
-Cloud Run service. See the Authorization section below for more information.
+* Google Cloud credentials that are authorized to deploy a
+Cloud Run service. See the [Credentials](#credentials) below for more information.
 
-- [Enable the Cloud Run API](http://console.cloud.google.com/apis/library/run.googleapis.com?_ga=2.267842766.1374248275.1591025444-475066991.1589991158)
+* [Enable the Cloud Run API](http://console.cloud.google.com/apis/library/run.googleapis.com?_ga=2.267842766.1374248275.1591025444-475066991.1589991158)
 
 ## Usage
 
 ```yaml
-steps:
-- id: deploy
+- name: Deploy to Cloud Run
+  id: deploy
   uses: google-github-actions/deploy-cloudrun@main
   with:
+    service: hello-cloud-run 
     image: gcr.io/cloudrun/hello
-    service: hello-cloud-run
-    credentials: ${{ secrets.gcp_credentials }}
+    credentials: ${{ secrets.GCP_SA_KEY }}
 
-# Example of using the output
-- id: test
+- name: Use Output
   run: curl "${{ steps.deploy.outputs.url }}"
 ```
 
 ## Inputs
 
-- `image`: Name of the container image to deploy (e.g. gcr.io/cloudrun/hello:latest).
-  Required if not using a service YAML.
-
-- `service`: ID of the service or fully qualified identifier for the service.
-  Required if not using a service YAML.
-
-- `region`: Region in which the resource can be found.
-
-- `credentials`: Service account key to use for authentication. This should be
-  the JSON formatted private key which can be exported from the Cloud Console. The
-  value can be raw or base64-encoded. Required if not using a the
-  `setup-gcloud` action with exported credentials.
-
-- `env_vars`: List of key-value pairs to set as environment variables in the format:
-  KEY1=VALUE1,KEY2=VALUE2. **All existing environment variables will be retained**.
-
-- `metadata`: YAML service description for the Cloud Run service. See
-  [Metadata customizations](#metadata-customizations) for more information.
-  **Existing configuration will be retained besides container entrypoint and arguments**.
-
-- `project_id`: (Optional) ID of the Google Cloud project. If provided, this
-  will override the project configured by gcloud.
+| Name          | Requirement | Default | Description |
+| ------------- | ----------- | ------- | ----------- |
+| `service`| Required if not using a service YAML via `metadata` input. | | ID of the service or fully qualified identifier for the service. |
+| `image`| Required if not using a service YAML via `metadata` input. | | Name of the container image to deploy (Example: `gcr.io/cloudrun/hello:latest`). |
+| `region`| _optional_ | `us-central1` | Region in which the resource can be found. |
+| `credentials`| Required if not using a the `setup-gcloud` action with exported credentials. | | Service account key to use for authentication. This should be the JSON formatted private key which can be exported from the Cloud Console. The value can be raw or base64-encoded.  |
+| `env_vars`| _optional_ | | List of key-value pairs to set as environment variables in the format: `KEY1=VALUE1,KEY2=VALUE2`. **All existing environment variables will be retained**. |
+| `metadata`| _optional_ | | YAML service description for the Cloud Run service (`service` and `image` inputs will override YAML). See [Metadata customizations](#metadata-customizations) for more information. **Existing configuration will be retained besides container entrypoint and arguments**. |
+| `project_id`| _optional_ | | ID of the Google Cloud project. If provided, this will override the project configured by `setup-gcloud`. |
+| `source` | _optional_ | | Deploy from source by specifying the source directory. The role `Cloud Build Service Account` is required. |
+| `suffix` | _optional_ | | Specify the suffix of the revision name. Revision names always start with named 'helloworld', would lead to a revision named 'helloworld-v1'. |
+| `tag` | _optional_ | | Traffic tag to assign to the newly created revision. |
+| `no_traffic` | _optional_ | `false` | Set to `true` to avoid sending traffic to the revision being deployed.|
+| `revision_traffic` | _optional_ | | Comma separated list of traffic assignments in the form REVISION-NAME=PERCENTAGE. |
+| `tag_traffic` | _optional_ | | Comma separated list of traffic assignments in the form TAG=PERCENTAGE. |
+| `flags` | _optional_ | | Space separated list of other Cloud Run flags, examples can be found: https://cloud.google.com/sdk/gcloud/reference/run/deploy#FLAGS. |
+| `gcloud_version` | _optional_ | `latest` | Pin the version of Cloud SDK `gcloud` CLI. |
 
 ### Metadata customizations
 
@@ -97,7 +108,7 @@ to generated a YAML service specification from an existing service:
 ```
 gcloud run services describe SERVICE --format yaml > service.yaml
 ```
-## Allow unauthenticated requests
+### Allow unauthenticated requests
 
 A Cloud Run product recommendation is that CI/CD systems not set or change
 settings for allowing unauthenticated invocations. New deployments are
@@ -109,7 +120,7 @@ automatically private services, while deploying a revision of a public
 
 - `url`: The URL of your Cloud Run service.
 
-## Authorization
+## Credentials
 
 There are a few ways to authenticate this action. A service account will be needed
 with the following roles:
@@ -130,10 +141,10 @@ You can provide credentials using the [setup-gcloud][setup-gcloud] action:
 ```yaml
 - uses: google-github-actions/setup-gcloud@master
   with:
-    version: '290.0.1'
     service_account_key: ${{ secrets.GCP_SA_KEY }}
     export_default_credentials: true
-- id: Deploy
+
+- name: Deploy to Cloud Run
   uses: google-github-actions/deploy-cloudrun@main
   with:
     image: gcr.io/cloudrun/hello
@@ -148,7 +159,7 @@ Secret][gh-secret] that contains the JSON content, then import it into the
 action:
 
 ```yaml
-- id: Deploy
+- name: Deploy to Cloud Run
   uses: google-github-actions/deploy-cloudrun@main
   with:
     credentials: ${{ secrets.GCP_SA_KEY }}
@@ -164,15 +175,12 @@ authenticate requests as the service account attached to the instance. **This
 only works using a custom runner hosted on GCP.**
 
 ```yaml
-- id: Deploy
+- name: Deploy to Cloud Run
   uses: google-github-actions/deploy-cloudrun@main
   with:
     image: gcr.io/cloudrun/hello
     service: hello-cloud-run
 ```
-
-The action will automatically detect and use the Application Default
-Credentials.
 
 ## Example Workflows
 
@@ -256,6 +264,13 @@ Migrated to `deploy-cloudrun`:
 ```
 Note: The action is for the "managed" platform and will not set access privileges such as [allowing unauthenticated requests](#Allow-unauthenticated-requests).
 
+## Contributing
+
+See [CONTRIBUTING](CONTRIBUTING.md).
+
+## License
+
+See [LICENSE](LICENSE).
 
 [cloud-run]: https://cloud.google.com/run
 [sa]: https://cloud.google.com/iam/docs/creating-managing-service-accounts

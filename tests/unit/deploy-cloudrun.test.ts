@@ -19,7 +19,7 @@ import * as sinon from 'sinon';
 import * as core from '@actions/core';
 import * as setupGcloud from '../../setup-google-cloud-sdk/src';
 import { expect } from 'chai';
-import { run, setUrlOutput } from '../../src/deploy-cloudrun';
+import { run, setUrlOutput, parseFlags } from '../../src/deploy-cloudrun';
 
 /* eslint-disable @typescript-eslint/camelcase */
 // These are mock data for github actions inputs, where camel case is expected.
@@ -154,6 +154,39 @@ describe('#run', function() {
     expect(this.stubs.setFailed.callCount).to.eq(1);
   });
 });
+
+describe('#parseFlags', function() {
+  it('parses flags using equals', async function() {
+    const input = '--concurrency=2 --memory=2Gi';
+    const results = parseFlags(input);
+    expect(results).to.eql(["--concurrency", "2", "--memory", "2Gi"])
+  })
+  it('parses flags using spaces', async function() {
+    const input = '--concurrency 2 --memory 2Gi';
+    const results = parseFlags(input);
+    expect(results).to.eql(["--concurrency", "2", "--memory", "2Gi"])
+  })
+  it('parses flags using combo', async function() {
+    const input = '--concurrency 2 --memory=2Gi';
+    const results = parseFlags(input);
+    expect(results).to.eql(["--concurrency", "2", "--memory", "2Gi"])
+  })
+  it('parses flags using space and quotes combo', async function() {
+    const input = '--concurrency 2 --memory="2 Gi"';
+    const results = parseFlags(input);
+    expect(results).to.eql(["--concurrency", "2", "--memory", "\"2 Gi\""])
+  })
+  it('parses flags using space and quotes', async function() {
+    const input = '--entry-point "node index.js"';
+    const results = parseFlags(input);
+    expect(results).to.eql(["--entry-point", "\"node index.js\""])
+  })
+  it('parses flags using equals and quotes', async function() {
+    const input = '--entry-point="node index.js"';
+    const results = parseFlags(input);
+    expect(results).to.eql(["--entry-point", "\"node index.js\""])
+  })
+})
 
 describe('#setUrlOutput', function() {
   it('correctly parses the URL', function() {
