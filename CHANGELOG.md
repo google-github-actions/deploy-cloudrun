@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://www.github.com/google-github-actions/deploy-cloudrun/compare/v0.4.0...v0.5.0) (2021-04-05)
+
+
+### Features
+
+* Add source deploys and traffic updates ([#45](https://www.github.com/google-github-actions/deploy-cloudrun/issues/45)) ([09c010d](https://www.github.com/google-github-actions/deploy-cloudrun/commit/09c010da2e395d281a1aa052c124e25499a90d01))
+
 ## [0.4.0](https://www.github.com/google-github-actions/deploy-cloudrun/compare/v0.3.0...v0.4.0) (2021-02-11)
 
 
