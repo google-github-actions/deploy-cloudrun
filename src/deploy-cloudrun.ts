@@ -20,11 +20,15 @@ import * as toolCache from '@actions/tool-cache';
 import * as setupGcloud from '../setup-google-cloud-sdk/src/';
 import path from 'path';
 
+export const GCLOUD_METRICS_ENV_VAR = 'CLOUDSDK_METRICS_ENVIRONMENT';
+export const GCLOUD_METRICS_LABEL = 'github-actions-deploy-cloudrun';
+
 /**
  * Executes the main action. It includes the main business logic and is the
  * primary entry point. It is documented inline.
  */
 export async function run(): Promise<void> {
+  core.exportVariable(GCLOUD_METRICS_ENV_VAR, GCLOUD_METRICS_LABEL);
   try {
     // Get inputs
     // Core inputs
