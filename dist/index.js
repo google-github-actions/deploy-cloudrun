@@ -8191,18 +8191,21 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.parseFlags = exports.setUrlOutput = exports.run = void 0;
+exports.parseFlags = exports.setUrlOutput = exports.run = exports.GCLOUD_METRICS_LABEL = exports.GCLOUD_METRICS_ENV_VAR = void 0;
 const core = __importStar(__webpack_require__(470));
 const exec = __importStar(__webpack_require__(986));
 const toolCache = __importStar(__webpack_require__(533));
 const setupGcloud = __importStar(__webpack_require__(628));
 const path_1 = __importDefault(__webpack_require__(622));
+exports.GCLOUD_METRICS_ENV_VAR = 'CLOUDSDK_METRICS_ENVIRONMENT';
+exports.GCLOUD_METRICS_LABEL = 'github-actions-deploy-cloudrun';
 /**
  * Executes the main action. It includes the main business logic and is the
  * primary entry point. It is documented inline.
  */
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
+        core.exportVariable(exports.GCLOUD_METRICS_ENV_VAR, exports.GCLOUD_METRICS_LABEL);
         try {
             // Get inputs
             // Core inputs
