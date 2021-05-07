@@ -1,0 +1,24 @@
+{
+  "extends": [
+    "config:base"
+  ],
+  "pinVersions": false,
+  "rebaseStalePrs": true,
+  "schedule": [
+    "after 9am and before 3pm"
+  ],
+  "lockFileMaintenance": {
+    "enabled": true,
+    "recreateClosed": true,
+    "schedule": [
+      "before 10am on tuesday"
+    ]
+  },
+  "gitAuthor": null,
+  "packageRules": [
+    {
+      "extends": "packages:linters",
+      "groupName": "linters"
+    }
+  ]
+}
