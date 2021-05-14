@@ -68,6 +68,7 @@ Cloud Run service. See the [Credentials](#credentials) below for more informatio
 | `region`| _optional_ | `us-central1` | Region in which the resource can be found. |
 | `credentials`| Required if not using a the `setup-gcloud` action with exported credentials. | | Service account key to use for authentication. This should be the JSON formatted private key which can be exported from the Cloud Console. The value can be raw or base64-encoded.  |
 | `env_vars`| _optional_ | | List of key-value pairs to set as environment variables in the format: `KEY1=VALUE1,KEY2=VALUE2`. **All existing environment variables will be retained**. |
+| `secrets`| _optional_ | | List of key-value pairs to set as either environment variables or mounted volumes in the format: `KEY1=secret-key-1:latest,/secrets/api/key=secret-key-2:latest`. The secrets will be fetched from the Secret Manager. **All existing environment secrets or volumes will be retained**. |
 | `metadata`| _optional_ | | YAML service description for the Cloud Run service (`service` and `image` inputs will override YAML). See [Metadata customizations](#metadata-customizations) for more information. **Existing configuration will be retained besides container entrypoint and arguments**. |
 | `project_id`| _optional_ | | ID of the Google Cloud project. If provided, this will override the project configured by `setup-gcloud`. |
 | `source` | _optional_ | | Deploy from source by specifying the source directory. The role `Cloud Build Service Account` is required. |
