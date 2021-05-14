@@ -40,6 +40,7 @@ export async function run(): Promise<void> {
     let gcloudVersion = core.getInput('gcloud_version');
     // Flags
     const envVars = core.getInput('env_vars'); // String of env vars KEY=VALUE,...
+    const secrets = core.getInput('secrets'); // String of secrets KEY=VALUE,...
     const region = core.getInput('region') || 'us-central1';
     const source = core.getInput('source'); // Source directory
     const suffix = core.getInput('suffix');
@@ -97,9 +98,9 @@ export async function run(): Promise<void> {
       installBeta = true;
     } else if (metadata) {
       // Deploy service from metadata
-      if (image || name || envVars) {
+      if (image || name || envVars || secrets) {
         core.warning(
-          'Metadata YAML provided: ignoring `image`, `service`, and `env_vars` inputs.',
+          'Metadata YAML provided: ignoring `image`, `service`, `env_vars` and `secrets` inputs.',
         );
       }
       cmd = [
@@ -132,6 +133,7 @@ export async function run(): Promise<void> {
     if (!metadata) {
       // Set optional flags from inputs
       if (envVars) cmd.push('--update-env-vars', envVars);
+      if (secrets) cmd.push('--update-secrets', secrets);
       if (tag) {
         cmd.push('--tag', tag);
         cmd.unshift('beta');
