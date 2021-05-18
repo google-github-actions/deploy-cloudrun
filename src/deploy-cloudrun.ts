@@ -133,14 +133,17 @@ export async function run(): Promise<void> {
     if (!metadata) {
       // Set optional flags from inputs
       if (envVars) cmd.push('--update-env-vars', envVars);
-      if (secrets) cmd.push('--update-secrets', secrets);
+      if (secrets) {
+        cmd.push('--update-secrets', secrets);
+        installBeta = true;
+      }
       if (tag) {
         cmd.push('--tag', tag);
-        cmd.unshift('beta');
         installBeta = true;
       }
       if (suffix) cmd.push('--revision-suffix', suffix);
       if (noTraffic) cmd.push('--no-traffic');
+      if (installBeta) cmd.unshift('beta');
     }
     // Add optional flags
     if (flags) {
