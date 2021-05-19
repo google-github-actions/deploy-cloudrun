@@ -5,7 +5,18 @@
 
 version: 2
 updates:
-  - package-ecosystem: "" # See documentation for possible values
-    directory: "/" # Location of package manifests
+  - package-ecosystem: "npm"
+    directory: "/" # ToDo: check if this updates example-app/
     schedule:
       interval: "daily"
+    commit-message:
+      prefix: "chore(deps): "
+    rebase-strategy: "disabled"
+    
+  - package-ecosystem: "github-actions"
+    directory: ".github/workflows"
+    schedule:
+      # Check for updates to GitHub Actions every weekday
+      interval: "daily"
+    commit-message:
+      prefix: "chore(deps): "
