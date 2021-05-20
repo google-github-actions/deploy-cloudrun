@@ -1,0 +1,22 @@
+# To get started with Dependabot version updates, you'll need to specify which
+# package ecosystems to update and where the package manifests are located.
+# Please see the documentation for all configuration options:
+# https://help.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
+
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/" # ToDo: check if this updates example-app/
+    schedule:
+      interval: "daily"
+    commit-message:
+      prefix: "chore(deps): "
+    rebase-strategy: "disabled"
+    
+  - package-ecosystem: "github-actions"
+    directory: ".github/workflows"
+    schedule:
+      # Check for updates to GitHub Actions every weekday
+      interval: "daily"
+    commit-message:
+      prefix: "chore(deps): "
