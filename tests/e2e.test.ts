@@ -132,15 +132,23 @@ describe('E2E tests', function () {
   it('has the correct secret volumes', function () {
     if (SECRET_VOLUMES && service) {
       const expected = parseEnvVars(SECRET_VOLUMES);
-      const containers: run_v1.Schema$Container[] = _.get(
+      const spec: run_v1.Schema$RevisionSpec = _.get(
         service,
-        'spec.template.spec.containers',
+        'spec.template.spec',
       );
-      const actual = containers[0]?.volumeMounts;
-      expect(actual).to.have.lengthOf(expected.length);
-      actual?.forEach((secretVolume: run_v1.Schema$VolumeMount) => {
-        const found = expected.find((expectedSecretVolume) =>
-          _.isEqual(secretVolume.mountPath, expectedSecretVolume.name),
+      const volumes = spec.volumes;
+      const volumeMounts = spec.containers![0]?.volumeMounts;
+      expect(volumes).to.have.lengthOf(expected.length);
+      volumeMounts?.forEach((volumeMount: run_v1.Schema$VolumeMount) => {
+        const secretVolume = volumes?.find((volume: run_v1.Schema$Volume) =>
+          _.isEqual(volumeMount.name, volume.name),
+        );
+        const actualSecretPath = volumeMount.mountPath?.concat(
+          '/',
+          secretVolume?.secret?.items![0].path ?? '',
+        );
+        const found = expected.find((expectedSecretPath) =>
+          _.isEqual(expectedSecretPath.name, actualSecretPath),
         );
         expect(found).to.not.equal(undefined);
       });
