@@ -33,6 +33,7 @@ describe('E2E tests', function () {
     LABELS,
     ENV,
     SECRET_ENV,
+    SECRET_VOLUMES,
     SERVICE,
     COUNT,
     REVISION,
@@ -122,6 +123,24 @@ describe('E2E tests', function () {
       actual.forEach((secretEnvVar: run_v1.Schema$EnvVar) => {
         const found = expected.find((expectedSecretEnvVar) =>
           _.isEqual(secretEnvVar.name, expectedSecretEnvVar.name),
+        );
+        expect(found).to.not.equal(undefined);
+      });
+    }
+  });
+
+  it('has the correct secret volumes', function () {
+    if (SECRET_VOLUMES && service) {
+      const expected = parseEnvVars(SECRET_VOLUMES);
+      const containers: run_v1.Schema$Container[] = _.get(
+        service,
+        'spec.template.spec.containers',
+      );
+      const actual = containers[0]?.volumeMounts;
+      expect(actual).to.have.lengthOf(expected.length);
+      actual?.forEach((secretVolume: run_v1.Schema$VolumeMount) => {
+        const found = expected.find((expectedSecretVolume) =>
+          _.isEqual(secretVolume.mountPath, expectedSecretVolume.name),
         );
         expect(found).to.not.equal(undefined);
       });
