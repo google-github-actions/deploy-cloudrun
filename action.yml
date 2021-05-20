@@ -39,8 +39,15 @@ inputs:
   env_vars:
     description: |-
       List of key-value pairs to set as environment variables in the format:
-      KEY1=VALUE1,KEY2=VALUE2. All existing environment variables will be
-      removed first.
+      KEY1=VALUE1,KEY2=VALUE2. Existing environment variables will be retained.
+    required: false
+
+  secrets:
+    description: |-
+      List of key-value pairs to set as either environment variables or mounted
+      volumes in the format:
+      KEY1=secret-key-1:latest,/secrets/api/key=secret-key-2:latest. Existing
+      secrets will be retained.
     required: false
 
   metadata:
