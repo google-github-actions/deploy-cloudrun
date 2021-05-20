@@ -67,7 +67,6 @@ export async function run(): Promise<void> {
     if (revTraffic || tagTraffic) {
       // Update traffic
       cmd = [
-        'beta',
         'run',
         'services',
         'update-traffic',
@@ -83,7 +82,6 @@ export async function run(): Promise<void> {
     } else if (source) {
       // Deploy service from source
       cmd = [
-        'beta',
         'run',
         'deploy',
         name,
@@ -104,7 +102,6 @@ export async function run(): Promise<void> {
         );
       }
       cmd = [
-        'beta',
         'run',
         'services',
         'replace',
@@ -143,7 +140,6 @@ export async function run(): Promise<void> {
       }
       if (suffix) cmd.push('--revision-suffix', suffix);
       if (noTraffic) cmd.push('--no-traffic');
-      if (installBeta) cmd.unshift('beta');
     }
     // Add optional flags
     if (flags) {
@@ -184,8 +180,11 @@ export async function run(): Promise<void> {
         'No project Id provided. Ensure you have set either the project_id or credentials fields.',
       );
 
-    // Install beta components if needed
-    if (installBeta) await setupGcloud.installComponent('beta');
+    // Install beta components if needed and prepend the beta command
+    if (installBeta) {
+      await setupGcloud.installComponent('beta');
+      cmd.unshift('beta');
+    }
 
     const toolCommand = setupGcloud.getToolCommand();
 
