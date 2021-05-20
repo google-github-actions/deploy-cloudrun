@@ -32,6 +32,7 @@ describe('E2E tests', function () {
     ANNOTATIONS,
     LABELS,
     ENV,
+    SECRET_ENV,
     SERVICE,
     COUNT,
     REVISION,
@@ -106,6 +107,21 @@ describe('E2E tests', function () {
       actual.forEach((envVar: run_v1.Schema$EnvVar) => {
         const found = expected.find((expectedEnvVar) =>
           _.isEqual(envVar, expectedEnvVar),
+        );
+        expect(found).to.not.equal(undefined);
+      });
+    }
+  });
+
+  it('has the correct secret vars', function () {
+    if (SECRET_ENV && service) {
+      const expected = parseEnvVars(SECRET_ENV);
+      const containers = _.get(service, 'spec.template.spec.containers');
+      const actual = containers[0]?.env;
+      expect(actual).to.have.lengthOf(expected.length);
+      actual.forEach((secretEnvVar: run_v1.Schema$EnvVar) => {
+        const found = expected.find((expectedSecretEnvVar) =>
+          _.isEqual(secretEnvVar.name, expectedSecretEnvVar.name),
         );
         expect(found).to.not.equal(undefined);
       });
