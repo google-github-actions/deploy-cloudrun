@@ -32,6 +32,8 @@ describe('E2E tests', function () {
     ANNOTATIONS,
     LABELS,
     ENV,
+    SECRET_ENV,
+    SECRET_VOLUMES,
     SERVICE,
     COUNT,
     REVISION,
@@ -106,6 +108,47 @@ describe('E2E tests', function () {
       actual.forEach((envVar: run_v1.Schema$EnvVar) => {
         const found = expected.find((expectedEnvVar) =>
           _.isEqual(envVar, expectedEnvVar),
+        );
+        expect(found).to.not.equal(undefined);
+      });
+    }
+  });
+
+  it('has the correct secret vars', function () {
+    if (SECRET_ENV && service) {
+      const expected = parseEnvVars(SECRET_ENV);
+      const containers = _.get(service, 'spec.template.spec.containers');
+      const actual = containers[0]?.env;
+      expect(actual).to.have.lengthOf(expected.length);
+      actual.forEach((secretEnvVar: run_v1.Schema$EnvVar) => {
+        const found = expected.find((expectedSecretEnvVar) =>
+          _.isEqual(secretEnvVar.name, expectedSecretEnvVar.name),
+        );
+        expect(found).to.not.equal(undefined);
+      });
+    }
+  });
+
+  it('has the correct secret volumes', function () {
+    if (SECRET_VOLUMES && service) {
+      const expected = parseEnvVars(SECRET_VOLUMES);
+      const spec: run_v1.Schema$RevisionSpec = _.get(
+        service,
+        'spec.template.spec',
+      );
+      const volumes = spec.volumes;
+      const volumeMounts = spec.containers![0]?.volumeMounts;
+      expect(volumes).to.have.lengthOf(expected.length);
+      volumeMounts?.forEach((volumeMount: run_v1.Schema$VolumeMount) => {
+        const secretVolume = volumes?.find((volume: run_v1.Schema$Volume) =>
+          _.isEqual(volumeMount.name, volume.name),
+        );
+        const actualSecretPath = volumeMount.mountPath?.concat(
+          '/',
+          secretVolume?.secret?.items![0].path ?? '',
+        );
+        const found = expected.find((expectedSecretPath) =>
+          _.isEqual(expectedSecretPath.name, actualSecretPath),
         );
         expect(found).to.not.equal(undefined);
       });

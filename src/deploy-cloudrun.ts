@@ -40,6 +40,7 @@ export async function run(): Promise<void> {
     let gcloudVersion = core.getInput('gcloud_version');
     // Flags
     const envVars = core.getInput('env_vars'); // String of env vars KEY=VALUE,...
+    const secrets = core.getInput('secrets'); // String of secrets KEY=VALUE,...
     const region = core.getInput('region') || 'us-central1';
     const source = core.getInput('source'); // Source directory
     const suffix = core.getInput('suffix');
@@ -66,7 +67,6 @@ export async function run(): Promise<void> {
     if (revTraffic || tagTraffic) {
       // Update traffic
       cmd = [
-        'beta',
         'run',
         'services',
         'update-traffic',
@@ -82,7 +82,6 @@ export async function run(): Promise<void> {
     } else if (source) {
       // Deploy service from source
       cmd = [
-        'beta',
         'run',
         'deploy',
         name,
@@ -97,13 +96,12 @@ export async function run(): Promise<void> {
       installBeta = true;
     } else if (metadata) {
       // Deploy service from metadata
-      if (image || name || envVars) {
+      if (image || name || envVars || secrets) {
         core.warning(
-          'Metadata YAML provided: ignoring `image`, `service`, and `env_vars` inputs.',
+          'Metadata YAML provided: ignoring `image`, `service`, `env_vars` and `secrets` inputs.',
         );
       }
       cmd = [
-        'beta',
         'run',
         'services',
         'replace',
@@ -132,9 +130,12 @@ export async function run(): Promise<void> {
     if (!metadata) {
       // Set optional flags from inputs
       if (envVars) cmd.push('--update-env-vars', envVars);
+      if (secrets) {
+        cmd.push('--update-secrets', secrets);
+        installBeta = true;
+      }
       if (tag) {
         cmd.push('--tag', tag);
-        cmd.unshift('beta');
         installBeta = true;
       }
       if (suffix) cmd.push('--revision-suffix', suffix);
@@ -179,8 +180,11 @@ export async function run(): Promise<void> {
         'No project Id provided. Ensure you have set either the project_id or credentials fields.',
       );
 
-    // Install beta components if needed
-    if (installBeta) await setupGcloud.installComponent('beta');
+    // Install beta components if needed and prepend the beta command
+    if (installBeta) {
+      await setupGcloud.installComponent('beta');
+      cmd.unshift('beta');
+    }
 
     const toolCommand = setupGcloud.getToolCommand();
 
