@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.6.0](https://www.github.com/google-github-actions/deploy-cloudrun/compare/v0.5.0...v0.6.0) (2021-05-27)
+
+
+### Features
+
+* Add Secrets Manger integration support ([#64](https://www.github.com/google-github-actions/deploy-cloudrun/issues/64)) ([4a9b191](https://www.github.com/google-github-actions/deploy-cloudrun/commit/4a9b1916d11796934ce70d155a9fa30b282bb935))
+
+
+### Bug Fixes
+
+* **deps:** update dependency fs to v0.0.2 ([#54](https://www.github.com/google-github-actions/deploy-cloudrun/issues/54)) ([3e6a16a](https://www.github.com/google-github-actions/deploy-cloudrun/commit/3e6a16a292c034e56bf24da5e45c59e232ab0639))
+* **deps:** update dependency googleapis to v73 ([#57](https://www.github.com/google-github-actions/deploy-cloudrun/issues/57)) ([759fbb9](https://www.github.com/google-github-actions/deploy-cloudrun/commit/759fbb9f9ada824d9782018bf16acd8bcfb0d544))
+* Update to PR target ([#68](https://www.github.com/google-github-actions/deploy-cloudrun/issues/68)) ([02b3b48](https://www.github.com/google-github-actions/deploy-cloudrun/commit/02b3b48476414e852806d64d4d8684f1a0894484))
+
 ## [0.5.0](https://www.github.com/google-github-actions/deploy-cloudrun/compare/v0.4.0...v0.5.0) (2021-04-05)
 
 
