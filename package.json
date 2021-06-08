@@ -36,7 +36,7 @@
     "@types/tmp": "^0.2.0",
     "fs": "0.0.2",
     "google-auth-library": "^7.1.1",
-    "googleapis": "^73.0.0",
+    "googleapis": "^75.0.0",
     "tmp": "^0.2.1",
     "typed-rest-client": "^1.8.4",
     "yaml": "^1.10.0"
