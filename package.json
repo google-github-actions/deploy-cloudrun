@@ -36,7 +36,7 @@
     "@types/tmp": "^0.2.0",
     "fs": "0.0.2",
     "google-auth-library": "^7.1.1",
-    "googleapis": "^73.0.0",
+    "googleapis": "^75.0.0",
     "tmp": "^0.2.1",
     "typed-rest-client": "^1.8.4",
     "yaml": "^1.10.0"
@@ -47,7 +47,7 @@
     "@types/lodash": "^4.14.170",
     "@types/mocha": "^8.2.0",
     "@types/node": "^14.14.22",
-    "@types/sinon": "^10.0.0",
+    "@types/sinon": "^10.0.2",
     "@types/uuid": "^8.3.0",
     "@typescript-eslint/eslint-plugin": "^4.14.1",
     "@typescript-eslint/parser": "^4.26.1",
