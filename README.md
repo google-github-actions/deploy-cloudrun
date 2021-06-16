@@ -71,7 +71,7 @@ Cloud Run service. See the [Credentials](#credentials) below for more informatio
 | `secrets`| _optional_ | | List of key-value pairs to set as either environment variables or mounted volumes in the format: `KEY1=secret-key-1:latest,/secrets/api/key=secret-key-2:latest`. The secrets will be fetched from the Secret Manager. **All existing environment secrets or volumes will be retained**. |
 | `metadata`| _optional_ | | YAML service description for the Cloud Run service (`service` and `image` inputs will override YAML). See [Metadata customizations](#metadata-customizations) for more information. **Existing configuration will be retained besides container entrypoint and arguments**. |
 | `project_id`| _optional_ | | ID of the Google Cloud project. If provided, this will override the project configured by `setup-gcloud`. |
-| `source` | _optional_ | | Deploy from source by specifying the source directory. The role `Cloud Build Service Account` is required. |
+| `source` | _optional_ | | Deploy from source by specifying the source directory. The [Artifact Registry API][artifact-api] needs to be enabled and the service account role `Cloud Build Service Account` is required. The first deployment will create an [Artifact Registry repository][repo] which requires the `Artifact Registry Admin` role. Learn more about [Deploying from source code](https://cloud.google.com/run/docs/deploying-source-code). |
 | `suffix` | _optional_ | | Specify the suffix of the revision name. Revision names always start with named 'helloworld', would lead to a revision named 'helloworld-v1'. |
 | `tag` | _optional_ | | Traffic tag to assign to the newly created revision. |
 | `no_traffic` | _optional_ | `false` | Set to `true` to avoid sending traffic to the revision being deployed.|
@@ -279,3 +279,5 @@ See [LICENSE](LICENSE).
 [gh-runners]: https://help.github.com/en/actions/hosting-your-own-runners/about-self-hosted-runners
 [gh-secret]: https://help.github.com/en/actions/configuring-and-managing-workflows/creating-and-storing-encrypted-secrets
 [setup-gcloud]: ./setup-gcloud
+[artifact-api]: https://console.cloud.google.com/flows/enableapi?apiid=artifactregistry.googleapis.com&redirect=https://cloud.google.com/artifact-registry/docs/docker/quickstart&_ga=2.234012894.1325218733.1623704963-2035038643.1623704963
+[repo]: https://cloud.google.com/artifact-registry/docs/manage-repos
