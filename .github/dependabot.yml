@@ -12,11 +12,3 @@ updates:
     commit-message:
       prefix: "chore(deps): "
     rebase-strategy: "disabled"
-    
-  - package-ecosystem: "github-actions"
-    directory: ".github/workflows"
-    schedule:
-      # Check for updates to GitHub Actions every weekday
-      interval: "daily"
-    commit-message:
-      prefix: "chore(deps): "
