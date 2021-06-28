@@ -9,7 +9,7 @@ on:
 jobs:
   envvars:
     name: with Env Vars
-    if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name && github.actor != 'dependabot' }}
+    if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name && github.actor != 'dependabot[bot]' }}
     runs-on: ubuntu-latest
     steps:
     - id: service
@@ -64,7 +64,7 @@ jobs:
 
   secret-manager:
     name: with Secret Manager
-    if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name && github.actor != 'dependabot' }}
+    if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name && github.actor != 'dependabot[bot]' }}
     runs-on: ubuntu-latest
     steps:
     - id: service
@@ -120,7 +120,7 @@ jobs:
 
   yaml:
     name: with YAML metadata
-    if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name && github.actor != 'dependabot' }}
+    if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name && github.actor != 'dependabot[bot]' }}
     runs-on: ubuntu-latest
     steps:
     - id: service
@@ -157,7 +157,7 @@ jobs:
 
   metadata:
     name: with full YAML metadata
-    if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name && github.actor != 'dependabot' }}
+    if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name && github.actor != 'dependabot[bot]' }}
     runs-on: ubuntu-latest
     steps:
     - id: service
@@ -217,7 +217,7 @@ jobs:
 
   revision:
     name: with Revision Name
-    if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name && github.actor != 'dependabot' }}
+    if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name && github.actor != 'dependabot[bot]' }}
     runs-on: ubuntu-latest
     steps:
     - id: service
@@ -275,7 +275,7 @@ jobs:
 
   name:
     name: with Bad Inputs
-    if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name && github.actor != 'dependabot' }}
+    if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name && github.actor != 'dependabot[bot]' }}
     runs-on: ubuntu-latest
     env:
       SERVICE_NAME: test-name
