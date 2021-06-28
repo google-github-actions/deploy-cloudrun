@@ -199,7 +199,7 @@ jobs:
 
   cleanup:
     name: Clean Up
-    if: ${{ (github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name) && always() }}
+    if: ${{ (github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name && github.actor != 'dependabot[bot]') && always() }}
     runs-on: ubuntu-latest
     needs: [source, suffix, tag]
     steps:
