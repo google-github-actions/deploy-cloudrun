@@ -9,7 +9,7 @@ on:
 jobs:
   source:
     name: with Source
-    if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name || github.actor != 'dependabot' }}
+    if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name && github.actor != 'dependabot' }}
     runs-on: ubuntu-latest
     steps:
     - id: service
@@ -64,7 +64,7 @@ jobs:
 
   suffix:
     name: with Suffix
-    if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name || github.actor != 'dependabot' }}
+    if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name && github.actor != 'dependabot' }}
     runs-on: ubuntu-latest
     steps:
     - id: service
@@ -101,7 +101,7 @@ jobs:
   
   tag:
     name: with Tag
-    if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name || github.actor != 'dependabot' }}
+    if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name && github.actor != 'dependabot' }}
     runs-on: ubuntu-latest
     steps:
     - id: service
