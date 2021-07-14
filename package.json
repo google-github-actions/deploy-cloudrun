@@ -33,7 +33,7 @@
     "@actions/exec": "^1.1.0",
     "@actions/tool-cache": "^1.7.1",
     "@lifeomic/attempt": "^3.0.0",
-    "@types/tmp": "^0.2.0",
+    "@types/tmp": "^0.2.1",
     "fs": "0.0.2",
     "google-auth-library": "^7.2.0",
     "googleapis": "^80.0.0",
@@ -43,7 +43,7 @@
   },
   "devDependencies": {
     "@types/chai": "^4.2.19",
-    "@types/js-yaml": "^4.0.0",
+    "@types/js-yaml": "^4.0.2",
     "@types/lodash": "^4.14.170",
     "@types/mocha": "^8.2.0",
     "@types/node": "^15.12.5",
