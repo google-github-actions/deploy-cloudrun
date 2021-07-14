@@ -43,7 +43,7 @@
   },
   "devDependencies": {
     "@types/chai": "^4.2.19",
-    "@types/js-yaml": "^4.0.0",
+    "@types/js-yaml": "^4.0.2",
     "@types/lodash": "^4.14.170",
     "@types/mocha": "^8.2.0",
     "@types/node": "^15.12.5",
