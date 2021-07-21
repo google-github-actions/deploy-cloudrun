@@ -23,7 +23,7 @@ import { run_v1 } from 'googleapis';
 import yaml = require('js-yaml');
 
 function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms, []));
 }
 
 describe('E2E tests', function () {

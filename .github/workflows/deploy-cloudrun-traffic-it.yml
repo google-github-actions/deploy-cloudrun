@@ -20,7 +20,7 @@ jobs:
         node-version: 12.x
     - name: Build Javascript
       run: |-
-        npm install
+        npm ci
         npm run build
 
     - name: Deploys from source
@@ -75,7 +75,7 @@ jobs:
         node-version: 12.x
     - name: Build Javascript
       run: |-
-        npm install
+        npm ci
         npm run build
     - name: Deploys with suffix
       id: deploy_1
@@ -113,7 +113,7 @@ jobs:
 
     - name: Build Javascript
       run: |-
-        npm install
+        npm ci
         npm run build
 
     - name: Deploys with tag
