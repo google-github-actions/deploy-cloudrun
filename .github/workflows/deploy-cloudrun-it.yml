@@ -20,7 +20,7 @@ jobs:
         node-version: 12.x
     - name: Build Javascript
       run: |-
-        npm install
+        npm ci
         npm run build
 
     - name: Create Service with one env var
@@ -75,7 +75,7 @@ jobs:
         node-version: 12.x
     - name: Build Javascript
       run: |-
-        npm install
+        npm ci
         npm run build
 
     - name: Create Service with Secret Manager
@@ -131,7 +131,7 @@ jobs:
         node-version: 12.x
     - name: Build Javascript
       run: |-
-        npm install
+        npm ci
         npm run build
 
     - name: Set service name in metadata YAML
@@ -168,7 +168,7 @@ jobs:
         node-version: 12.x
     - name: Build Javascript
       run: |-
-        npm install
+        npm ci
         npm run build
 
     - name: Set service name in metadata YAML
@@ -228,7 +228,7 @@ jobs:
         node-version: 12.x
     - name: Build Javascript
       run: |-
-        npm install
+        npm ci
         npm run build
 
     - run: |-
@@ -288,7 +288,7 @@ jobs:
         node-version: 12.x
     - name: Build Javascript
       run: |-
-        npm install
+        npm ci
         npm run build
 
     - name: Name with uppercase letters
