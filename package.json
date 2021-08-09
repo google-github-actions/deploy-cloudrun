@@ -49,7 +49,7 @@
     "@types/node": "^16.4.10",
     "@types/sinon": "^10.0.2",
     "@types/uuid": "^8.3.1",
-    "@typescript-eslint/eslint-plugin": "^4.28.5",
+    "@typescript-eslint/eslint-plugin": "^4.29.0",
     "@typescript-eslint/parser": "^4.29.0",
     "@zeit/ncc": "^0.22.3",
     "chai": "^4.2.0",
