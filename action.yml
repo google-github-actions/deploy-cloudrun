@@ -12,7 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
+
 name: Deploy to Cloud Run
+uses: google-github-actions/deploy-cloudrun@v0.3.0
 author: Google LLC
 description: |-
   Use this action to deploy a container in the Google Container Registry to Cloud Run.
