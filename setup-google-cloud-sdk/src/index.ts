@@ -164,9 +164,10 @@ export function parseServiceAccountKey(
       "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/service-account-email"
     }
     `;
+    let errorMsg = (error instanceof Error) ? error.message : error as string;
     const message =
       'Error parsing credentials: ' +
-      error.message +
+        + errorMsg
       '\nEnsure your credentials are base64 encoded or validate JSON format: ' +
       keyFormat;
     throw new Error(message);

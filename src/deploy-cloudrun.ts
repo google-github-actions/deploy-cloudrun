@@ -215,11 +215,11 @@ export async function run(): Promise<void> {
       if (errOutput) {
         throw new Error(errOutput);
       } else {
-        throw new Error(error);
+        if (error instanceof Error) throw new Error(error.message);
       }
     }
   } catch (error) {
-    core.setFailed(error.message);
+    if (error instanceof Error) core.setFailed(error.message);
   }
 }
 
