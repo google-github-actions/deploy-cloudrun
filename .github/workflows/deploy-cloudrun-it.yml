@@ -86,6 +86,7 @@ jobs:
         image: gcr.io/cloudrun/hello
         service: ${{ steps.service.outputs.service }}
         secrets: MY_SECRET=secret_value:latest
+          MY_SECOND_SECRET=new_value:latest
 
     - name: Setup Authentication with gcloud
       uses: google-github-actions/setup-gcloud@master
@@ -98,7 +99,7 @@ jobs:
       env:
         URL: ${{ steps.deploy_1.outputs.url }}
         SERVICE: ${{ steps.service.outputs.service }}
-        SECRET_ENV: MY_SECRET=secret_value:latest
+        SECRET_ENV: MY_SECOND_SECRET=new_value:latest
 
     - name: Update service with mounted secret
       id: deploy_2

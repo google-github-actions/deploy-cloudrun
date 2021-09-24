@@ -131,7 +131,9 @@ export async function run(): Promise<void> {
       // Set optional flags from inputs
       if (envVars) cmd.push('--update-env-vars', envVars);
       if (secrets) {
-        cmd.push('--update-secrets', secrets);
+        // If there are spaces not within quotes 
+        const regex = /[ ]+(?=[^"]*(?:"[^"]*"[^"]*)*$)/;
+        cmd.push('--update-secrets', secrets.replace(regex, ","));
         installBeta = true;
       }
       if (tag) {
