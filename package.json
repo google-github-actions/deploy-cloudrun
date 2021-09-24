@@ -37,6 +37,7 @@
     "fs": "0.0.2",
     "google-auth-library": "^7.9.2",
     "googleapis": "^85.0.0",
+    "setup-cloud-sdk": "git+https://github.com/google-github-actions/setup-cloud-sdk.git",
     "tmp": "^0.2.1",
     "typed-rest-client": "^1.8.5",
     "yaml": "^1.10.0"
