@@ -215,11 +215,11 @@ export async function run(): Promise<void> {
       if (errOutput) {
         throw new Error(errOutput);
       } else {
-        if (error instanceof Error) throw new Error(error.message);
+        throw new Error(convertUnknown(error));
       }
     }
   } catch (error) {
-    if (error instanceof Error) core.setFailed(error.message);
+    core.setFailed(convertUnknown(error));
   }
 }
 
@@ -240,4 +240,11 @@ export function setUrlOutput(output: string): string | undefined {
 
 export function parseFlags(flags: string): RegExpMatchArray {
   return flags.match(/(".*?"|[^"\s=]+)+(?=\s*|\s*$)/g)!; // Split on space or "=" if not in quotes
+}
+
+export function convertUnknown(unknown: any): string {
+  if (unknown instanceof Error) {
+    return unknown.message;
+  }
+  return unknown as string;
 }

@@ -1767,7 +1767,7 @@ function onceStrict (fn) {
 // We use any as a valid input type
 /* eslint-disable @typescript-eslint/no-explicit-any */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.toCommandProperties = exports.toCommandValue = void 0;
+exports.toCommandValue = void 0;
 /**
  * Sanitizes an input into a string so it can be passed into issueCommand safely
  * @param input input to sanitize into a string
@@ -1782,25 +1782,6 @@ function toCommandValue(input) {
     return JSON.stringify(input);
 }
 exports.toCommandValue = toCommandValue;
-/**
- *
- * @param annotationProperties
- * @returns The command properties to send with the actual annotation command
- * See IssueCommandProperties: https://github.com/actions/runner/blob/main/src/Runner.Worker/ActionCommandManager.cs#L646
- */
-function toCommandProperties(annotationProperties) {
-    if (!Object.keys(annotationProperties).length) {
-        return {};
-    }
-    return {
-        title: annotationProperties.title,
-        line: annotationProperties.startLine,
-        endLine: annotationProperties.endLine,
-        col: annotationProperties.startColumn,
-        endColumn: annotationProperties.endColumn
-    };
-}
-exports.toCommandProperties = toCommandProperties;
 //# sourceMappingURL=utils.js.map
 
 /***/ }),
@@ -4368,7 +4349,7 @@ function getReleaseURL(os, arch, version) {
         try {
             const url = formatReleaseURL(os, arch, version);
             const client = new httpm.HttpClient('github-actions-setup-gcloud-sdk');
-            return (0, attempt_1.retry)(() => __awaiter(this, void 0, void 0, function* () {
+            return attempt_1.retry(() => __awaiter(this, void 0, void 0, function* () {
                 const res = yield client.head(url);
                 if (res.message.statusCode === 200) {
                     return url;
@@ -4945,7 +4926,7 @@ function getLatestGcloudSDKVersion() {
     return __awaiter(this, void 0, void 0, function* () {
         const queryUrl = 'https://dl.google.com/dl/cloudsdk/channels/rapid/components-2.json';
         const client = new httpm.HttpClient('github-actions-setup-gcloud-sdk');
-        return yield (0, attempt_1.retry)(() => __awaiter(this, void 0, void 0, function* () {
+        return yield attempt_1.retry(() => __awaiter(this, void 0, void 0, function* () {
             const res = yield client.get(queryUrl);
             if (res.message.statusCode != 200) {
                 throw new Error(`Failed to retrieve gcloud SDK version, HTTP error code: ${res.message.statusCode} url: ${queryUrl}`);
@@ -6915,7 +6896,7 @@ if (typeof Object.create === 'function') {
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 const deploy_cloudrun_1 = __webpack_require__(530);
-(0, deploy_cloudrun_1.run)();
+deploy_cloudrun_1.run();
 
 
 /***/ }),
@@ -7970,7 +7951,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getState = exports.saveState = exports.group = exports.endGroup = exports.startGroup = exports.info = exports.notice = exports.warning = exports.error = exports.debug = exports.isDebug = exports.setFailed = exports.setCommandEcho = exports.setOutput = exports.getBooleanInput = exports.getMultilineInput = exports.getInput = exports.addPath = exports.setSecret = exports.exportVariable = exports.ExitCode = void 0;
+exports.getState = exports.saveState = exports.group = exports.endGroup = exports.startGroup = exports.info = exports.warning = exports.error = exports.debug = exports.isDebug = exports.setFailed = exports.setCommandEcho = exports.setOutput = exports.getBooleanInput = exports.getMultilineInput = exports.getInput = exports.addPath = exports.setSecret = exports.exportVariable = exports.ExitCode = void 0;
 const command_1 = __webpack_require__(431);
 const file_command_1 = __webpack_require__(102);
 const utils_1 = __webpack_require__(82);
@@ -8148,30 +8129,19 @@ exports.debug = debug;
 /**
  * Adds an error issue
  * @param message error issue message. Errors will be converted to string via toString()
- * @param properties optional properties to add to the annotation.
  */
-function error(message, properties = {}) {
-    command_1.issueCommand('error', utils_1.toCommandProperties(properties), message instanceof Error ? message.toString() : message);
+function error(message) {
+    command_1.issue('error', message instanceof Error ? message.toString() : message);
 }
 exports.error = error;
 /**
- * Adds a warning issue
+ * Adds an warning issue
  * @param message warning issue message. Errors will be converted to string via toString()
- * @param properties optional properties to add to the annotation.
  */
-function warning(message, properties = {}) {
-    command_1.issueCommand('warning', utils_1.toCommandProperties(properties), message instanceof Error ? message.toString() : message);
+function warning(message) {
+    command_1.issue('warning', message instanceof Error ? message.toString() : message);
 }
 exports.warning = warning;
-/**
- * Adds a notice issue
- * @param message notice issue message. Errors will be converted to string via toString()
- * @param properties optional properties to add to the annotation.
- */
-function notice(message, properties = {}) {
-    command_1.issueCommand('notice', utils_1.toCommandProperties(properties), message instanceof Error ? message.toString() : message);
-}
-exports.notice = notice;
 /**
  * Writes info to log with console.log.
  * @param message info message
@@ -8652,14 +8622,12 @@ function run() {
                     throw new Error(errOutput);
                 }
                 else {
-                    if (error instanceof Error)
-                        throw new Error(error.message);
+                    throw new Error(error);
                 }
             }
         }
         catch (error) {
-            if (error instanceof Error)
-                core.setFailed(error.message);
+            core.setFailed(error.message);
         }
     });
 }
@@ -10796,7 +10764,7 @@ function installGcloudSDK(version) {
         // Retreive the release corresponding to the specified version and OS
         const osPlat = os.platform();
         const osArch = os.arch();
-        const url = yield (0, format_url_1.getReleaseURL)(osPlat, osArch, version);
+        const url = yield format_url_1.getReleaseURL(osPlat, osArch, version);
         // Download and extract the release
         const extPath = yield downloadUtil.downloadAndExtractTool(url);
         if (!extPath) {
@@ -10837,10 +10805,9 @@ function parseServiceAccountKey(serviceAccountKey) {
       "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/service-account-email"
     }
     `;
-        let errorMsg = (error instanceof Error) ? error.message : error;
         const message = 'Error parsing credentials: ' +
-            +errorMsg;
-        '\nEnsure your credentials are base64 encoded or validate JSON format: ' +
+            error.message +
+            '\nEnsure your credentials are base64 encoded or validate JSON format: ' +
             keyFormat;
         throw new Error(message);
     }
@@ -12663,7 +12630,7 @@ const attempt_1 = __webpack_require__(503);
  */
 function downloadAndExtractTool(url) {
     return __awaiter(this, void 0, void 0, function* () {
-        const downloadPath = yield (0, attempt_1.retry)(() => __awaiter(this, void 0, void 0, function* () { return toolCache.downloadTool(url); }), {
+        const downloadPath = yield attempt_1.retry(() => __awaiter(this, void 0, void 0, function* () { return toolCache.downloadTool(url); }), {
             delay: 200,
             factor: 2,
             maxAttempts: 4,
