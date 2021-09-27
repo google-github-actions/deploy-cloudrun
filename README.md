@@ -69,7 +69,7 @@ Cloud Run service. See the [Credentials](#credentials) below for more informatio
 | `credentials`| Required if not using a the `setup-gcloud` action with exported credentials. | | Service account key to use for authentication. This should be the JSON formatted private key which can be exported from the Cloud Console. The value can be raw or base64-encoded.  |
 | `env_vars`| _optional_ | | List of key-value pairs to set as environment variables in the format: `KEY1=VALUE1,KEY2=VALUE2`. **All existing environment variables will be retained**. |
 | `secrets`| _optional_ | | List of key-value pairs to set as either environment variables or mounted volumes in the format: `KEY1=secret-key-1:latest,/secrets/api/key=secret-key-2:latest`. The secrets will be fetched from the Secret Manager. **All existing environment secrets or volumes will be retained**. |
-| `metadata`| _optional_ | | YAML service description for the Cloud Run service (`service` and `image` inputs will override YAML). See [Metadata customizations](#metadata-customizations) for more information. **Existing configuration will be retained besides container entrypoint and arguments**. |
+| `metadata`| _optional_ | | YAML service description for the Cloud Run service (**Other inputs will be overridden**). See [Metadata customizations](#metadata-customizations) for more information. |
 | `project_id`| _optional_ | | ID of the Google Cloud project. If provided, this will override the project configured by `setup-gcloud`. |
 | `source` | _optional_ | | Deploy from source by specifying the source directory. The [Artifact Registry API][artifact-api] needs to be enabled and the service account role `Cloud Build Service Account` is required. The first deployment will create an [Artifact Registry repository][repo] which requires the `Artifact Registry Admin` role. Learn more about [Deploying from source code](https://cloud.google.com/run/docs/deploying-source-code). |
 | `suffix` | _optional_ | | Specify the suffix of the revision name. Revision names always start with named 'helloworld', would lead to a revision named 'helloworld-v1'. |
@@ -86,7 +86,8 @@ You can store your service specification in a YAML file. This will allow for
 further service configuration, such as [memory limits](https://cloud.google.com/run/docs/configuring/memory-limits),
 [CPU allocation](https://cloud.google.com/run/docs/configuring/cpu),
 [max instances](https://cloud.google.com/run/docs/configuring/max-instances),
-and [more.](https://cloud.google.com/sdk/gcloud/reference/run/deploy#OPTIONAL-FLAGS)
+and [more](https://cloud.google.com/sdk/gcloud/reference/run/deploy#OPTIONAL-FLAGS).
+**Other inputs will be overridden when using `metadata`**
 
 - See [Deploying a new service](https://cloud.google.com/run/docs/deploying#yaml)
 to create a new YAML service definition, for example:
