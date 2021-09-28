@@ -23,6 +23,7 @@ import * as downloadUtil from './download-util';
 import * as installUtil from './install-util';
 import { getLatestGcloudSDKVersion } from './version-util';
 import { ExecOptions } from '@actions/exec/lib/interfaces';
+import { convertUnknown } from '../../src/deploy-cloudrun';
 
 export { getLatestGcloudSDKVersion };
 
@@ -164,9 +165,10 @@ export function parseServiceAccountKey(
       "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/service-account-email"
     }
     `;
+    
     const message =
       'Error parsing credentials: ' +
-      error.message +
+      convertUnknown(error) +
       '\nEnsure your credentials are base64 encoded or validate JSON format: ' +
       keyFormat;
     throw new Error(message);
