@@ -8,9 +8,7 @@ updates:
   - package-ecosystem: "npm"
     directory: "/" # ToDo: check if this updates example-app/
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
+      interval: "monthly"
     commit-message:
       prefix: "chore(deps): "
     rebase-strategy: "disabled"
