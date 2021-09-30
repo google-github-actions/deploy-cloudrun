@@ -17,7 +17,7 @@
 import 'mocha';
 import * as sinon from 'sinon';
 import * as core from '@actions/core';
-import * as setupGcloud from '../../setup-google-cloud-sdk/src';
+import * as setupGcloud from '@google-github-actions/setup-cloud-sdk';
 import { expect } from 'chai';
 import { run, setUrlOutput, parseFlags } from '../../src/deploy-cloudrun';
 
