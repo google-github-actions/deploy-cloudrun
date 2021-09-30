@@ -17,7 +17,7 @@
 import * as core from '@actions/core';
 import * as exec from '@actions/exec';
 import * as toolCache from '@actions/tool-cache';
-import * as setupGcloud from '../setup-google-cloud-sdk/src/';
+import * as setupGcloud from '@google-github-actions/setup-cloud-sdk';
 import path from 'path';
 
 export const GCLOUD_METRICS_ENV_VAR = 'CLOUDSDK_METRICS_ENVIRONMENT';
