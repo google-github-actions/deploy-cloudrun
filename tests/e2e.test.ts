@@ -120,9 +120,7 @@ describe('E2E tests', function () {
       const containers = _.get(service, 'spec.template.spec.containers');
       const actual = containers[0]?.env;
       expect(actual).to.have.lengthOf(expected.length);
-      console.log(expected)
       actual.forEach((secretEnvVar: run_v1.Schema$EnvVar) => {
-        console.log(secretEnvVar)
         const found = expected.find((expectedSecretEnvVar) =>
           _.isEqual(secretEnvVar.name, expectedSecretEnvVar.name),
         );
