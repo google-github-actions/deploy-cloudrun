@@ -131,7 +131,7 @@ export async function run(): Promise<void> {
       // Set optional flags from inputs
       if (envVars) cmd.push('--update-env-vars', envVars);
       if (secrets) {
-        cmd.push('--update-secrets', secrets.replace("\n", ","));
+        cmd.push('--update-secrets', secrets.replace('\n', ','));
         installBeta = true;
       }
       if (tag) {
