@@ -41,6 +41,7 @@ export async function run(): Promise<void> {
     // Flags
     const envVars = core.getInput('env_vars'); // String of env vars KEY=VALUE,...
     const secrets = core.getInput('secrets'); // String of secrets KEY=VALUE,...
+    const cloudsql = core.getInput('cloudsql'); // String of cloudsql instances...
     const region = core.getInput('region') || 'us-central1';
     const source = core.getInput('source'); // Source directory
     const suffix = core.getInput('suffix');
@@ -132,6 +133,10 @@ export async function run(): Promise<void> {
       if (envVars) cmd.push('--update-env-vars', envVars);
       if (secrets) {
         cmd.push('--update-secrets', secrets);
+        installBeta = true;
+      }
+      if (cloudsql) {
+        cmd.push('--add-cloudsql-instances', cloudsql);
         installBeta = true;
       }
       if (tag) {
