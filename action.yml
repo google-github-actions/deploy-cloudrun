@@ -42,7 +42,7 @@ inputs:
       KEY1=VALUE1,KEY2=VALUE2. Existing environment variables will be retained.
     required: false
 
-  cloudsql:
+  cloudsql_instances:
     description: |-
       List of connection names of cloudsql instances.
     required: false
