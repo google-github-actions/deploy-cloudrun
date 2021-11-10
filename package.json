@@ -37,7 +37,7 @@
     "@types/tmp": "^0.2.1",
     "fs": "0.0.2",
     "google-auth-library": "^7.9.2",
-    "googleapis": "^87.0.0",
+    "googleapis": "^91.0.0",
     "tmp": "^0.2.1",
     "typed-rest-client": "^1.8.6",
     "yaml": "^1.10.0"
@@ -45,7 +45,7 @@
   "devDependencies": {
     "@types/chai": "^4.2.21",
     "@types/js-yaml": "^4.0.3",
-    "@types/lodash": "^4.14.173",
+    "@types/lodash": "^4.14.176",
     "@types/mocha": "^9.0.0",
     "@types/node": "^16.10.1",
     "@types/sinon": "^10.0.4",
