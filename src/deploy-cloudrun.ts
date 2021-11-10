@@ -17,7 +17,7 @@
 import * as core from '@actions/core';
 import * as exec from '@actions/exec';
 import * as toolCache from '@actions/tool-cache';
-import * as setupGcloud from '../setup-google-cloud-sdk/src/';
+import * as setupGcloud from '@google-github-actions/setup-cloud-sdk';
 import path from 'path';
 
 export const GCLOUD_METRICS_ENV_VAR = 'CLOUDSDK_METRICS_ENVIRONMENT';
@@ -215,11 +215,11 @@ export async function run(): Promise<void> {
       if (errOutput) {
         throw new Error(errOutput);
       } else {
-        throw new Error(error);
+        throw new Error(convertUnknown(error));
       }
     }
   } catch (error) {
-    core.setFailed(error.message);
+    core.setFailed(convertUnknown(error));
   }
 }
 
@@ -240,4 +240,11 @@ export function setUrlOutput(output: string): string | undefined {
 
 export function parseFlags(flags: string): RegExpMatchArray {
   return flags.match(/(".*?"|[^"\s=]+)+(?=\s*|\s*$)/g)!; // Split on space or "=" if not in quotes
+}
+
+export function convertUnknown(unknown: any): string {
+  if (unknown instanceof Error) {
+    return unknown.message;
+  }
+  return unknown as string;
 }
