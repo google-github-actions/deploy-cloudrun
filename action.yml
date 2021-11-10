@@ -44,7 +44,7 @@ inputs:
 
   cloudsql:
     description: |-
-      Connection name(s) of cloudsql instances.
+      List of connection names of cloudsql instances.
     required: false
 
   secrets:

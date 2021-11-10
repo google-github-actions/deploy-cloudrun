@@ -41,7 +41,7 @@ export async function run(): Promise<void> {
     // Flags
     const envVars = core.getInput('env_vars'); // String of env vars KEY=VALUE,...
     const secrets = core.getInput('secrets'); // String of secrets KEY=VALUE,...
-    const cloudsql = core.getInput('cloudsql'); // String of cloudsql instances...
+    const cloudsqlInstances = core.getInput('cloudsql_instances'); // String of cloudsql instances...
     const region = core.getInput('region') || 'us-central1';
     const source = core.getInput('source'); // Source directory
     const suffix = core.getInput('suffix');
@@ -97,9 +97,9 @@ export async function run(): Promise<void> {
       installBeta = true;
     } else if (metadata) {
       // Deploy service from metadata
-      if (image || name || envVars || secrets) {
+      if (image || name || envVars || secrets || cloudsqlInstances) {
         core.warning(
-          'Metadata YAML provided: ignoring `image`, `service`, `env_vars` and `secrets` inputs.',
+          'Metadata YAML provided: ignoring `image`, `service`, `env_vars`, `secrets` and `cloudsql_instances` inputs.',
         );
       }
       cmd = [
@@ -135,9 +135,8 @@ export async function run(): Promise<void> {
         cmd.push('--update-secrets', secrets);
         installBeta = true;
       }
-      if (cloudsql) {
-        cmd.push('--add-cloudsql-instances', cloudsql);
-        installBeta = true;
+      if (cloudsqlInstances) {
+        cmd.push('--add-cloudsql-instances', cloudsqlInstances);
       }
       if (tag) {
         cmd.push('--tag', tag);
