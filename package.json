@@ -34,7 +34,7 @@
     "@actions/tool-cache": "^1.7.1",
     "@google-github-actions/setup-cloud-sdk": "^0.1.1",
     "@lifeomic/attempt": "^3.0.0",
-    "@types/tmp": "^0.2.1",
+    "@types/tmp": "^0.2.2",
     "fs": "0.0.2",
     "googleapis": "^91.0.0",
     "google-auth-library": "^7.10.1",
