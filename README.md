@@ -165,10 +165,10 @@ one of the methods found in [Configuring Ownership and access to a service accou
 #### Authenticating via Service Account Key JSON
 
 ```yaml
-- id: auth
-  uses: google-github-actions/auth@v0.4.0
+- id: 'auth'
+  uses: 'google-github-actions/auth@v0.4.0'
   with:
-    credentials_json: ${{ secrets.GCP_SA_KEY }}
+    credentials_json: '${{ secrets.GCP_SA_KEY }}'
 
 - name: Deploy to Cloud Run
   uses: google-github-actions/deploy-cloudrun@v0.6.0
@@ -263,10 +263,10 @@ Example using `setup-gcloud`:
 Migrated to `deploy-cloudrun`:
 
 ```YAML
-- id: auth
-  uses: google-github-actions/auth@v0.4.0
+- id: 'auth'
+  uses: 'google-github-actions/auth@v0.4.0'
   with:
-    credentials_json: ${{ secrets.GCP_SA_KEY }}
+    credentials_json: '${{ secrets.GCP_SA_KEY }}'
 
 - name: Deploy to Cloud Run
   uses: google-github-actions/deploy-cloudrun@v0.6.0
