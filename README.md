@@ -149,8 +149,8 @@ one of the methods found in [Configuring Ownership and access to a service accou
 #### Authenticating via Workload Identity Federation
 
 ```yaml
-- id: auth
-  uses: google-github-actions/auth@v0.4.0
+- id: 'auth'
+  uses: 'google-github-actions/auth@v0.4.0'
   with:
     workload_identity_provider: 'projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider'
     service_account: 'my-service-account@my-project.iam.gserviceaccount.com'
