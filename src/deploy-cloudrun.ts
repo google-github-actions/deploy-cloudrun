@@ -51,6 +51,15 @@ export async function run(): Promise<void> {
     const tagTraffic = core.getInput('tag_traffic');
     const flags = core.getInput('flags');
 
+    // Add warning if using credentials
+    if (credentials) {
+      core.warning(
+        '"credentials" input has been deprecated. ' +
+          'Please switch to using google-github-actions/auth which supports both Workload Identity Federation and JSON Key authentication. ' +
+          'For more details, see https://github.com/google-github-actions/deploy-cloudrun#authorization',
+      );
+    }
+
     let installBeta = false; // Flag for installing gcloud beta components
     let cmd;
     // Throw errors if inputs aren't valid
@@ -158,8 +167,10 @@ export async function run(): Promise<void> {
       core.addPath(path.join(toolPath, 'bin'));
     }
 
-    // Authenticate gcloud SDK.
-    if (credentials) await setupGcloud.authenticateGcloudSDK(credentials);
+    // Either credentials or GOOGLE_GHA_CREDS_PATH env var required
+    if (credentials || process.env.GOOGLE_GHA_CREDS_PATH) {
+      await setupGcloud.authenticateGcloudSDK(credentials);
+    }
     const authenticated = await setupGcloud.isAuthenticated();
     if (!authenticated) {
       throw new Error('Error authenticating the Cloud SDK.');
