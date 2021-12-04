@@ -16,7 +16,7 @@
 
 import { expect } from 'chai';
 import { GoogleAuth } from 'google-auth-library';
-import * as exec from '@actions/exec';
+import { exec } from '@actions/exec';
 import * as _ from 'lodash';
 import 'mocha';
 import { run_v1 } from 'googleapis';
@@ -76,7 +76,7 @@ describe('E2E tests', function () {
         '--region',
         'us-central1',
       ];
-      await exec.exec(toolCommand, cmd, options);
+      await exec(toolCommand, cmd, options);
       service = yaml.load(output) as run_v1.Schema$Service;
       if (!service) console.log('no service found');
     }
@@ -106,9 +106,7 @@ describe('E2E tests', function () {
       const actual = containers[0]?.env;
       expect(actual).to.have.lengthOf(expected.length);
       actual.forEach((envVar: run_v1.Schema$EnvVar) => {
-        const found = expected.find((expectedEnvVar) =>
-          _.isEqual(envVar, expectedEnvVar),
-        );
+        const found = expected.find((expectedEnvVar) => _.isEqual(envVar, expectedEnvVar));
         expect(found).to.not.equal(undefined);
       });
     }
@@ -132,10 +130,7 @@ describe('E2E tests', function () {
   it('has the correct secret volumes', function () {
     if (SECRET_VOLUMES && service) {
       const expected = parseEnvVars(SECRET_VOLUMES);
-      const spec: run_v1.Schema$RevisionSpec = _.get(
-        service,
-        'spec.template.spec',
-      );
+      const spec: run_v1.Schema$RevisionSpec = _.get(service, 'spec.template.spec');
       const volumes = spec.volumes;
       const volumeMounts = spec.containers![0]?.volumeMounts;
       expect(volumes).to.have.lengthOf(expected.length);
@@ -161,9 +156,7 @@ describe('E2E tests', function () {
       const actual = _.get(service, 'spec.template.spec');
 
       if (expected.containerConncurrency) {
-        expect(actual.containerConncurrency).to.equal(
-          expected.containerConncurrency,
-        );
+        expect(actual.containerConncurrency).to.equal(expected.containerConncurrency);
       }
       if (expected.timeoutSeconds) {
         expect(actual.timeoutSeconds).to.equal(expected.timeoutSeconds);
@@ -238,7 +231,7 @@ describe('E2E tests', function () {
           '--region',
           'us-central1',
         ];
-        await exec.exec(toolCommand, cmd, options);
+        await exec(toolCommand, cmd, options);
         revisions = JSON.parse(output);
       }
 

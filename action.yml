@@ -89,24 +89,25 @@ inputs:
   no_traffic:
     description: |-
       True to avoid sending traffic to the revision being deployed. Setting
-      this flag assigns any traffic assigned to the LATEST revision to the 
-      specific revision bound to LATEST before the deployment. The effect is 
-      that the revision being deployed will not receive traffic. After a 
-      deployment with this flag the LATEST revision will not receive traffic 
-      on future deployments. 
+      this flag assigns any traffic assigned to the LATEST revision to the
+      specific revision bound to LATEST before the deployment. The effect is
+      that the revision being deployed will not receive traffic. After a
+      deployment with this flag the LATEST revision will not receive traffic
+      on future deployments.
+    default: false
     required: false
 
   revision_traffic:
     description: |-
       Comma separated list of traffic assignments in the form REVISION-NAME=PERCENTAGE.
       REVISION-NAME must be the name for a revision for the service as returned
-      by 'gcloud beta run list revisions'. PERCENTAGE must be an integer 
-      percentage between 0 and 100 inclusive. 
+      by 'gcloud beta run list revisions'. PERCENTAGE must be an integer
+      percentage between 0 and 100 inclusive.
       Ex service-nw9hs=10,service-nw9hs=20 Up to 100 percent of traffic may be
       assigned. If 100 percent of traffic is assigned, the Service traffic is
-      updated as specified. If under 100 percent of traffic is assigned, the 
-      Service traffic is updated as specified for revisions with assignments and 
-      traffic is scaled up or down down proportionally as needed for revision 
+      updated as specified. If under 100 percent of traffic is assigned, the
+      Service traffic is updated as specified for revisions with assignments and
+      traffic is scaled up or down down proportionally as needed for revision
       that are currently serving traffic but that do not have new assignments.
     required: false
 
@@ -116,7 +117,7 @@ inputs:
       TAG must match a traffic tag on a revision of the service. PERCENTAGE must
       be an integer percentage between 0 and 100 inclusive. Up to 100 percent of
       traffic may be assigned. If 100 percent of traffic is assigned, the service
-      traffic is updated as specified. If under 100 percent of traffic is 
+      traffic is updated as specified. If under 100 percent of traffic is
       assigned, the service traffic is updated as specified to the given tags,
       and other traffic is scaled up or down proportionally.
     required: false
@@ -124,7 +125,7 @@ inputs:
   flags:
     description: |-
       Space separated list of other Cloud Run flags, examples can be found:
-      https://cloud.google.com/sdk/gcloud/reference/run/deploy#FLAGS. Ex 
+      https://cloud.google.com/sdk/gcloud/reference/run/deploy#FLAGS. Ex
       --service-account=my-account@project.iam.gserviceaccount.com --concurrency=10
     required: false
 
