@@ -16,7 +16,7 @@
 
 import { expect } from 'chai';
 import { GoogleAuth } from 'google-auth-library';
-import * as exec from '@actions/exec';
+import { exec } from '@actions/exec';
 import * as _ from 'lodash';
 import 'mocha';
 import { run_v1 } from 'googleapis';
@@ -76,7 +76,7 @@ describe('E2E tests', function () {
         '--region',
         'us-central1',
       ];
-      await exec.exec(toolCommand, cmd, options);
+      await exec(toolCommand, cmd, options);
       service = yaml.load(output) as run_v1.Schema$Service;
       if (!service) console.log('no service found');
     }
@@ -231,7 +231,7 @@ describe('E2E tests', function () {
           '--region',
           'us-central1',
         ];
-        await exec.exec(toolCommand, cmd, options);
+        await exec(toolCommand, cmd, options);
         revisions = JSON.parse(output);
       }
 

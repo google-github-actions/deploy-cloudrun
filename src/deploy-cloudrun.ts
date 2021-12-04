@@ -15,7 +15,7 @@
  */
 
 import * as core from '@actions/core';
-import * as exec from '@actions/exec';
+import { exec } from '@actions/exec';
 import * as toolCache from '@actions/tool-cache';
 import * as setupGcloud from '@google-github-actions/setup-cloud-sdk';
 import path from 'path';
@@ -207,7 +207,7 @@ export async function run(): Promise<void> {
     core.info(`running: ${toolCommand} ${cmd.join(' ')}`);
     // Run gcloud cmd.
     try {
-      await exec.exec(toolCommand, cmd, options);
+      await exec(toolCommand, cmd, options);
       // Set url as output.
       setUrlOutput(output + errOutput);
     } catch (error) {
