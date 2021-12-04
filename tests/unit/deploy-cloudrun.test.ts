@@ -35,7 +35,7 @@ const fakeInputs: { [key: string]: string } = {
   tag: '',
   no_traffic: '',
   revision_traffic: '',
-  tag_traffic: ''
+  tag_traffic: '',
 };
 /* eslint-enable @typescript-eslint/camelcase */
 
@@ -43,8 +43,8 @@ function getInputMock(name: string): string {
   return fakeInputs[name];
 }
 
-describe('#run', function() {
-  beforeEach(async function() {
+describe('#run', function () {
+  beforeEach(async function () {
     this.stubs = {
       getInput: sinon.stub(core, 'getInput').callsFake(getInputMock),
       exportVariable: sinon.stub(core, 'exportVariable'),
@@ -60,94 +60,94 @@ describe('#run', function() {
     };
   });
 
-  afterEach(function() {
+  afterEach(function () {
     Object.keys(this.stubs).forEach((k) => this.stubs[k].restore());
   });
 
-  it('sets the project ID if provided', async function() {
+  it('sets the project ID if provided', async function () {
     this.stubs.getInput.withArgs('project_id').returns('my-test-project');
     await run();
     expect(this.stubs.setProject.withArgs('my-test-project').callCount).to.eq(1);
   });
-  it('sets the project ID if GCLOUD_PROJECT is provided', async function() {
+  it('sets the project ID if GCLOUD_PROJECT is provided', async function () {
     this.stubs.getInput.withArgs('project_id').returns('');
     this.stubs.getInput.withArgs('credentials').returns('');
     process.env.GCLOUD_PROJECT = 'my-test-project';
     await run();
     expect(this.stubs.setProject.withArgs('my-test-project').callCount).to.eq(1);
   });
-  it('does not set the project ID if not provided', async function() {
+  it('does not set the project ID if not provided', async function () {
     this.stubs.getInput.withArgs('project_id').returns('');
     this.stubs.getInput.withArgs('credentials').returns('');
     process.env.GCLOUD_PROJECT = '';
     await run();
     expect(this.stubs.setProject.callCount).to.eq(0);
   });
-  it('installs the gcloud SDK if it is not already installed', async function() {
+  it('installs the gcloud SDK if it is not already installed', async function () {
     this.stubs.isInstalled.returns(false);
     await run();
     expect(this.stubs.installGcloudSDK.callCount).to.eq(1);
   });
-  it('uses the cached gcloud SDK if it was already installed', async function() {
+  it('uses the cached gcloud SDK if it was already installed', async function () {
     this.stubs.isInstalled.returns(true);
     await run();
     expect(this.stubs.installGcloudSDK.callCount).to.eq(0);
   });
-  it('authenticates if key is provided', async function() {
+  it('authenticates if key is provided', async function () {
     this.stubs.getInput.withArgs('credentials').returns('key');
     await run();
     expect(this.stubs.authenticateGcloudSDK.withArgs('key').callCount).to.eq(1);
   });
-  it('uses project id from credentials if project_id is not provided', async function() {
+  it('uses project id from credentials if project_id is not provided', async function () {
     this.stubs.getInput.withArgs('credentials').returns('key');
     this.stubs.getInput.withArgs('project_id').returns('');
     await run();
     expect(this.stubs.setProjectWithKey.withArgs('key').callCount).to.eq(1);
   });
-  it('fails if credentials and project_id are not provided', async function() {
+  it('fails if credentials and project_id are not provided', async function () {
     this.stubs.getInput.withArgs('credentials').returns('');
     this.stubs.getInput.withArgs('project_id').returns('');
     process.env.GCLOUD_PROJECT = '';
     await run();
     expect(this.stubs.setFailed.callCount).to.be.at.least(1);
   });
-  it('installs beta components with source', async function() {
+  it('installs beta components with source', async function () {
     this.stubs.getInput.withArgs('source').returns('example-app');
     this.stubs.getInput.withArgs('image').returns('');
     await run();
     expect(this.stubs.installComponent.withArgs('beta').callCount).to.eq(1);
   });
-  it('installs beta components with metadata', async function() {
+  it('installs beta components with metadata', async function () {
     this.stubs.getInput.withArgs('metadata').returns('yaml');
     this.stubs.getInput.withArgs('image').returns('');
     this.stubs.getInput.withArgs('service').returns('');
     await run();
     expect(this.stubs.installComponent.withArgs('beta').callCount).to.eq(1);
   });
-  it('installs beta components with tag', async function() {
+  it('installs beta components with tag', async function () {
     this.stubs.getInput.withArgs('tag').returns('test');
     await run();
     expect(this.stubs.installComponent.withArgs('beta').callCount).to.eq(1);
   });
-  it('installs beta components with tag traffic', async function() {
+  it('installs beta components with tag traffic', async function () {
     this.stubs.getInput.withArgs('tag').returns('test');
     this.stubs.getInput.withArgs('name').returns('service-name');
     await run();
     expect(this.stubs.installComponent.withArgs('beta').callCount).to.eq(1);
   });
-  it('fails if tag traffic and revision traffic are provided', async function() {
+  it('fails if tag traffic and revision traffic are provided', async function () {
     this.stubs.getInput.withArgs('revision_traffic').returns('TEST=100');
     this.stubs.getInput.withArgs('tag_traffic').returns('TEST=100');
     await run();
     expect(this.stubs.setFailed.callCount).to.eq(1);
   });
-  it('fails if name is not provided with tag traffic', async function() {
+  it('fails if name is not provided with tag traffic', async function () {
     this.stubs.getInput.withArgs('tag_traffic').returns('TEST=100');
     this.stubs.getInput.withArgs('name').returns('service-name');
     await run();
     expect(this.stubs.setFailed.callCount).to.eq(1);
   });
-  it('fails if name is not provided with revision traffic', async function() {
+  it('fails if name is not provided with revision traffic', async function () {
     this.stubs.getInput.withArgs('revision_traffic').returns('TEST=100');
     this.stubs.getInput.withArgs('name').returns('service-name');
     await run();
@@ -155,48 +155,48 @@ describe('#run', function() {
   });
 });
 
-describe('#parseFlags', function() {
-  it('parses flags using equals', async function() {
+describe('#parseFlags', function () {
+  it('parses flags using equals', async function () {
     const input = '--concurrency=2 --memory=2Gi';
     const results = parseFlags(input);
-    expect(results).to.eql(["--concurrency", "2", "--memory", "2Gi"])
-  })
-  it('parses flags using spaces', async function() {
+    expect(results).to.eql(['--concurrency', '2', '--memory', '2Gi']);
+  });
+  it('parses flags using spaces', async function () {
     const input = '--concurrency 2 --memory 2Gi';
     const results = parseFlags(input);
-    expect(results).to.eql(["--concurrency", "2", "--memory", "2Gi"])
-  })
-  it('parses flags using combo', async function() {
+    expect(results).to.eql(['--concurrency', '2', '--memory', '2Gi']);
+  });
+  it('parses flags using combo', async function () {
     const input = '--concurrency 2 --memory=2Gi';
     const results = parseFlags(input);
-    expect(results).to.eql(["--concurrency", "2", "--memory", "2Gi"])
-  })
-  it('parses flags using space and quotes combo', async function() {
+    expect(results).to.eql(['--concurrency', '2', '--memory', '2Gi']);
+  });
+  it('parses flags using space and quotes combo', async function () {
     const input = '--concurrency 2 --memory="2 Gi"';
     const results = parseFlags(input);
-    expect(results).to.eql(["--concurrency", "2", "--memory", "\"2 Gi\""])
-  })
-  it('parses flags using space and quotes', async function() {
+    expect(results).to.eql(['--concurrency', '2', '--memory', '"2 Gi"']);
+  });
+  it('parses flags using space and quotes', async function () {
     const input = '--entry-point "node index.js"';
     const results = parseFlags(input);
-    expect(results).to.eql(["--entry-point", "\"node index.js\""])
-  })
-  it('parses flags using equals and quotes', async function() {
+    expect(results).to.eql(['--entry-point', '"node index.js"']);
+  });
+  it('parses flags using equals and quotes', async function () {
     const input = '--entry-point="node index.js"';
     const results = parseFlags(input);
-    expect(results).to.eql(["--entry-point", "\"node index.js\""])
-  })
-})
+    expect(results).to.eql(['--entry-point', '"node index.js"']);
+  });
+});
 
-describe('#setUrlOutput', function() {
-  it('correctly parses the URL', function() {
+describe('#setUrlOutput', function () {
+  it('correctly parses the URL', function () {
     const output = `
-    Allow unauthenticated invocations to [action-test] (y/N)?  
+    Allow unauthenticated invocations to [action-test] (y/N)?
     Deploying container to Cloud Run service [action-test] in project [PROJECT] region [us-central1]
-    ✓ Deploying new service... Done.                                                                                                      
-    ✓ Creating Revision...                                                                                                              
-    ✓ Routing traffic...                                                                                                                
-    Done.                                                                                                                                 
+    ✓ Deploying new service... Done.
+    ✓ Creating Revision...
+    ✓ Routing traffic...
+    Done.
     Service [action-test] revision [action-test-00001-guw] has been deployed and is serving 100 percent of traffic.
     Service URL: https://action-test-cy7cdwrvha-uc.a.run.app
     `;
@@ -204,24 +204,22 @@ describe('#setUrlOutput', function() {
     expect(url).to.eq('https://action-test-cy7cdwrvha-uc.a.run.app');
   });
 
-  it('correctly parses 2 URLs', function() {
+  it('correctly parses 2 URLs', function () {
     const output = `
     Deploying container to Cloud Run service [action-test] in project [PROJECT] region [us-central1]
-    ✓ Deploying... Done.                                                                                                                                                                                                                                                           
-    ✓ Creating Revision...                                                                                                                                                                                                                                                       
-    ✓ Routing traffic...                                                                                                                                                                                                                                                         
-    Done.                                                                                                                                                                                                                                                                          
+    ✓ Deploying... Done.
+    ✓ Creating Revision...
+    ✓ Routing traffic...
+    Done.
     Service [action-test] revision [action-test-00002-gaw] has been deployed and is serving 100 percent of traffic.
     Service URL: https://action-test-cy7cdwrvha-uc.a.run.app
     The revision can be reached directly at https://actions-tag---action-test-cy7cdwrvha-uc.a.run.app
     `;
     const url = setUrlOutput(output);
-    expect(url).to.eq(
-      'https://actions-tag---action-test-cy7cdwrvha-uc.a.run.app',
-    );
+    expect(url).to.eq('https://actions-tag---action-test-cy7cdwrvha-uc.a.run.app');
   });
 
-  it('returns undefined', function() {
+  it('returns undefined', function () {
     const output = `
     Deploying container to Cloud Run service [action-test] in project [PROJECT] region [us-central1]
     ⠹ Deploying... Invalid ENTRYPOINT.
@@ -230,29 +228,27 @@ describe('#setUrlOutput', function() {
     expect(url).to.eq(undefined);
   });
 
-  it('correctly parses updated traffic', function() {
+  it('correctly parses updated traffic', function () {
     const output = `
-    ✓ Updating traffic... Done.                                                                                                                                                                                                                                                    
-    ✓ Routing traffic...                                                                                                                                                                                                                                                         
-    Done.                                                                                                                                                                                                                                                                          
+    ✓ Updating traffic... Done.
+    ✓ Routing traffic...
+    Done.
     URL: https://action-test-cy7cdwrvha-uc.a.run.app
     Traffic:
       100% action-test-00002-gaw
             actions-tag: https://actions-tag---action-test-cy7cdwrvha-uc.a.run.app
     `;
     const url = setUrlOutput(output);
-    expect(url).to.eq(
-      'https://actions-tag---action-test-cy7cdwrvha-uc.a.run.app',
-    );
+    expect(url).to.eq('https://actions-tag---action-test-cy7cdwrvha-uc.a.run.app');
   });
 
-  it('correctly parses metadata updates', function() {
+  it('correctly parses metadata updates', function () {
     const output = `
     Applying new configuration to Cloud Run service [run-full-yaml] in project [PROJECT] region [us-central1]
-    ✓ Deploying new service... Done.                                                                                                                                                                                                                                               
-    ✓ Creating Revision...                                                                                                                                                                                                                                                       
-    ✓ Routing traffic...                                                                                                                                                                                                                                                         
-    Done.                                                                                                                                                                                                                                                                          
+    ✓ Deploying new service... Done.
+    ✓ Creating Revision...
+    ✓ Routing traffic...
+    Done.
     New configuration has been applied to service [run-full-yaml].
     URL: https://run-full-yaml-cy7cdwrvha-uc.a.run.app
     `;

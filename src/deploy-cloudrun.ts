@@ -45,8 +45,7 @@ export async function run(): Promise<void> {
     const source = core.getInput('source'); // Source directory
     const suffix = core.getInput('suffix');
     const tag = core.getInput('tag');
-    const noTraffic =
-      core.getInput('no_traffic').toLowerCase() == 'true' ? true : false;
+    const noTraffic = core.getInput('no_traffic').toLowerCase() == 'true' ? true : false;
     const revTraffic = core.getInput('revision_traffic');
     const tagTraffic = core.getInput('tag_traffic');
     const flags = core.getInput('flags');
@@ -64,9 +63,7 @@ export async function run(): Promise<void> {
     let cmd;
     // Throw errors if inputs aren't valid
     if (revTraffic && tagTraffic) {
-      throw new Error(
-        'Both `revision_traffic` and `tag_traffic` inputs set - Please select one.',
-      );
+      throw new Error('Both `revision_traffic` and `tag_traffic` inputs set - Please select one.');
     }
     if ((revTraffic || tagTraffic) && !name) {
       throw new Error('No service name set.');
@@ -110,16 +107,7 @@ export async function run(): Promise<void> {
           'Metadata YAML provided: ignoring `image`, `service`, `env_vars` and `secrets` inputs.',
         );
       }
-      cmd = [
-        'run',
-        'services',
-        'replace',
-        metadata,
-        '--platform',
-        'managed',
-        '--region',
-        region,
-      ];
+      cmd = ['run', 'services', 'replace', metadata, '--platform', 'managed', '--region', region];
       installBeta = true;
     } else {
       // Deploy service with image specified
@@ -236,9 +224,7 @@ export async function run(): Promise<void> {
 
 export function setUrlOutput(output: string): string | undefined {
   // regex to match Cloud Run URLs
-  const urlMatch = output.match(
-    /https:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.app/g,
-  );
+  const urlMatch = output.match(/https:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.app/g);
   if (!urlMatch) {
     core.warning('Can not find URL.');
     return undefined;
@@ -253,6 +239,7 @@ export function parseFlags(flags: string): RegExpMatchArray {
   return flags.match(/(".*?"|[^"\s=]+)+(?=\s*|\s*$)/g)!; // Split on space or "=" if not in quotes
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function convertUnknown(unknown: any): string {
   if (unknown instanceof Error) {
     return unknown.message;
