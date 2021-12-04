@@ -45,7 +45,7 @@ export async function run(): Promise<void> {
     const source = core.getInput('source'); // Source directory
     const suffix = core.getInput('suffix');
     const tag = core.getInput('tag');
-    const noTraffic = core.getInput('no_traffic').toLowerCase() == 'true' ? true : false;
+    const noTraffic = core.getBooleanInput('no_traffic');
     const revTraffic = core.getInput('revision_traffic');
     const tagTraffic = core.getInput('tag_traffic');
     const flags = core.getInput('flags');

@@ -33,7 +33,6 @@ const fakeInputs: { [key: string]: string } = {
   source: '',
   suffix: '',
   tag: '',
-  no_traffic: '',
   revision_traffic: '',
   tag_traffic: '',
 };
@@ -47,6 +46,7 @@ describe('#run', function () {
   beforeEach(async function () {
     this.stubs = {
       getInput: sinon.stub(core, 'getInput').callsFake(getInputMock),
+      getBooleanInput: sinon.stub(core, 'getBooleanInput').returns(false),
       exportVariable: sinon.stub(core, 'exportVariable'),
       setFailed: sinon.stub(core, 'setFailed'),
       installGcloudSDK: sinon.stub(setupGcloud, 'installGcloudSDK'),
