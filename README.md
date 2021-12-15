@@ -60,7 +60,7 @@ jobs:
         service_account: 'my-service-account@my-project.iam.gserviceaccount.com'
 
     - id: 'deploy'
-      uses: 'google-github-actions/deploy-cloudrun@v0.6.0'
+      uses: 'google-github-actions/deploy-cloudrun@v0'
       with:
         service: 'hello-cloud-run'
         image: 'gcr.io/cloudrun/hello'
@@ -169,7 +169,7 @@ jobs:
         service_account: 'my-service-account@my-project.iam.gserviceaccount.com'
 
     - name: 'Deploy to Cloud Run'
-      uses: 'google-github-actions/deploy-cloudrun@v0.6.0'
+      uses: 'google-github-actions/deploy-cloudrun@v0'
       with:
         image: 'gcr.io/cloudrun/hello'
         service: 'hello-cloud-run'
@@ -187,7 +187,7 @@ jobs:
         credentials_json: '${{ secrets.GCP_SA_KEY }}'
 
     - name: 'Deploy to Cloud Run'
-      uses: 'google-github-actions/deploy-cloudrun@v0.6.0'
+      uses: 'google-github-actions/deploy-cloudrun@v0'
       with:
         image: 'gcr.io/cloudrun/hello'
         service: 'hello-cloud-run'
@@ -205,7 +205,7 @@ jobs:
   job_id:
     steps:
     - name: 'Deploy to Cloud Run'
-      uses: 'google-github-actions/deploy-cloudrun@v0.6.0'
+      uses: 'google-github-actions/deploy-cloudrun@v0'
       with:
         image: 'gcr.io/cloudrun/hello'
         service: 'hello-cloud-run'
@@ -294,7 +294,7 @@ jobs:
         credentials_json: '${{ secrets.GCP_SA_KEY }}'
 
     - name: 'Deploy to Cloud Run'
-      uses: 'google-github-actions/deploy-cloudrun@v0.6.0'
+      uses: 'google-github-actions/deploy-cloudrun@v0'
       with:
         service: '${{ env.SERVICE }}'
         image: 'gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE }}'
