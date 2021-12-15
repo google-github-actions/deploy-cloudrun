@@ -23,10 +23,10 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-        
+
     - name: Deploy to Cloud Run
       id: deploy
-      uses: google-github-actions/deploy-cloudrun@v0.2.0
+      uses: google-github-actions/deploy-cloudrun@v0
       with:
         image: gcr.io/cloudrun/hello
         service: hello-cloud-run
@@ -34,4 +34,3 @@ jobs:
 
     - name: Show Output
       run: echo ${{ steps.deploy.outputs.url }}
-      
