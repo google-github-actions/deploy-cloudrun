@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.7.0](https://www.github.com/google-github-actions/deploy-cloudrun/compare/v0.6.0...v0.7.0) (2021-12-15)
+
+
+### Features
+
+* add WIF support ([#254](https://www.github.com/google-github-actions/deploy-cloudrun/issues/254)) ([1a42a1c](https://www.github.com/google-github-actions/deploy-cloudrun/commit/1a42a1c5d9f8c28a15a9c2baec5767873fed11c7))
+* update all dependencies ([#262](https://www.github.com/google-github-actions/deploy-cloudrun/issues/262)) ([ab7ecb7](https://www.github.com/google-github-actions/deploy-cloudrun/commit/ab7ecb7bee7cfa1c5d9d05d4a511e9ec9a99a117))
+* use library for setup-cloud-sdk ([#232](https://www.github.com/google-github-actions/deploy-cloudrun/issues/232)) ([d419653](https://www.github.com/google-github-actions/deploy-cloudrun/commit/d419653e9e7540752f657d4ae8ce1c992a9454e7))
+
 ## [0.6.0](https://www.github.com/google-github-actions/deploy-cloudrun/compare/v0.5.0...v0.6.0) (2021-05-27)
 
 
