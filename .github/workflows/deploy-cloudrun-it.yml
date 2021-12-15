@@ -376,6 +376,7 @@ jobs:
         project_id: ${{ secrets.DEPLOY_CLOUDRUN_PROJECT_ID }}
 
     - name: Delete services
+      continue-on-error: true
       run: |-
         gcloud config set run/platform managed
         gcloud config set run/region us-central1
