@@ -47,7 +47,7 @@
     "chai": "^4.3.4",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^4.0.0",
-    "eslint": "^8.4.1",
+    "eslint": "^8.6.0",
     "google-auth-library": "^7.10.4",
     "googleapis": "^92.0.0",
     "lodash": "^4.17.21",
