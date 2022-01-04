@@ -21,7 +21,7 @@
       "es6"
     ],
     "outDir": "./dist",
-    "rootDirs": ["./src", "./setup-google-cloud-sdk"],
+    "rootDir": "./src",
     "strict": true,
     "noImplicitAny": true,
     "esModuleInterop": true
