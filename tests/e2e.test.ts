@@ -16,7 +16,7 @@
 
 import { expect } from 'chai';
 import { GoogleAuth } from 'google-auth-library';
-import { exec } from '@actions/exec';
+import { getExecOutput } from '@actions/exec';
 import * as _ from 'lodash';
 import 'mocha';
 import { run_v1 } from 'googleapis';
@@ -52,18 +52,7 @@ describe('E2E tests', function () {
     }
     toolCommand = 'gcloud';
     if (SERVICE) {
-      sleep(10000);
       // get Service yaml
-      let output = '';
-      const stdout = (data: Buffer): void => {
-        output += data.toString();
-      };
-      const options = {
-        listeners: {
-          stdout,
-        },
-        silent: true,
-      };
       let cmd = [
         'run',
         'services',
@@ -76,8 +65,17 @@ describe('E2E tests', function () {
         '--region',
         'us-central1',
       ];
-      await exec(toolCommand, cmd, options);
-      service = yaml.load(output) as run_v1.Schema$Service;
+
+      const options = { silent: true };
+      const commandString = `${toolCommand} ${cmd.join(' ')}`;
+      const output = await getExecOutput(toolCommand, cmd, options);
+      if (output.exitCode !== 0) {
+        const errMsg =
+          output.stderr || `command exited ${output.exitCode}, but stderr had no output`;
+        throw new Error(`failed to execute gcloud command \`${commandString}\`: ${errMsg}`);
+      }
+
+      service = yaml.load(output.stdout) as run_v1.Schema$Service;
       if (!service) console.log('no service found');
     }
   });
@@ -207,17 +205,8 @@ describe('E2E tests', function () {
       let attempt = 0;
       let revisions = [];
       while (attempt < max && revisions.length < parseInt(COUNT)) {
-        await sleep(1000);
-        let output = '';
-        const stdout = (data: Buffer): void => {
-          output += data.toString();
-        };
-        const options = {
-          listeners: {
-            stdout,
-          },
-          silent: true,
-        };
+        await sleep(1000 * attempt);
+
         let cmd = [
           'run',
           'revisions',
@@ -231,8 +220,17 @@ describe('E2E tests', function () {
           '--region',
           'us-central1',
         ];
-        await exec(toolCommand, cmd, options);
-        revisions = JSON.parse(output);
+
+        const options = { silent: true };
+        const commandString = `${toolCommand} ${cmd.join(' ')}`;
+
+        const output = await getExecOutput(toolCommand, cmd, options);
+        if (output.exitCode !== 0) {
+          const errMsg =
+            output.stderr || `command exited ${output.exitCode}, but stderr had no output`;
+          throw new Error(`failed to execute gcloud command \`${commandString}\`: ${errMsg}`);
+        }
+        revisions = JSON.parse(output.stdout);
       }
 
       expect(revisions.length).to.equal(parseInt(COUNT));

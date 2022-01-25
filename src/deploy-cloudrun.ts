@@ -15,7 +15,7 @@
  */
 
 import * as core from '@actions/core';
-import { exec } from '@actions/exec';
+import { getExecOutput } from '@actions/exec';
 import * as toolCache from '@actions/tool-cache';
 import * as setupGcloud from '@google-github-actions/setup-cloud-sdk';
 import path from 'path';
@@ -186,37 +186,20 @@ export async function run(): Promise<void> {
     }
 
     const toolCommand = setupGcloud.getToolCommand();
+    const options = { silent: true };
+    const commandString = `${toolCommand} ${cmd.join(' ')}`;
+    core.info(`Running: ${commandString}`);
 
-    // Get output of gcloud cmd.
-    let output = '';
-    const stdout = (data: Buffer): void => {
-      output += data.toString();
-    };
-    let errOutput = '';
-    const stderr = (data: Buffer): void => {
-      errOutput += data.toString();
-    };
-
-    const options = {
-      listeners: {
-        stderr,
-        stdout,
-      },
-      silent: true,
-    };
-    core.info(`running: ${toolCommand} ${cmd.join(' ')}`);
     // Run gcloud cmd.
-    try {
-      await exec(toolCommand, cmd, options);
-      // Set url as output.
-      setUrlOutput(output + errOutput);
-    } catch (error) {
-      if (errOutput) {
-        throw new Error(errOutput);
-      } else {
-        throw new Error(convertUnknown(error));
-      }
+    const output = await getExecOutput(toolCommand, cmd, options);
+    if (output.exitCode !== 0) {
+      const errMsg = output.stderr || `command exited ${output.exitCode}, but stderr had no output`;
+      throw new Error(`failed to execute gcloud command \`${commandString}\`: ${errMsg}`);
     }
+
+    // gcloud outputs status information to stderr.
+    // TODO: update this to use JSON or YAML machine-readable output instead.
+    setUrlOutput(output.stdout + output.stderr);
   } catch (error) {
     core.setFailed(convertUnknown(error));
   }
