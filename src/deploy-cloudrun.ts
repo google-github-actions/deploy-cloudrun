@@ -24,10 +24,16 @@ import { parseDeployResponse, parseUpdateTrafficResponse } from './output-parser
 export const GCLOUD_METRICS_ENV_VAR = 'CLOUDSDK_METRICS_ENVIRONMENT';
 export const GCLOUD_METRICS_LABEL = 'github-actions-deploy-cloudrun';
 
+/**
+ * DeployCloudRunOutputs are the common GitHub action outputs created by this action
+ */
 export interface DeployCloudRunOutputs {
   url?: string | null | undefined;
 }
 
+/**
+ * ResponseTypes are the gcloud command response formats
+ */
 enum ResponseTypes {
   DEPLOY,
   UPDATE_TRAFFIC,
@@ -119,7 +125,7 @@ export async function run(): Promise<void> {
       // Deploy service from metadata
       if (image || name || envVars || secrets) {
         core.warning(
-          'Metadata YAML provided: ignoring `image`, `service`, `env_vars` and `secrets` ',
+          'Metadata YAML provided: ignoring `image`, `service`, `env_vars` and `secrets` inputs.',
         );
       }
       cmd = ['run', 'services', 'replace', metadata, '--platform', 'managed', '--region', region];

@@ -17,6 +17,9 @@
 import { DeployCloudRunOutputs } from './deploy-cloudrun';
 import { run_v1 } from 'googleapis';
 
+/**
+ * ParseInputs are the input values from GitHub actions used for parsing logic
+ */
 export interface ParseInputs {
   [key: string]: string | boolean;
 }
@@ -42,7 +45,7 @@ interface UpdateTrafficItem {
 
 /**
  * parseUpdateTrafficResponse parses the gcloud command response for update-traffic
- * into and expected return format
+ * into a common DeployCloudRunOutputs object
  *
  * @param stdout
  * @returns DeployCloudRunOutputs
@@ -74,7 +77,7 @@ export function parseUpdateTrafficResponse(stdout: string): DeployCloudRunOutput
 
 /**
  * parseDeployResponse parses the gcloud command response for gcloud run deploy/replace
- * into and expected return format
+ * into a common DeployCloudRunOutputs object
  *
  * @param stdout Standard output from gcloud command
  * @param inputs Action inputs used in parsing logic
