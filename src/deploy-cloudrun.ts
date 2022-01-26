@@ -24,32 +24,13 @@ import { parseDeployResponse, parseUpdateTrafficResponse } from './output-parser
 export const GCLOUD_METRICS_ENV_VAR = 'CLOUDSDK_METRICS_ENVIRONMENT';
 export const GCLOUD_METRICS_LABEL = 'github-actions-deploy-cloudrun';
 
-export enum ResponseTypes {
+export interface DeployCloudRunOutputs {
+  url?: string | null | undefined;
+}
+
+enum ResponseTypes {
   DEPLOY,
   UPDATE_TRAFFIC,
-}
-
-export interface DeployCloudRunInputs {
-  image: string;
-  name: string;
-  metadata: string;
-  credentials: string;
-  projectId: string;
-  gcloudVersion: string;
-  envVars: string;
-  secrets: string;
-  region: string;
-  source: string;
-  suffix: string;
-  tag: string;
-  noTraffic: boolean;
-  revTraffic: string;
-  tagTraffic: string;
-  flags: string;
-}
-
-export interface DeployCloudRunOutputs {
-  url: string | null | undefined;
 }
 
 /**
@@ -60,29 +41,27 @@ export async function run(): Promise<void> {
   core.exportVariable(GCLOUD_METRICS_ENV_VAR, GCLOUD_METRICS_LABEL);
   try {
     // Get inputs
-    const inputs: DeployCloudRunInputs = {
-      // Core inputs
-      image: core.getInput('image'), // Image ie gcr.io/...
-      name: core.getInput('service'), // Service name
-      metadata: core.getInput('metadata'), // YAML file
-      credentials: core.getInput('credentials'), // Service account key
-      projectId: core.getInput('project_id'),
-      gcloudVersion: core.getInput('gcloud_version'),
-      // Flags
-      envVars: core.getInput('env_vars'), // String of env vars KEY=VALUE,...
-      secrets: core.getInput('secrets'), // String of secrets KEY=VALUE,...
-      region: core.getInput('region') || 'us-central1',
-      source: core.getInput('source'), // Source directory
-      suffix: core.getInput('suffix'),
-      tag: core.getInput('tag'),
-      noTraffic: core.getBooleanInput('no_traffic'),
-      revTraffic: core.getInput('revision_traffic'),
-      tagTraffic: core.getInput('tag_traffic'),
-      flags: core.getInput('flags'),
-    };
+    // Core inputs
+    const image = core.getInput('image'); // Image ie gcr.io/...
+    const name = core.getInput('service'); // Service name
+    const metadata = core.getInput('metadata'); // YAML file
+    const credentials = core.getInput('credentials'); // Service account key
+    let projectId = core.getInput('project_id');
+    let gcloudVersion = core.getInput('gcloud_version');
+    // Flags
+    const envVars = core.getInput('env_vars'); // String of env vars KEY=VALUE,...
+    const secrets = core.getInput('secrets'); // String of secrets KEY=VALUE,...
+    const region = core.getInput('region') || 'us-central1';
+    const source = core.getInput('source'); // Source directory
+    const suffix = core.getInput('suffix');
+    const tag = core.getInput('tag');
+    const noTraffic = core.getBooleanInput('no_traffic');
+    const revTraffic = core.getInput('revision_traffic');
+    const tagTraffic = core.getInput('tag_traffic');
+    const flags = core.getInput('flags');
 
     // Add warning if using credentials
-    if (inputs.credentials) {
+    if (credentials) {
       core.warning(
         '"credentials" input has been deprecated. ' +
           'Please switch to using google-github-actions/auth which supports both Workload Identity Federation and JSON Key authentication. ' +
@@ -95,15 +74,15 @@ export async function run(): Promise<void> {
     let cmd;
 
     // Throw errors if inputs aren't valid
-    if (inputs.revTraffic && inputs.tagTraffic) {
+    if (revTraffic && tagTraffic) {
       throw new Error('Both `revision_traffic` and `tag_traffic` inputs set - Please select one.');
     }
-    if ((inputs.revTraffic || inputs.tagTraffic) && !inputs.name) {
+    if ((revTraffic || tagTraffic) && !name) {
       throw new Error('No service name set.');
     }
 
     // Find base command
-    if (inputs.revTraffic || inputs.tagTraffic) {
+    if (revTraffic || tagTraffic) {
       // Set response type for output parsing
       responseType = ResponseTypes.UPDATE_TRAFFIC;
 
@@ -112,97 +91,88 @@ export async function run(): Promise<void> {
         'run',
         'services',
         'update-traffic',
-        inputs.name,
+        name,
         '--platform',
         'managed',
         '--region',
-        inputs.region,
+        region,
       ];
       installBeta = true;
-      if (inputs.revTraffic) cmd.push('--to-revisions', inputs.revTraffic);
-      if (inputs.tagTraffic) cmd.push('--to-tags', inputs.tagTraffic);
-    } else if (inputs.source) {
+      if (revTraffic) cmd.push('--to-revisions', revTraffic);
+      if (tagTraffic) cmd.push('--to-tags', tagTraffic);
+    } else if (source) {
       // Deploy service from source
       cmd = [
         'run',
         'deploy',
-        inputs.name,
+        name,
         '--quiet',
         '--platform',
         'managed',
         '--region',
-        inputs.region,
+        region,
         '--source',
-        inputs.source,
+        source,
       ];
       installBeta = true;
-    } else if (inputs.metadata) {
+    } else if (metadata) {
       // Deploy service from metadata
-      if (inputs.image || inputs.name || inputs.envVars || inputs.secrets) {
+      if (image || name || envVars || secrets) {
         core.warning(
-          'Metadata YAML provided: ignoring `image`, `service`, `env_vars` and `secrets` inputs.',
+          'Metadata YAML provided: ignoring `image`, `service`, `env_vars` and `secrets` ',
         );
       }
-      cmd = [
-        'run',
-        'services',
-        'replace',
-        inputs.metadata,
-        '--platform',
-        'managed',
-        '--region',
-        inputs.region,
-      ];
+      cmd = ['run', 'services', 'replace', metadata, '--platform', 'managed', '--region', region];
       installBeta = true;
     } else {
       // Deploy service with image specified
       cmd = [
         'run',
         'deploy',
-        inputs.name,
+        name,
         '--image',
-        inputs.image,
+        image,
         '--quiet',
         '--platform',
         'managed',
         '--region',
-        inputs.region,
+        region,
       ];
     }
-    if (!inputs.metadata) {
+    if (!metadata) {
       // Set optional flags from inputs
-      if (inputs.envVars) cmd.push('--update-env-vars', inputs.envVars);
-      if (inputs.secrets) {
-        cmd.push('--update-secrets', inputs.secrets);
+      if (envVars) cmd.push('--update-env-vars', envVars);
+      if (secrets) {
+        cmd.push('--update-secrets', secrets);
         installBeta = true;
       }
-      if (inputs.tag) {
-        cmd.push('--tag', inputs.tag);
+      if (tag) {
+        cmd.push('--tag', tag);
         installBeta = true;
       }
-      if (inputs.suffix) cmd.push('--revision-suffix', inputs.suffix);
-      if (inputs.noTraffic) cmd.push('--no-traffic');
+      if (suffix) cmd.push('--revision-suffix', suffix);
+      if (noTraffic) cmd.push('--no-traffic');
     }
     // Add optional flags
-    if (inputs.flags) {
-      const flagList = parseFlags(inputs.flags);
+    if (flags) {
+      const flagList = parseFlags(flags);
       if (flagList) cmd = cmd.concat(flagList);
     }
 
     // Install gcloud if not already installed.
-    if (!inputs.gcloudVersion || inputs.gcloudVersion == 'latest') {
-      inputs.gcloudVersion = await setupGcloud.getLatestGcloudSDKVersion();
+    if (!gcloudVersion || gcloudVersion == 'latest') {
+      gcloudVersion = await setupGcloud.getLatestGcloudSDKVersion();
     }
-    if (!setupGcloud.isInstalled(inputs.gcloudVersion)) {
-      await setupGcloud.installGcloudSDK(inputs.gcloudVersion);
+    if (!setupGcloud.isInstalled(gcloudVersion)) {
+      await setupGcloud.installGcloudSDK(gcloudVersion);
     } else {
-      const toolPath = toolCache.find('gcloud', inputs.gcloudVersion);
+      const toolPath = toolCache.find('gcloud', gcloudVersion);
       core.addPath(path.join(toolPath, 'bin'));
     }
 
     // Either credentials or GOOGLE_GHA_CREDS_PATH env var required
-    if (inputs.credentials || process.env.GOOGLE_GHA_CREDS_PATH) {
-      await setupGcloud.authenticateGcloudSDK(inputs.credentials);
+    if (credentials || process.env.GOOGLE_GHA_CREDS_PATH) {
+      await setupGcloud.authenticateGcloudSDK(credentials);
     }
     const authenticated = await setupGcloud.isAuthenticated();
     if (!authenticated) {
@@ -210,10 +180,10 @@ export async function run(): Promise<void> {
     }
 
     // set PROJECT ID
-    if (inputs.projectId) {
-      await setupGcloud.setProject(inputs.projectId);
-    } else if (inputs.credentials) {
-      inputs.projectId = await setupGcloud.setProjectWithKey(inputs.credentials);
+    if (projectId) {
+      await setupGcloud.setProject(projectId);
+    } else if (credentials) {
+      projectId = await setupGcloud.setProjectWithKey(credentials);
     } else if (process.env.GCLOUD_PROJECT) {
       await setupGcloud.setProject(process.env.GCLOUD_PROJECT);
     }
@@ -246,14 +216,14 @@ export async function run(): Promise<void> {
     }
 
     // Map outputs by response type
-    let outputs;
+    let outputs: DeployCloudRunOutputs = {};
     try {
       switch (responseType) {
         case ResponseTypes.UPDATE_TRAFFIC:
-          outputs = parseUpdateTrafficResponse(inputs, output.stdout);
+          outputs = parseUpdateTrafficResponse(output.stdout);
           break;
         default:
-          outputs = parseDeployResponse(inputs, output.stdout);
+          outputs = parseDeployResponse(output.stdout, { tag });
           break;
       }
     } catch (e) {

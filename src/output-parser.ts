@@ -14,10 +14,17 @@
  * limitations under the License.
  */
 
-import { DeployCloudRunInputs, DeployCloudRunOutputs } from './deploy-cloudrun';
+import { DeployCloudRunOutputs } from './deploy-cloudrun';
 import { run_v1 } from 'googleapis';
 
-export interface UpdateTrafficItem {
+export interface ParseInputs {
+  [key: string]: string | boolean;
+}
+
+/**
+ * UpdateTrafficItem is the response type for the gcloud run services update-traffic command
+ */
+interface UpdateTrafficItem {
   displayPercent: string;
   displayRevisionId: string;
   displayTags: string;
@@ -33,12 +40,19 @@ export interface UpdateTrafficItem {
   urls: string[];
 }
 
-export function parseUpdateTrafficResponse(inputs: DeployCloudRunInputs, stdout: string) {
+/**
+ * parseUpdateTrafficResponse parses the gcloud command response for update-traffic
+ * into and expected return format
+ *
+ * @param stdout
+ * @returns DeployCloudRunOutputs
+ */
+export function parseUpdateTrafficResponse(stdout: string): DeployCloudRunOutputs {
   const outputJSON: UpdateTrafficItem[] = JSON.parse(stdout);
 
   // Validate response
-  if (!outputJSON.length) {
-    throw new Error(`command response is empty: ${stdout}`);
+  if (!outputJSON?.length) {
+    throw new Error(`gcloud response is empty: ${stdout}`);
   }
 
   // Default to service url
@@ -46,12 +60,11 @@ export function parseUpdateTrafficResponse(inputs: DeployCloudRunInputs, stdout:
   let url = responseItem?.serviceUrl;
 
   // Maintain current logic to use first tag URL if present
-  const tagUrls: string[] = outputJSON
-    .map((item) => item.urls)
-    .reduce((accum, urls) => [...accum, ...urls], []);
-
-  if (tagUrls.length) {
-    url = tagUrls[0];
+  for (const item of outputJSON) {
+    if (item?.urls?.length) {
+      url = item.urls[0];
+      break;
+    }
   }
 
   const outputs: DeployCloudRunOutputs = { url };
@@ -59,12 +72,20 @@ export function parseUpdateTrafficResponse(inputs: DeployCloudRunInputs, stdout:
   return outputs;
 }
 
-export function parseDeployResponse(inputs: DeployCloudRunInputs, stdout: string) {
+/**
+ * parseDeployResponse parses the gcloud command response for gcloud run deploy/replace
+ * into and expected return format
+ *
+ * @param stdout Standard output from gcloud command
+ * @param inputs Action inputs used in parsing logic
+ * @returns DeployCloudRunOutputs
+ */
+export function parseDeployResponse(stdout: string, inputs: ParseInputs): DeployCloudRunOutputs {
   const outputJSON: run_v1.Schema$Service = JSON.parse(stdout);
 
   // Validate response
   if (!outputJSON?.status?.url) {
-    throw new Error(`invalid command response: ${stdout}`);
+    throw new Error(`gcloud response is missing url: ${stdout}`);
   }
 
   // Set outputs
@@ -73,7 +94,7 @@ export function parseDeployResponse(inputs: DeployCloudRunInputs, stdout: string
   };
 
   // Maintain current logic to use tag url if provided
-  if (inputs.tag) {
+  if (inputs?.tag) {
     const tagInfo = outputJSON?.status?.traffic?.find((t) => t.tag === inputs.tag);
     if (tagInfo) {
       outputs.url = tagInfo.url;
