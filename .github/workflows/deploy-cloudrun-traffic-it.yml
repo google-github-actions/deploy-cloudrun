@@ -41,6 +41,7 @@ jobs:
       run: npm run e2e-tests
       env:
         URL: ${{ steps.deploy_1.outputs.url }}
+        PROJECT_ID: ${{ secrets.DEPLOY_CLOUDRUN_PROJECT_ID }}
         SERVICE: ${{ steps.service.outputs.service }}
 
     - name: Update Service with env vars
@@ -57,6 +58,7 @@ jobs:
       run: npm run e2e-tests
       env:
         URL: ${{ steps.deploy_2.outputs.url }}
+        PROJECT_ID: ${{ secrets.DEPLOY_CLOUDRUN_PROJECT_ID }}
         SERVICE: ${{ steps.service.outputs.service }}
         ENV: TEST_ENV=TEST_VAR
         PARAMS: "{\"cpu\": 2,\"memory\": \"1Gi\", \"containerConcurrency\": 20}"
@@ -96,6 +98,7 @@ jobs:
       run: npm run e2e-tests
       env:
         URL: ${{ steps.deploy_1.outputs.url }}
+        PROJECT_ID: ${{ secrets.DEPLOY_CLOUDRUN_PROJECT_ID }}
         SERVICE: ${{ steps.service.outputs.service }}
         REVISION: ${{ steps.service.outputs.service }}-002
 
@@ -135,6 +138,7 @@ jobs:
       run: npm run e2e-tests
       env:
         URL: ${{ steps.deploy_1.outputs.url }}
+        PROJECT_ID: ${{ secrets.DEPLOY_CLOUDRUN_PROJECT_ID }}
         SERVICE: ${{ steps.service.outputs.service }}
         TAG: test-tag
 
@@ -159,6 +163,7 @@ jobs:
       run: npm run e2e-tests
       env:
         URL: ${{ steps.traffic_1.outputs.url }}
+        PROJECT_ID: ${{ secrets.DEPLOY_CLOUDRUN_PROJECT_ID }}
         SERVICE: ${{ steps.service.outputs.service }}
         TAG: test-tag
         TRAFFIC: 100
@@ -175,6 +180,7 @@ jobs:
       run: npm run e2e-tests
       env:
         URL: ${{ steps.traffic_2.outputs.url }}
+        PROJECT_ID: ${{ secrets.DEPLOY_CLOUDRUN_PROJECT_ID }}
         SERVICE: ${{ steps.service.outputs.service }}
         TAG: test-tag
         TRAFFIC: 80
@@ -193,6 +199,7 @@ jobs:
       run: npm run e2e-tests
       env:
         URL: ${{ steps.deploy_3.outputs.url }}
+        PROJECT_ID: ${{ secrets.DEPLOY_CLOUDRUN_PROJECT_ID }}
         SERVICE: ${{ steps.service.outputs.service }}
         TAG: test-tag
         TRAFFIC: 80

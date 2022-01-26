@@ -17,11 +17,11 @@
 import 'mocha';
 import * as sinon from 'sinon';
 import * as core from '@actions/core';
+import * as exec from '@actions/exec';
 import * as setupGcloud from '@google-github-actions/setup-cloud-sdk';
 import { expect } from 'chai';
 import { run, parseFlags } from '../../src/deploy-cloudrun';
 
-/* eslint-disable @typescript-eslint/camelcase */
 // These are mock data for github actions inputs, where camel case is expected.
 const fakeInputs: { [key: string]: string } = {
   image: 'gcr.io/cloudrun/hello',
@@ -36,7 +36,6 @@ const fakeInputs: { [key: string]: string } = {
   revision_traffic: '',
   tag_traffic: '',
 };
-/* eslint-enable @typescript-eslint/camelcase */
 
 function getInputMock(name: string): string {
   return fakeInputs[name];
@@ -54,10 +53,11 @@ describe('#deploy-cloudrun', function () {
         authenticateGcloudSDK: sinon.stub(setupGcloud, 'authenticateGcloudSDK'),
         isAuthenticated: sinon.stub(setupGcloud, 'isAuthenticated').resolves(true),
         isInstalled: sinon.stub(setupGcloud, 'isInstalled').returns(false),
-        setProject: sinon.stub(setupGcloud, 'setProject'),
-        setProjectWithKey: sinon.stub(setupGcloud, 'setProjectWithKey'),
+        parseServiceAccountKey: sinon.stub(setupGcloud, 'parseServiceAccountKey'),
         isProjectIdSet: sinon.stub(setupGcloud, 'isProjectIdSet').resolves(true),
         installComponent: sinon.stub(setupGcloud, 'installComponent'),
+
+        getExecOutput: sinon.stub(exec, 'getExecOutput'),
       };
     });
 
@@ -68,21 +68,22 @@ describe('#deploy-cloudrun', function () {
     it('sets the project ID if provided', async function () {
       this.stubs.getInput.withArgs('project_id').returns('my-test-project');
       await run();
-      expect(this.stubs.setProject.withArgs('my-test-project').callCount).to.eq(1);
+
+      const call = this.stubs.getExecOutput.getCall(0);
+      expect(call).to.be;
+      const args = call.args[1];
+      expect(args).to.include.members(['--project', 'my-test-project']);
     });
     it('sets the project ID if GCLOUD_PROJECT is provided', async function () {
       this.stubs.getInput.withArgs('project_id').returns('');
       this.stubs.getInput.withArgs('credentials').returns('');
       process.env.GCLOUD_PROJECT = 'my-test-project';
       await run();
-      expect(this.stubs.setProject.withArgs('my-test-project').callCount).to.eq(1);
-    });
-    it('does not set the project ID if not provided', async function () {
-      this.stubs.getInput.withArgs('project_id').returns('');
-      this.stubs.getInput.withArgs('credentials').returns('');
-      process.env.GCLOUD_PROJECT = '';
-      await run();
-      expect(this.stubs.setProject.callCount).to.eq(0);
+
+      const call = this.stubs.getExecOutput.getCall(0);
+      expect(call).to.be;
+      const args = call.args[1];
+      expect(args).to.include.members(['--project', 'my-test-project']);
     });
     it('installs the gcloud SDK if it is not already installed', async function () {
       this.stubs.isInstalled.returns(false);
@@ -103,7 +104,7 @@ describe('#deploy-cloudrun', function () {
       this.stubs.getInput.withArgs('credentials').returns('key');
       this.stubs.getInput.withArgs('project_id').returns('');
       await run();
-      expect(this.stubs.setProjectWithKey.withArgs('key').callCount).to.eq(1);
+      expect(this.stubs.parseServiceAccountKey.withArgs('key').callCount).to.eq(1);
     });
     it('fails if credentials and project_id are not provided', async function () {
       this.stubs.getInput.withArgs('credentials').returns('');

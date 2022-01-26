@@ -28,6 +28,7 @@ function sleep(ms: number) {
 
 describe('E2E tests', function () {
   const {
+    PROJECT_ID,
     PARAMS,
     ANNOTATIONS,
     LABELS,
@@ -51,13 +52,15 @@ describe('E2E tests', function () {
       throw Error('URL not found.');
     }
     toolCommand = 'gcloud';
-    if (SERVICE) {
+    if (SERVICE && PROJECT_ID) {
       // get Service yaml
-      let cmd = [
+      const cmd = [
         'run',
         'services',
         'describe',
         SERVICE,
+        '--project',
+        PROJECT_ID,
         '--format',
         'yaml',
         '--platform',
@@ -200,17 +203,18 @@ describe('E2E tests', function () {
   });
 
   it('has the correct revision count', async function () {
-    if (COUNT && SERVICE) {
+    if (COUNT && SERVICE && PROJECT_ID) {
       const max = 3;
-      let attempt = 0;
+      const attempt = 0;
       let revisions = [];
       while (attempt < max && revisions.length < parseInt(COUNT)) {
         await sleep(1000 * attempt);
-
-        let cmd = [
+        const cmd = [
           'run',
           'revisions',
           'list',
+          '--project',
+          PROJECT_ID,
           '--service',
           SERVICE,
           '--format',
