@@ -234,13 +234,14 @@ describe('#output-parser', function () {
   describe('#parseDeployResponse', function () {
     const cases: {
       name: string;
-      input: { inputs?: ParseInputs; stdout: string };
+      input: { inputs: ParseInputs; stdout: string };
       error?: boolean;
       expected: string;
     }[] = [
       {
         name: 'parses deploy outputs',
         input: {
+          inputs: {},
           stdout: `
             {
               "apiVersion": "serving.knative.dev/v1",
@@ -474,6 +475,7 @@ describe('#output-parser', function () {
         name: 'handles invalid stdout',
         error: true,
         input: {
+          inputs: {},
           stdout: `{}`,
         },
         expected: 'gcloud response is missing url: {}',
