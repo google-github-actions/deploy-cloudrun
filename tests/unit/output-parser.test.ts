@@ -22,8 +22,8 @@ import {
   ParseInputs,
 } from '../../src/output-parser';
 
-describe('#output-parser', function () {
-  describe('#parseUpdateTrafficResponse', function () {
+describe('#output-parser', () => {
+  describe('#parseUpdateTrafficResponse', () => {
     const cases: {
       name: string;
       input: { stdout: string };
@@ -218,7 +218,7 @@ describe('#output-parser', function () {
     ];
 
     cases.forEach((tc) => {
-      it(tc.name, function () {
+      it(tc.name, async () => {
         if (tc?.error) {
           expect(() => {
             parseUpdateTrafficResponse(tc.input.stdout);
@@ -231,7 +231,7 @@ describe('#output-parser', function () {
     });
   });
 
-  describe('#parseDeployResponse', function () {
+  describe('#parseDeployResponse', () => {
     const cases: {
       name: string;
       input: { inputs: ParseInputs; stdout: string };
@@ -482,8 +482,8 @@ describe('#output-parser', function () {
       },
     ];
 
-    cases.forEach((tc: any) => {
-      it(tc.name, function () {
+    cases.forEach((tc) => {
+      it(tc.name, async () => {
         if (tc?.error) {
           expect(() => {
             parseDeployResponse(tc.input.stdout, tc.input.inputs);
