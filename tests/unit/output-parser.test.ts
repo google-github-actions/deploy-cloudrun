@@ -480,7 +480,7 @@ describe('#output-parser', function () {
       },
     ];
 
-    cases.forEach((tc: any) => {
+    cases.forEach((tc) => {
       it(tc.name, function () {
         if (tc?.error) {
           expect(() => {

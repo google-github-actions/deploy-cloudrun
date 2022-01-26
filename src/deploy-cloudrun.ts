@@ -186,19 +186,15 @@ export async function run(): Promise<void> {
     }
 
     // set PROJECT ID
-    if (projectId) {
-      await setupGcloud.setProject(projectId);
-    } else if (credentials) {
-      projectId = await setupGcloud.setProjectWithKey(credentials);
-    } else if (process.env.GCLOUD_PROJECT) {
-      await setupGcloud.setProject(process.env.GCLOUD_PROJECT);
+    if (!projectId) {
+      if (credentials) {
+        const key = setupGcloud.parseServiceAccountKey(credentials);
+        projectId = key.project_id;
+      } else if (process.env.GCLOUD_PROJECT) {
+        projectId = process.env.GCLOUD_PROJECT;
+      }
     }
-    // Fail if no Project Id is provided if not already set.
-    const projectIdSet = await setupGcloud.isProjectIdSet();
-    if (!projectIdSet)
-      throw new Error(
-        'No project Id provided. Ensure you have set either the project_id or credentials fields.',
-      );
+    if (projectId) cmd.push('--project', projectId);
 
     // Install beta components if needed and prepend the beta command
     if (installBeta) {
