@@ -21,19 +21,19 @@ import {
   parseDeployResponse,
   ParseInputs,
 } from '../../src/output-parser';
+import { DeployCloudRunOutputs } from '../../src/deploy-cloudrun';
 
 describe('#output-parser', () => {
   describe('#parseUpdateTrafficResponse', () => {
     const cases: {
       name: string;
-      input: { stdout: string };
-      error?: boolean;
-      expected: string;
+      stdout: string | undefined;
+      error?: string;
+      expected?: DeployCloudRunOutputs;
     }[] = [
       {
         name: 'parses update traffic outputs',
-        input: {
-          stdout: `
+        stdout: `
             [
               {
                 "displayPercent": "100%",
@@ -52,13 +52,11 @@ describe('#output-parser', () => {
               }
             ]
           `,
-        },
-        expected: 'https://test-basic-yaml-4goqgbaxqq-uc.a.run.app',
+        expected: { url: 'https://test-basic-yaml-4goqgbaxqq-uc.a.run.app' },
       },
       {
         name: 'parses update traffic with single tag',
-        input: {
-          stdout: `
+        stdout: `
             [
               {
                 "displayPercent": "0%",
@@ -101,13 +99,11 @@ describe('#output-parser', () => {
               }
             ]
           `,
-        },
-        expected: 'https://my-tag-1---test-basic-yaml-4goqgbaxqq-uc.a.run.app',
+        expected: { url: 'https://my-tag-1---test-basic-yaml-4goqgbaxqq-uc.a.run.app' },
       },
       {
         name: 'parses update traffic with multiple tags',
-        input: {
-          stdout: `
+        stdout: `
           [
             {
               "displayPercent": "20%",
@@ -204,28 +200,39 @@ describe('#output-parser', () => {
             }
           ]
         `,
-        },
-        expected: 'https://my-tag-1---test-basic-yaml-4goqgbaxqq-uc.a.run.app',
+        expected: { url: 'https://my-tag-1---test-basic-yaml-4goqgbaxqq-uc.a.run.app' },
       },
       {
         name: 'handles empty stdout',
-        error: true,
-        input: {
-          stdout: '[]',
-        },
-        expected: 'gcloud response is empty: []',
+        stdout: '',
+        error: 'failed to parse deploy response: invalid input received, stdout: ',
+      },
+      {
+        name: 'handles empty array from stdout',
+        stdout: '[]',
+        error: 'failed to parse deploy response: invalid input received, stdout: []',
+      },
+      {
+        name: 'handles empty object from stdout',
+        stdout: '{}',
+        error: 'failed to parse deploy response: invalid input received, stdout: {}',
+      },
+      {
+        name: 'handles invalid text from stdout',
+        stdout: 'Some text to fail',
+        error:
+          'failed to parse deploy response: unexpected token S in JSON at position 0, stdout: Some text to fail',
       },
     ];
 
     cases.forEach((tc) => {
-      it(tc.name, async () => {
-        if (tc?.error) {
+      it(tc.name, () => {
+        if (tc.error) {
           expect(() => {
-            parseUpdateTrafficResponse(tc.input.stdout);
-          }).to.throw(tc.expected);
+            parseUpdateTrafficResponse(tc.stdout);
+          }).to.throw(tc.error);
         } else {
-          const { url } = parseUpdateTrafficResponse(tc.input.stdout);
-          expect(url).to.eq(tc.expected);
+          expect(parseUpdateTrafficResponse(tc.stdout)).to.eql(tc.expected);
         }
       });
     });
@@ -234,15 +241,14 @@ describe('#output-parser', () => {
   describe('#parseDeployResponse', () => {
     const cases: {
       name: string;
-      input: { inputs: ParseInputs; stdout: string };
-      error?: boolean;
-      expected: string;
+      stdout?: string | undefined;
+      parseInputs?: ParseInputs | undefined;
+      error?: string;
+      expected?: DeployCloudRunOutputs;
     }[] = [
       {
         name: 'parses deploy outputs',
-        input: {
-          inputs: {},
-          stdout: `
+        stdout: `
             {
               "apiVersion": "serving.knative.dev/v1",
               "kind": "Service",
@@ -343,14 +349,12 @@ describe('#output-parser', () => {
               }
             }
           `,
-        },
-        expected: 'https://action-test-cy7cdwrvha-uc.a.run.app',
+        expected: { url: 'https://action-test-cy7cdwrvha-uc.a.run.app' },
       },
       {
-        name: 'parses deploy outputs with tag',
-        input: {
-          inputs: { tag: 'test' },
-          stdout: `
+        name: 'parses deploy outputs with tag input',
+        parseInputs: { tag: 'test' },
+        stdout: `
             {
               "apiVersion": "serving.knative.dev/v1",
               "kind": "Service",
@@ -468,29 +472,41 @@ describe('#output-parser', () => {
               }
             }
           `,
-        },
-        expected: 'https://test---hello-4goqgbaxqq-uc.a.run.app',
+        expected: { url: 'https://test---hello-4goqgbaxqq-uc.a.run.app' },
       },
       {
-        name: 'handles invalid stdout',
-        error: true,
-        input: {
-          inputs: {},
-          stdout: `{}`,
-        },
-        expected: 'gcloud response is missing url: {}',
+        name: 'handles empty stdout',
+        stdout: ``,
+        error:
+          'failed to parse deploy response: invalid input received, stdout: undefined, inputs: undefined',
+      },
+      {
+        name: 'handles empty array from stdout',
+        stdout: `[]`,
+        error:
+          'failed to parse deploy response: invalid input received, stdout: [], inputs: undefined',
+      },
+      {
+        name: 'handles empty object from stdout',
+        stdout: `{}`,
+        error:
+          'failed to parse deploy response: invalid input received, stdout: {}, inputs: undefined',
+      },
+      {
+        name: 'handles invalid text from stdout',
+        stdout: `Some text to fail`,
+        error: `failed to parse deploy response: unexpected token S in JSON at position 0, stdout: Some text to fail, inputs: undefined`,
       },
     ];
 
     cases.forEach((tc) => {
-      it(tc.name, async () => {
-        if (tc?.error) {
+      it(tc.name, () => {
+        if (tc.error) {
           expect(() => {
-            parseDeployResponse(tc.input.stdout, tc.input.inputs);
-          }).to.throw(tc.expected);
+            parseDeployResponse(tc.stdout, tc.parseInputs);
+          }).to.throw(tc.error);
         } else {
-          const { url } = parseDeployResponse(tc.input.stdout, tc.input.inputs);
-          expect(url).to.eq(tc.expected);
+          expect(parseDeployResponse(tc.stdout, tc.parseInputs)).to.eql(tc.expected);
         }
       });
     });
