@@ -16,6 +16,7 @@
 
 import { DeployCloudRunOutputs } from './deploy-cloudrun';
 import { run_v1 } from 'googleapis';
+import { errorMessage, presence } from '@google-github-actions/actions-utils';
 
 /**
  * ParseInputs are the input values from GitHub actions used for parsing logic
@@ -50,29 +51,34 @@ interface UpdateTrafficItem {
  * @param stdout
  * @returns DeployCloudRunOutputs
  */
-export function parseUpdateTrafficResponse(stdout: string): DeployCloudRunOutputs {
-  const outputJSON: UpdateTrafficItem[] = JSON.parse(stdout);
-
-  // Validate response
-  if (!outputJSON?.length) {
-    throw new Error(`gcloud response is empty: ${stdout}`);
-  }
-
-  // Default to service url
-  const responseItem = outputJSON[0];
-  let url = responseItem?.serviceUrl;
-
-  // Maintain current logic to use first tag URL if present
-  for (const item of outputJSON) {
-    if (item?.urls?.length) {
-      url = item.urls[0];
-      break;
+export function parseUpdateTrafficResponse(stdout: string | undefined): DeployCloudRunOutputs {
+  try {
+    stdout = presence(stdout);
+    if (!stdout || stdout === '{}' || stdout === '[]') {
+      throw new Error(`invalid input received`);
     }
+
+    const outputJSON: UpdateTrafficItem[] = JSON.parse(stdout);
+
+    // Default to service url
+    const responseItem = outputJSON[0];
+    let url = responseItem?.serviceUrl;
+
+    // Maintain current logic to use first tag URL if present
+    for (const item of outputJSON) {
+      if (item?.urls?.length) {
+        url = item.urls[0];
+        break;
+      }
+    }
+
+    const outputs: DeployCloudRunOutputs = { url };
+
+    return outputs;
+  } catch (err) {
+    const msg = errorMessage(err);
+    throw new Error(`failed to parse deploy response: ${msg}, stdout: ${stdout}`);
   }
-
-  const outputs: DeployCloudRunOutputs = { url };
-
-  return outputs;
 }
 
 /**
@@ -83,26 +89,38 @@ export function parseUpdateTrafficResponse(stdout: string): DeployCloudRunOutput
  * @param inputs Action inputs used in parsing logic
  * @returns DeployCloudRunOutputs
  */
-export function parseDeployResponse(stdout: string, inputs: ParseInputs): DeployCloudRunOutputs {
-  const outputJSON: run_v1.Schema$Service = JSON.parse(stdout);
-
-  // Validate response
-  if (!outputJSON?.status?.url) {
-    throw new Error(`gcloud response is missing url: ${stdout}`);
-  }
-
-  // Set outputs
-  const outputs: DeployCloudRunOutputs = {
-    url: outputJSON?.status?.url,
-  };
-
-  // Maintain current logic to use tag url if provided
-  if (inputs?.tag) {
-    const tagInfo = outputJSON?.status?.traffic?.find((t) => t.tag === inputs.tag);
-    if (tagInfo) {
-      outputs.url = tagInfo.url;
+export function parseDeployResponse(
+  stdout: string | undefined,
+  inputs: ParseInputs | undefined,
+): DeployCloudRunOutputs {
+  try {
+    stdout = presence(stdout);
+    if (!stdout || stdout === '{}' || stdout === '[]') {
+      throw new Error(`invalid input received`);
     }
-  }
 
-  return outputs;
+    const outputJSON: run_v1.Schema$Service = JSON.parse(stdout);
+
+    // Set outputs
+    const outputs: DeployCloudRunOutputs = {
+      url: outputJSON?.status?.url,
+    };
+
+    // Maintain current logic to use tag url if provided
+    if (inputs?.tag) {
+      const tagInfo = outputJSON?.status?.traffic?.find((t) => t.tag === inputs.tag);
+      if (tagInfo) {
+        outputs.url = tagInfo.url;
+      }
+    }
+
+    return outputs;
+  } catch (err) {
+    const msg = errorMessage(err);
+    throw new Error(
+      `failed to parse deploy response: ${msg}, stdout: ${stdout}, inputs: ${JSON.stringify(
+        inputs,
+      )}`,
+    );
+  }
 }

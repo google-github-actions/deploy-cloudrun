@@ -218,19 +218,10 @@ export async function run(): Promise<void> {
     }
 
     // Map outputs by response type
-    let outputs: DeployCloudRunOutputs = {};
-    try {
-      switch (responseType) {
-        case ResponseTypes.UPDATE_TRAFFIC:
-          outputs = parseUpdateTrafficResponse(output.stdout);
-          break;
-        default:
-          outputs = parseDeployResponse(output.stdout, { tag });
-          break;
-      }
-    } catch (e) {
-      throw new Error(`failed to parse gcloud command output: ${e}`);
-    }
+    const outputs: DeployCloudRunOutputs =
+      responseType === ResponseTypes.UPDATE_TRAFFIC
+        ? parseUpdateTrafficResponse(output.stdout)
+        : parseDeployResponse(output.stdout, { tag });
 
     // Map outputs to GitHub actions output
     setActionOutputs(outputs);
