@@ -205,23 +205,23 @@ describe('#output-parser', () => {
       {
         name: 'handles empty stdout',
         stdout: '',
-        error: 'failed to parse deploy response: invalid input received, stdout: ',
+        error: 'failed to parse update traffic response: invalid input received, stdout: ',
       },
       {
         name: 'handles empty array from stdout',
         stdout: '[]',
-        error: 'failed to parse deploy response: invalid input received, stdout: []',
+        error: 'failed to parse update traffic response: invalid input received, stdout: []',
       },
       {
         name: 'handles empty object from stdout',
         stdout: '{}',
-        error: 'failed to parse deploy response: invalid input received, stdout: {}',
+        error: 'failed to parse update traffic response: invalid input received, stdout: {}',
       },
       {
         name: 'handles invalid text from stdout',
         stdout: 'Some text to fail',
         error:
-          'failed to parse deploy response: unexpected token S in JSON at position 0, stdout: Some text to fail',
+          'failed to parse update traffic response: unexpected token S in JSON at position 0, stdout: Some text to fail',
       },
     ];
 

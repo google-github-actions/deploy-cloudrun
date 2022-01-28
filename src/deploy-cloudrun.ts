@@ -28,7 +28,7 @@ export const GCLOUD_METRICS_LABEL = 'github-actions-deploy-cloudrun';
  * DeployCloudRunOutputs are the common GitHub action outputs created by this action
  */
 export interface DeployCloudRunOutputs {
-  url?: string | null | undefined;
+  url?: string | null | undefined; // Type required to match run_v1.Schema$Service.status.url
 }
 
 /**
@@ -221,7 +221,7 @@ export async function run(): Promise<void> {
     const outputs: DeployCloudRunOutputs =
       responseType === ResponseTypes.UPDATE_TRAFFIC
         ? parseUpdateTrafficResponse(output.stdout)
-        : parseDeployResponse(output.stdout, { tag });
+        : parseDeployResponse(output.stdout, { tag: tag });
 
     // Map outputs to GitHub actions output
     setActionOutputs(outputs);

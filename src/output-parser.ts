@@ -72,12 +72,12 @@ export function parseUpdateTrafficResponse(stdout: string | undefined): DeployCl
       }
     }
 
-    const outputs: DeployCloudRunOutputs = { url };
+    const outputs: DeployCloudRunOutputs = { url: url };
 
     return outputs;
   } catch (err) {
     const msg = errorMessage(err);
-    throw new Error(`failed to parse deploy response: ${msg}, stdout: ${stdout}`);
+    throw new Error(`failed to parse update traffic response: ${msg}, stdout: ${stdout}`);
   }
 }
 
