@@ -42,6 +42,7 @@ jobs:
       run: npm run e2e-tests
       env:
         URL: ${{ steps.deploy_1.outputs.url }}
+        PROJECT_ID: ${{ secrets.DEPLOY_CLOUDRUN_PROJECT_ID }}
         SERVICE: ${{ steps.service.outputs.service }}
         ENV: TEST_ENV=TEST_VAR
 
@@ -58,6 +59,7 @@ jobs:
       run: npm run e2e-tests
       env:
         URL: ${{ steps.deploy_2.outputs.url }}
+        PROJECT_ID: ${{ secrets.DEPLOY_CLOUDRUN_PROJECT_ID }}
         SERVICE: ${{ steps.service.outputs.service }}
         ENV: TEST_ENV=TEST_VAR,TEST_ENV2=TEST_VAR2
         COUNT: 2
@@ -99,6 +101,7 @@ jobs:
       run: npm run e2e-tests
       env:
         URL: ${{ steps.deploy_1.outputs.url }}
+        PROJECT_ID: ${{ secrets.DEPLOY_CLOUDRUN_PROJECT_ID }}
         SERVICE: ${{ steps.service.outputs.service }}
         SECRET_ENV: MY_SECRET=secret_value:latest,MY_SECOND_SECRET=new_value:latest
 
@@ -115,6 +118,7 @@ jobs:
       run: npm run e2e-tests
       env:
         URL: ${{ steps.deploy_2.outputs.url }}
+        PROJECT_ID: ${{ secrets.DEPLOY_CLOUDRUN_PROJECT_ID }}
         SERVICE: ${{ steps.service.outputs.service }}
         SECRET_ENV: MY_SECRET=secret_value:latest,MY_SECOND_SECRET=new_value:latest
         SECRET_VOLUMES: /api/secrets/my-secret=secret_value:latest
@@ -156,6 +160,7 @@ jobs:
       run: npm run e2e-tests
       env:
         URL: ${{ steps.deploy.outputs.url }}
+        PROJECT_ID: ${{ secrets.DEPLOY_CLOUDRUN_PROJECT_ID }}
 
   metadata:
     name: with full YAML metadata
@@ -194,6 +199,7 @@ jobs:
       run: npm run e2e-tests
       env:
         URL: ${{ steps.deploy_1.outputs.url }}
+        PROJECT_ID: ${{ secrets.DEPLOY_CLOUDRUN_PROJECT_ID }}
         SERVICE: ${{ steps.service.outputs.service }}
         PARAMS: "{\"cpu\": 2,\"memory\": \"1Gi\", \"containerConcurrency\": 20}"
         ANNOTATIONS: "{\"run.googleapis.com/cloudsql-instances\": \"test-project:us-central1:my-test-instance\"}"
@@ -211,6 +217,7 @@ jobs:
       run: npm run e2e-tests
       env:
         URL: ${{ steps.deploy_2.outputs.url }}
+        PROJECT_ID: ${{ secrets.DEPLOY_CLOUDRUN_PROJECT_ID }}
         SERVICE: ${{ steps.service.outputs.service }}
         PARAMS: "{\"cpu\": 2,\"memory\": \"1Gi\", \"containerConcurrency\": 20}"
         ANNOTATIONS: "{\"run.googleapis.com/cloudsql-instances\": \"test-project:us-central1:my-test-instance\"}"
@@ -253,6 +260,7 @@ jobs:
       run: npm run e2e-tests
       env:
         URL: ${{ steps.deploy_1.outputs.url }}
+        PROJECT_ID: ${{ secrets.DEPLOY_CLOUDRUN_PROJECT_ID }}
         SERVICE: ${{ steps.service.outputs.service }}
         REVISION: ${{ steps.service.outputs.service }}-001
 
@@ -271,6 +279,7 @@ jobs:
       run: npm run e2e-tests
       env:
         URL: ${{ steps.deploy_2.outputs.url }}
+        PROJECT_ID: ${{ secrets.DEPLOY_CLOUDRUN_PROJECT_ID }}
         SERVICE: ${{ steps.service.outputs.service }}
         REVISION: ${{ steps.service.outputs.service }}-002
         COUNT: 2

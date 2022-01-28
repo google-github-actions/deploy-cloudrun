@@ -15,13 +15,29 @@
  */
 
 import * as core from '@actions/core';
-import { exec } from '@actions/exec';
+import { getExecOutput } from '@actions/exec';
 import * as toolCache from '@actions/tool-cache';
 import * as setupGcloud from '@google-github-actions/setup-cloud-sdk';
 import path from 'path';
+import { parseDeployResponse, parseUpdateTrafficResponse } from './output-parser';
 
 export const GCLOUD_METRICS_ENV_VAR = 'CLOUDSDK_METRICS_ENVIRONMENT';
 export const GCLOUD_METRICS_LABEL = 'github-actions-deploy-cloudrun';
+
+/**
+ * DeployCloudRunOutputs are the common GitHub action outputs created by this action
+ */
+export interface DeployCloudRunOutputs {
+  url?: string | null | undefined; // Type required to match run_v1.Schema$Service.status.url
+}
+
+/**
+ * ResponseTypes are the gcloud command response formats
+ */
+enum ResponseTypes {
+  DEPLOY,
+  UPDATE_TRAFFIC,
+}
 
 /**
  * Executes the main action. It includes the main business logic and is the
@@ -59,8 +75,10 @@ export async function run(): Promise<void> {
       );
     }
 
+    let responseType = ResponseTypes.DEPLOY; // Default response type for output parsing
     let installBeta = false; // Flag for installing gcloud beta components
     let cmd;
+
     // Throw errors if inputs aren't valid
     if (revTraffic && tagTraffic) {
       throw new Error('Both `revision_traffic` and `tag_traffic` inputs set - Please select one.');
@@ -71,6 +89,9 @@ export async function run(): Promise<void> {
 
     // Find base command
     if (revTraffic || tagTraffic) {
+      // Set response type for output parsing
+      responseType = ResponseTypes.UPDATE_TRAFFIC;
+
       // Update traffic
       cmd = [
         'run',
@@ -165,19 +186,15 @@ export async function run(): Promise<void> {
     }
 
     // set PROJECT ID
-    if (projectId) {
-      await setupGcloud.setProject(projectId);
-    } else if (credentials) {
-      projectId = await setupGcloud.setProjectWithKey(credentials);
-    } else if (process.env.GCLOUD_PROJECT) {
-      await setupGcloud.setProject(process.env.GCLOUD_PROJECT);
+    if (!projectId) {
+      if (credentials) {
+        const key = setupGcloud.parseServiceAccountKey(credentials);
+        projectId = key.project_id;
+      } else if (process.env.GCLOUD_PROJECT) {
+        projectId = process.env.GCLOUD_PROJECT;
+      }
     }
-    // Fail if no Project Id is provided if not already set.
-    const projectIdSet = await setupGcloud.isProjectIdSet();
-    if (!projectIdSet)
-      throw new Error(
-        'No project Id provided. Ensure you have set either the project_id or credentials fields.',
-      );
+    if (projectId) cmd.push('--project', projectId);
 
     // Install beta components if needed and prepend the beta command
     if (installBeta) {
@@ -185,54 +202,39 @@ export async function run(): Promise<void> {
       cmd.unshift('beta');
     }
 
+    // Set output format to json
+    cmd.push('--format', 'json');
+
     const toolCommand = setupGcloud.getToolCommand();
+    const options = { silent: true };
+    const commandString = `${toolCommand} ${cmd.join(' ')}`;
+    core.info(`Running: ${commandString}`);
 
-    // Get output of gcloud cmd.
-    let output = '';
-    const stdout = (data: Buffer): void => {
-      output += data.toString();
-    };
-    let errOutput = '';
-    const stderr = (data: Buffer): void => {
-      errOutput += data.toString();
-    };
-
-    const options = {
-      listeners: {
-        stderr,
-        stdout,
-      },
-      silent: true,
-    };
-    core.info(`running: ${toolCommand} ${cmd.join(' ')}`);
     // Run gcloud cmd.
-    try {
-      await exec(toolCommand, cmd, options);
-      // Set url as output.
-      setUrlOutput(output + errOutput);
-    } catch (error) {
-      if (errOutput) {
-        throw new Error(errOutput);
-      } else {
-        throw new Error(convertUnknown(error));
-      }
+    const output = await getExecOutput(toolCommand, cmd, options);
+    if (output.exitCode !== 0) {
+      const errMsg = output.stderr || `command exited ${output.exitCode}, but stderr had no output`;
+      throw new Error(`failed to execute gcloud command \`${commandString}\`: ${errMsg}`);
     }
+
+    // Map outputs by response type
+    const outputs: DeployCloudRunOutputs =
+      responseType === ResponseTypes.UPDATE_TRAFFIC
+        ? parseUpdateTrafficResponse(output.stdout)
+        : parseDeployResponse(output.stdout, { tag: tag });
+
+    // Map outputs to GitHub actions output
+    setActionOutputs(outputs);
   } catch (error) {
     core.setFailed(convertUnknown(error));
   }
 }
 
-export function setUrlOutput(output: string): string | undefined {
-  // regex to match Cloud Run URLs
-  const urlMatch = output.match(/https:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.app/g);
-  if (!urlMatch) {
-    core.warning('Can not find URL.');
-    return undefined;
-  }
-  // Match "tagged" URL or default to service URL
-  const url = urlMatch!.length > 1 ? urlMatch![1] : urlMatch![0];
-  core.setOutput('url', url);
-  return url;
+// Map output response to GitHub Action outputs
+export function setActionOutputs(outputs: DeployCloudRunOutputs): void {
+  Object.keys(outputs).forEach((key: string) => {
+    core.setOutput(key, outputs[key as keyof DeployCloudRunOutputs]);
+  });
 }
 
 export function parseFlags(flags: string): RegExpMatchArray {

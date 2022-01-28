@@ -5,8 +5,8 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "ncc build -m src/index.ts",
-    "lint": "eslint src/ --ext .ts,.tsx",
-    "format": "prettier --write **/*.ts",
+    "lint": "eslint src/ tests/ --ext .ts,.tsx",
+    "format": "eslint src/ tests/ --ext .ts,.tsx --fix",
     "test": "mocha -r ts-node/register -t 150s 'tests/unit/*.test.ts' --exit",
     "e2e-tests": "mocha -r ts-node/register -t 150s 'tests/e2e.test.ts' --exit"
   },
@@ -32,6 +32,7 @@
     "@actions/core": "^1.6.0",
     "@actions/exec": "^1.1.0",
     "@actions/tool-cache": "^1.7.1",
+    "@google-github-actions/actions-utils": "^0.1.2",
     "@google-github-actions/setup-cloud-sdk": "^0.3.1"
   },
   "devDependencies": {
@@ -45,9 +46,9 @@
     "@typescript-eslint/parser": "^5.7.0",
     "@zeit/ncc": "^0.22.3",
     "chai": "^4.3.4",
+    "eslint": "^8.4.1",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^4.0.0",
-    "eslint": "^8.4.1",
     "google-auth-library": "^7.10.4",
     "googleapis": "^92.0.0",
     "lodash": "^4.17.21",
