@@ -173,20 +173,40 @@ describe('#deploy-cloudrun', function () {
       const results = parseFlags(input);
       expect(results).to.eql(['--concurrency', '2', '--memory', '2Gi']);
     });
-    it('parses flags using space and quotes combo', async function () {
+    it('parses flags using space and double quotes combo', async function () {
       const input = '--concurrency 2 --memory="2 Gi"';
       const results = parseFlags(input);
       expect(results).to.eql(['--concurrency', '2', '--memory', '"2 Gi"']);
     });
-    it('parses flags using space and quotes', async function () {
+    it('parses flags using space and double quotes', async function () {
       const input = '--entry-point "node index.js"';
       const results = parseFlags(input);
       expect(results).to.eql(['--entry-point', '"node index.js"']);
     });
-    it('parses flags using equals and quotes', async function () {
+    it('parses flags using equals and double quotes', async function () {
       const input = '--entry-point="node index.js"';
       const results = parseFlags(input);
       expect(results).to.eql(['--entry-point', '"node index.js"']);
+    });
+    it('parses flags using space and single quotes combo', async function () {
+      const input = `--concurrency 2 --memory='2 Gi'`;
+      const results = parseFlags(input);
+      expect(results).to.eql(['--concurrency', '2', '--memory', "'2 Gi'"]);
+    });
+    it('parses flags using space and single quotes', async function () {
+      const input = `--entry-point 'node index.js'`;
+      const results = parseFlags(input);
+      expect(results).to.eql(['--entry-point', "'node index.js'"]);
+    });
+    it('parses flags using equals and single quotes', async function () {
+      const input = `--entry-point='node index.js'`;
+      const results = parseFlags(input);
+      expect(results).to.eql(['--entry-point', "'node index.js'"]);
+    });
+    it('parses flags mixing double and single quotes correctly', async function () {
+      const input = `--entry-point 'node index.js' --memory "2 Gi"`;
+      const results = parseFlags(input);
+      expect(results).to.eql(['--entry-point', "'node index.js'", '--memory', '"2 Gi"']);
     });
   });
 });
