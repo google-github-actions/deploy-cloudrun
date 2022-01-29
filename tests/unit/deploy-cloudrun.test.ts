@@ -157,56 +157,75 @@ describe('#deploy-cloudrun', function () {
     });
   });
 
-  describe('#parseFlags', function () {
-    it('parses flags using equals', async function () {
-      const input = '--concurrency=2 --memory=2Gi';
-      const results = parseFlags(input);
-      expect(results).to.eql(['--concurrency', '2', '--memory', '2Gi']);
-    });
-    it('parses flags using spaces', async function () {
-      const input = '--concurrency 2 --memory 2Gi';
-      const results = parseFlags(input);
-      expect(results).to.eql(['--concurrency', '2', '--memory', '2Gi']);
-    });
-    it('parses flags using combo', async function () {
-      const input = '--concurrency 2 --memory=2Gi';
-      const results = parseFlags(input);
-      expect(results).to.eql(['--concurrency', '2', '--memory', '2Gi']);
-    });
-    it('parses flags using space and double quotes combo', async function () {
-      const input = '--concurrency 2 --memory="2 Gi"';
-      const results = parseFlags(input);
-      expect(results).to.eql(['--concurrency', '2', '--memory', '"2 Gi"']);
-    });
-    it('parses flags using space and double quotes', async function () {
-      const input = '--entry-point "node index.js"';
-      const results = parseFlags(input);
-      expect(results).to.eql(['--entry-point', '"node index.js"']);
-    });
-    it('parses flags using equals and double quotes', async function () {
-      const input = '--entry-point="node index.js"';
-      const results = parseFlags(input);
-      expect(results).to.eql(['--entry-point', '"node index.js"']);
-    });
-    it('parses flags using space and single quotes combo', async function () {
-      const input = `--concurrency 2 --memory='2 Gi'`;
-      const results = parseFlags(input);
-      expect(results).to.eql(['--concurrency', '2', '--memory', "'2 Gi'"]);
-    });
-    it('parses flags using space and single quotes', async function () {
-      const input = `--entry-point 'node index.js'`;
-      const results = parseFlags(input);
-      expect(results).to.eql(['--entry-point', "'node index.js'"]);
-    });
-    it('parses flags using equals and single quotes', async function () {
-      const input = `--entry-point='node index.js'`;
-      const results = parseFlags(input);
-      expect(results).to.eql(['--entry-point', "'node index.js'"]);
-    });
-    it('parses flags mixing double and single quotes correctly', async function () {
-      const input = `--entry-point 'node index.js' --memory "2 Gi"`;
-      const results = parseFlags(input);
-      expect(results).to.eql(['--entry-point', "'node index.js'", '--memory', '"2 Gi"']);
+  describe('#parseFlags', () => {
+    const cases = [
+      {
+        name: `with equals`,
+        input: `--concurrency=2 --memory=2Gi`,
+        exp: [`--concurrency`, `2`, `--memory`, `2Gi`],
+      },
+      {
+        name: `with spaces`,
+        input: `--concurrency 2 --memory 2Gi`,
+        exp: [`--concurrency`, `2`, `--memory`, `2Gi`],
+      },
+      {
+        name: `with equals and spaces`,
+        input: `--concurrency 2 --memory=2Gi`,
+        exp: [`--concurrency`, `2`, `--memory`, `2Gi`],
+      },
+      {
+        name: `with equals and double quotes`,
+        input: `--memory="2Gi"`,
+        exp: [`--memory`, `"2Gi"`],
+      },
+      {
+        name: `with space and double quotes`,
+        input: `--memory "2Gi"`,
+        exp: [`--memory`, `"2Gi"`],
+      },
+      {
+        name: `with equals and space and double quotes`,
+        input: `--memory="2Gi" --concurrency "2"`,
+        exp: [`--memory`, `"2Gi"`, `--concurrency`, `"2"`],
+      },
+      {
+        name: `with equals and space and some double quotes`,
+        input: `--memory="2Gi" --concurrency 2`,
+        exp: [`--memory`, `"2Gi"`, `--concurrency`, `2`],
+      },
+      {
+        name: `with equals and single quotes`,
+        input: `--memory='2Gi'`,
+        exp: [`--memory`, `'2Gi'`],
+      },
+      {
+        name: `with space and single quotes`,
+        input: `--memory '2Gi'`,
+        exp: [`--memory`, `'2Gi'`],
+      },
+      {
+        name: `with equals and space and single quotes`,
+        input: `--memory='2Gi' --concurrency '2'`,
+        exp: [`--memory`, `'2Gi'`, `--concurrency`, `'2'`],
+      },
+      {
+        name: `with equals and space and some single quotes`,
+        input: `--memory='2Gi' --concurrency 2`,
+        exp: [`--memory`, `'2Gi'`, `--concurrency`, `2`],
+      },
+      {
+        name: `with double and single quotes`,
+        input: `--memory='2Gi' --concurrency="2"`,
+        exp: [`--memory`, `'2Gi'`, `--concurrency`, `"2"`],
+      },
+    ];
+
+    cases.forEach((tc) => {
+      it(tc.name, () => {
+        const result = parseFlags(tc.input);
+        expect(result).to.eql(tc.exp);
+      });
     });
   });
 });
