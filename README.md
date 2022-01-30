@@ -83,6 +83,7 @@ jobs:
 | `source` | _optional_ | | Deploy from source by specifying the source directory. The [Artifact Registry API][artifact-api] needs to be enabled and the service account role `Cloud Build Service Account` is required. The first deployment will create an [Artifact Registry repository][repo] which requires the `Artifact Registry Admin` role. Learn more about [Deploying from source code](https://cloud.google.com/run/docs/deploying-source-code). |
 | `suffix` | _optional_ | | Specify the suffix of the revision name. Revision names always start with named 'helloworld', would lead to a revision named 'helloworld-v1'. |
 | `tag` | _optional_ | | Traffic tag to assign to the newly created revision. |
+| `timeout` | _optional_ | | Set the maximum request execution time. It is specified as a duration; for example, "10m5s" is ten minutes and five seconds. If you don't specify a unit, seconds is assumed. |
 | `no_traffic` | _optional_ | `false` | Set to `true` to avoid sending traffic to the revision being deployed.|
 | `revision_traffic` | _optional_ | | Comma separated list of traffic assignments in the form REVISION-NAME=PERCENTAGE. |
 | `tag_traffic` | _optional_ | | Comma separated list of traffic assignments in the form TAG=PERCENTAGE. |

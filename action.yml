@@ -86,6 +86,13 @@ inputs:
       Traffic tag to assign to the newly created revision.
     required: false
 
+  timeout:
+    description: |-
+      Set the maximum request execution time. It is specified as a duration; for
+      example, "10m5s" is ten minutes and five seconds. If you don't specify a
+      unit, seconds is assumed.
+    required: false
+
   no_traffic:
     description: |-
       True to avoid sending traffic to the revision being deployed. Setting

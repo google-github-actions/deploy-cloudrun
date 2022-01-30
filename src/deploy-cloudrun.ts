@@ -61,6 +61,7 @@ export async function run(): Promise<void> {
     const source = core.getInput('source'); // Source directory
     const suffix = core.getInput('suffix');
     const tag = core.getInput('tag');
+    const timeout = core.getInput('timeout');
     const noTraffic = core.getBooleanInput('no_traffic');
     const revTraffic = core.getInput('revision_traffic');
     const tagTraffic = core.getInput('tag_traffic');
@@ -121,11 +122,12 @@ export async function run(): Promise<void> {
         source,
       ];
       installBeta = true;
+      if (timeout) cmd.push('--timeout', timeout);
     } else if (metadata) {
       // Deploy service from metadata
-      if (image || name || envVars || secrets) {
+      if (image || name || envVars || secrets || timeout) {
         core.warning(
-          'Metadata YAML provided: ignoring `image`, `service`, `env_vars` and `secrets` inputs.',
+          `Metadata YAML provided, ignoring: "image", "service", "env_vars", "secrets", and "timeout" inputs.`,
         );
       }
       cmd = ['run', 'services', 'replace', metadata, '--platform', 'managed', '--region', region];
@@ -159,6 +161,7 @@ export async function run(): Promise<void> {
       if (suffix) cmd.push('--revision-suffix', suffix);
       if (noTraffic) cmd.push('--no-traffic');
     }
+    if (timeout) cmd.push('--timeout', timeout);
     // Add optional flags
     if (flags) {
       const flagList = parseFlags(flags);

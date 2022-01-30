@@ -33,6 +33,7 @@ const fakeInputs: { [key: string]: string } = {
   source: '',
   suffix: '',
   tag: '',
+  timeout: '',
   revision_traffic: '',
   tag_traffic: '',
 };
@@ -56,7 +57,6 @@ describe('#deploy-cloudrun', function () {
         parseServiceAccountKey: sinon.stub(setupGcloud, 'parseServiceAccountKey'),
         isProjectIdSet: sinon.stub(setupGcloud, 'isProjectIdSet').resolves(true),
         installComponent: sinon.stub(setupGcloud, 'installComponent'),
-
         getExecOutput: sinon.stub(exec, 'getExecOutput'),
       };
     });
@@ -125,6 +125,14 @@ describe('#deploy-cloudrun', function () {
       this.stubs.getInput.withArgs('service').returns('');
       await run();
       expect(this.stubs.installComponent.withArgs('beta').callCount).to.eq(1);
+    });
+    it('sets timeout if given', async function () {
+      this.stubs.getInput.withArgs('timeout').returns('55m12s');
+      await run();
+      const call = this.stubs.getExecOutput.getCall(0);
+      expect(call).to.be;
+      const args = call.args[1];
+      expect(args).to.include.members(['--timeout', '55m12s']);
     });
     it('installs beta components with tag', async function () {
       this.stubs.getInput.withArgs('tag').returns('test');
