@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.8.0](https://www.github.com/google-github-actions/deploy-cloudrun/compare/v0.7.0...v0.8.0) (2022-01-31)
+
+
+### Features
+
+* add `timeout` option for setting execution timeouts ([#291](https://www.github.com/google-github-actions/deploy-cloudrun/issues/291)) ([30692e4](https://www.github.com/google-github-actions/deploy-cloudrun/commit/30692e449d09cf9b29e0be80a0d3d7cf7409a397))
+* allow for multi line secrets ([#224](https://www.github.com/google-github-actions/deploy-cloudrun/issues/224)) ([5cab4a9](https://www.github.com/google-github-actions/deploy-cloudrun/commit/5cab4a99aad37f2049c16809f2372ee1bcfbd674))
+* Enable machine parsable output with --format json ([#283](https://www.github.com/google-github-actions/deploy-cloudrun/issues/283)) ([50aa77a](https://www.github.com/google-github-actions/deploy-cloudrun/commit/50aa77a4cc04bc953904f3b82fce54dcdab435a5))
+* support single quote flags ([#289](https://www.github.com/google-github-actions/deploy-cloudrun/issues/289)) ([dd45811](https://www.github.com/google-github-actions/deploy-cloudrun/commit/dd458116fa3a920fce433f28697629c5b163a9dc))
+
 ## [0.7.0](https://www.github.com/google-github-actions/deploy-cloudrun/compare/v0.6.0...v0.7.0) (2021-12-15)
 
 
