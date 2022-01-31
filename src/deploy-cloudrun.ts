@@ -206,7 +206,7 @@ export async function run(): Promise<void> {
     cmd.push('--format', 'json');
 
     const toolCommand = setupGcloud.getToolCommand();
-    const options = { silent: true };
+    const options = { silent: true, ignoreReturnCode: true };
     const commandString = `${toolCommand} ${cmd.join(' ')}`;
     core.info(`Running: ${commandString}`);
 
