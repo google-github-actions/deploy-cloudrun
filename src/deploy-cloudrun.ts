@@ -238,7 +238,7 @@ export function setActionOutputs(outputs: DeployCloudRunOutputs): void {
 }
 
 export function parseFlags(flags: string): RegExpMatchArray {
-  return flags.match(/(".*?"|[^"\s=]+)+(?=\s*|\s*$)/g)!; // Split on space or "=" if not in quotes
+  return flags.match(/(".*?"|'.*?'|[^"\s=]+)+(?=\s*|\s*$)/g)!; // Split on space or "=" if not in quotes
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
