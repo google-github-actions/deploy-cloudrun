@@ -54,6 +54,7 @@ export async function run(): Promise<void> {
     const credentials = core.getInput('credentials'); // Service account key
     let projectId = core.getInput('project_id');
     let gcloudVersion = core.getInput('gcloud_version');
+    const gcloudComponents = core.getInput('gcloud_components'); // Cloud SDK component version (alpha/beta)
     // Flags
     const envVars = core.getInput('env_vars'); // String of env vars KEY=VALUE,...
     const secrets = core.getInput('secrets'); // String of secrets KEY=VALUE,...
@@ -77,6 +78,7 @@ export async function run(): Promise<void> {
     }
 
     let responseType = ResponseTypes.DEPLOY; // Default response type for output parsing
+    let installAlpha = false; // Flag for installing gcloud alpha components
     let installBeta = false; // Flag for installing gcloud beta components
     let cmd;
 
@@ -86,6 +88,18 @@ export async function run(): Promise<void> {
     }
     if ((revTraffic || tagTraffic) && !name) {
       throw new Error('No service name set.');
+    }
+
+    // Set flags for gcloud components version install
+    switch (gcloudComponents) {
+      case 'alpha':
+        installAlpha = true;
+        break;
+      case 'beta':
+        installBeta = true;
+        break;
+      default:
+        break;
     }
 
     // Find base command
@@ -199,10 +213,11 @@ export async function run(): Promise<void> {
     }
     if (projectId) cmd.push('--project', projectId);
 
-    // Install beta components if needed and prepend the beta command
-    if (installBeta) {
-      await setupGcloud.installComponent('beta');
-      cmd.unshift('beta');
+    // Install alpha/beta components if needed and prepend the command
+    if (installAlpha || installBeta) {
+      const installVersion = installAlpha ? 'alpha' : 'beta';
+      await setupGcloud.installComponent(installVersion);
+      cmd.unshift(installVersion);
     }
 
     // Set output format to json

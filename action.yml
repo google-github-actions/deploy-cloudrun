@@ -143,6 +143,13 @@ inputs:
       installed. Example: "290.0.1".
     required: false
 
+  gcloud_components:
+    description: |-
+      Version of the Cloud SDK components to install. If unspecified, the latest
+      or released version will be used. The is the equivalent of running 
+      'gcloud alpha run' or 'gcloud beta run'. Valid values are `alpha` or `beta`.
+    required: false
+
 outputs:
   url:
     description: The URL of your Cloud Run service
