@@ -163,6 +163,28 @@ describe('#deploy-cloudrun', function () {
       await run();
       expect(this.stubs.setFailed.callCount).to.eq(1);
     });
+    it('uses default components without gcloud_component flag', async function () {
+      await run();
+      expect(this.stubs.installComponent.callCount).to.eq(0);
+    });
+    it('throws error with invalid gcloud component flag', async function () {
+      this.stubs.getInput.withArgs('gcloud_component').returns('wrong_value');
+      await run();
+      expect(
+        this.stubs.setFailed.withArgs(`invalid input received for gcloud_component: wrong_value`)
+          .callCount,
+      ).to.be.at.least(1);
+    });
+    it('installs alpha component with alpha flag', async function () {
+      this.stubs.getInput.withArgs('gcloud_component').returns('alpha');
+      await run();
+      expect(this.stubs.installComponent.withArgs('alpha').callCount).to.eq(1);
+    });
+    it('installs beta component with beta flag', async function () {
+      this.stubs.getInput.withArgs('gcloud_component').returns('beta');
+      await run();
+      expect(this.stubs.installComponent.withArgs('beta').callCount).to.eq(1);
+    });
   });
 
   describe('#parseFlags', () => {

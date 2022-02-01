@@ -17,6 +17,7 @@
 import * as core from '@actions/core';
 import { getExecOutput } from '@actions/exec';
 import * as toolCache from '@actions/tool-cache';
+import { presence } from '@google-github-actions/actions-utils/dist';
 import * as setupGcloud from '@google-github-actions/setup-cloud-sdk';
 import path from 'path';
 import { parseDeployResponse, parseUpdateTrafficResponse } from './output-parser';
@@ -54,6 +55,7 @@ export async function run(): Promise<void> {
     const credentials = core.getInput('credentials'); // Service account key
     let projectId = core.getInput('project_id');
     let gcloudVersion = core.getInput('gcloud_version');
+    let gcloudComponent = presence(core.getInput('gcloud_component')); // Cloud SDK component version
     // Flags
     const envVars = core.getInput('env_vars'); // String of env vars KEY=VALUE,...
     const secrets = core.getInput('secrets'); // String of secrets KEY=VALUE,...
@@ -77,7 +79,6 @@ export async function run(): Promise<void> {
     }
 
     let responseType = ResponseTypes.DEPLOY; // Default response type for output parsing
-    let installBeta = false; // Flag for installing gcloud beta components
     let cmd;
 
     // Throw errors if inputs aren't valid
@@ -86,6 +87,11 @@ export async function run(): Promise<void> {
     }
     if ((revTraffic || tagTraffic) && !name) {
       throw new Error('No service name set.');
+    }
+
+    // Validate gcloud component input
+    if (gcloudComponent && gcloudComponent !== 'alpha' && gcloudComponent !== 'beta') {
+      throw new Error(`invalid input received for gcloud_component: ${gcloudComponent}`);
     }
 
     // Find base command
@@ -104,7 +110,7 @@ export async function run(): Promise<void> {
         '--region',
         region,
       ];
-      installBeta = true;
+      gcloudComponent = gcloudComponent ?? 'beta';
       if (revTraffic) cmd.push('--to-revisions', revTraffic);
       if (tagTraffic) cmd.push('--to-tags', tagTraffic);
     } else if (source) {
@@ -121,7 +127,7 @@ export async function run(): Promise<void> {
         '--source',
         source,
       ];
-      installBeta = true;
+      gcloudComponent = gcloudComponent ?? 'beta';
       if (timeout) cmd.push('--timeout', timeout);
     } else if (metadata) {
       // Deploy service from metadata
@@ -131,7 +137,7 @@ export async function run(): Promise<void> {
         );
       }
       cmd = ['run', 'services', 'replace', metadata, '--platform', 'managed', '--region', region];
-      installBeta = true;
+      gcloudComponent = gcloudComponent ?? 'beta';
     } else {
       // Deploy service with image specified
       cmd = [
@@ -152,11 +158,11 @@ export async function run(): Promise<void> {
       if (envVars) cmd.push('--update-env-vars', envVars);
       if (secrets) {
         cmd.push('--update-secrets', secrets.replace('\n', ','));
-        installBeta = true;
+        gcloudComponent = gcloudComponent ?? 'beta';
       }
       if (tag) {
         cmd.push('--tag', tag);
-        installBeta = true;
+        gcloudComponent = gcloudComponent ?? 'beta';
       }
       if (suffix) cmd.push('--revision-suffix', suffix);
       if (noTraffic) cmd.push('--no-traffic');
@@ -199,10 +205,10 @@ export async function run(): Promise<void> {
     }
     if (projectId) cmd.push('--project', projectId);
 
-    // Install beta components if needed and prepend the beta command
-    if (installBeta) {
-      await setupGcloud.installComponent('beta');
-      cmd.unshift('beta');
+    // Install gcloud component if needed and prepend the command
+    if (gcloudComponent) {
+      await setupGcloud.installComponent(gcloudComponent);
+      cmd.unshift(gcloudComponent);
     }
 
     // Set output format to json

@@ -89,6 +89,7 @@ jobs:
 | `tag_traffic` | _optional_ | | Comma separated list of traffic assignments in the form TAG=PERCENTAGE. |
 | `flags` | _optional_ | | Space separated list of other Cloud Run flags, examples can be found: https://cloud.google.com/sdk/gcloud/reference/run/deploy#FLAGS. |
 | `gcloud_version` | _optional_ | `latest` | Pin the version of Cloud SDK `gcloud` CLI. |
+| `gcloud_component` | _optional_ | | Pin the Cloud SDK `gcloud` CLI components version, valid values are `alpha` or `beta`. |
 | `credentials`| Required if not using the `setup-gcloud` action with exported credentials. | | (**Deprecated**) This input is deprecated. See [auth section](https://github.com/google-github-actions/deploy-cloudrun#via-google-github-actionsauth) for more details. Service account key to use for authentication. This should be the JSON formatted private key which can be exported from the Cloud Console. The value can be raw or base64-encoded.  |
 
 ### Metadata customizations
