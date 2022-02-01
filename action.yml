@@ -145,8 +145,8 @@ inputs:
 
   gcloud_component:
     description: |-
-      Version of the Cloud SDK components to install. If unspecified, the latest
-      or released version will be used. The is the equivalent of running 
+      Version of the Cloud SDK components to install and use. If unspecified, the latest
+      or released version will be used. This is the equivalent of running 
       'gcloud alpha run' or 'gcloud beta run'. Valid values are `alpha` or `beta`.
     required: false
 
