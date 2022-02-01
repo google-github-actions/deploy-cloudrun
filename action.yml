@@ -155,5 +155,5 @@ outputs:
     description: The URL of your Cloud Run service
 
 runs:
-  using: node12
-  main: dist/index.js
+  using: 'node16'
+  main: 'dist/index.js'
