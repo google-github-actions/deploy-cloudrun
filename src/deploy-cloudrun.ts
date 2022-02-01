@@ -110,7 +110,7 @@ export async function run(): Promise<void> {
         '--region',
         region,
       ];
-      gcloudComponent = setIfUndefined(gcloudComponent, 'beta');
+      gcloudComponent = gcloudComponent ?? 'beta';
       if (revTraffic) cmd.push('--to-revisions', revTraffic);
       if (tagTraffic) cmd.push('--to-tags', tagTraffic);
     } else if (source) {
@@ -127,7 +127,7 @@ export async function run(): Promise<void> {
         '--source',
         source,
       ];
-      gcloudComponent = setIfUndefined(gcloudComponent, 'beta');
+      gcloudComponent = gcloudComponent ?? 'beta';
       if (timeout) cmd.push('--timeout', timeout);
     } else if (metadata) {
       // Deploy service from metadata
@@ -137,7 +137,7 @@ export async function run(): Promise<void> {
         );
       }
       cmd = ['run', 'services', 'replace', metadata, '--platform', 'managed', '--region', region];
-      gcloudComponent = setIfUndefined(gcloudComponent, 'beta');
+      gcloudComponent = gcloudComponent ?? 'beta';
     } else {
       // Deploy service with image specified
       cmd = [
@@ -158,11 +158,11 @@ export async function run(): Promise<void> {
       if (envVars) cmd.push('--update-env-vars', envVars);
       if (secrets) {
         cmd.push('--update-secrets', secrets.replace('\n', ','));
-        gcloudComponent = setIfUndefined(gcloudComponent, 'beta');
+        gcloudComponent = gcloudComponent ?? 'beta';
       }
       if (tag) {
         cmd.push('--tag', tag);
-        gcloudComponent = setIfUndefined(gcloudComponent, 'beta');
+        gcloudComponent = gcloudComponent ?? 'beta';
       }
       if (suffix) cmd.push('--revision-suffix', suffix);
       if (noTraffic) cmd.push('--no-traffic');
@@ -256,9 +256,4 @@ export function convertUnknown(unknown: any): string {
     return unknown.message;
   }
   return unknown as string;
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function setIfUndefined(target: any, value: any) {
-  return target ?? value;
 }
