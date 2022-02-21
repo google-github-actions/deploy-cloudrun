@@ -148,6 +148,10 @@ with the following roles:
 - Cloud Run Admin (`roles/run.admin`):
   - Can create, update, and delete services.
   - Can get and set IAM policies.
+- Cloud Run Service Agent (`roles/run.serviceAgent`):
+  - Act as cloud run service account (`iam.serviceAccounts.actAs`).
+  - Access artifacts.
+  - Use and create cloud builds
 
 This service account needs to a member of the `Compute Engine default service account`,
 `(PROJECT_NUMBER-compute@developer.gserviceaccount.com)`, with role
