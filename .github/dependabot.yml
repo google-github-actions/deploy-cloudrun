@@ -6,9 +6,17 @@
 version: 2
 updates:
   - package-ecosystem: "npm"
-    directory: "/" # ToDo: check if this updates example-app/
-    schedule:
-      interval: "monthly"
+    directory: "/"
     commit-message:
       prefix: "chore(deps): "
     rebase-strategy: "disabled"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-patch", "version-update:semver-minor"] # Security updates are unaffected by this setting
+        
+  - package-ecosystem: "npm"
+   directory: "/example-app"
+   commit-message:
+      prefix: "chore(deps): "
+   schedule:
+     interval: "monthly"
