@@ -19,4 +19,4 @@ updates:
     commit-message:
       prefix: "chore(deps): "
     schedule:
-     interval: "monthly"
+      interval: "monthly"
