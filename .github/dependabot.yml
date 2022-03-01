@@ -15,8 +15,8 @@ updates:
         update-types: ["version-update:semver-patch", "version-update:semver-minor"] # Security updates are unaffected by this setting
         
   - package-ecosystem: "npm"
-   directory: "/example-app"
-   commit-message:
+    directory: "/example-app"
+    commit-message:
       prefix: "chore(deps): "
-   schedule:
+    schedule:
      interval: "monthly"
