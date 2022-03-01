@@ -20,7 +20,7 @@ import * as core from '@actions/core';
 import * as exec from '@actions/exec';
 import * as setupGcloud from '@google-github-actions/setup-cloud-sdk';
 import { expect } from 'chai';
-import { run, parseFlags } from '../../src/deploy-cloudrun';
+import { run, kvToString, parseFlags } from '../../src/deploy-cloudrun';
 
 // These are mock data for github actions inputs, where camel case is expected.
 const fakeInputs: { [key: string]: string } = {
@@ -184,6 +184,33 @@ describe('#deploy-cloudrun', function () {
       this.stubs.getInput.withArgs('gcloud_component').returns('beta');
       await run();
       expect(this.stubs.installComponent.withArgs('beta').callCount).to.eq(1);
+    });
+  });
+
+  describe.only('#kvToString', () => {
+    const cases = [
+      {
+        name: `empty`,
+        input: {},
+        exp: ``,
+      },
+      {
+        name: `single item`,
+        input: { FOO: 'bar' },
+        exp: `FOO=bar`,
+      },
+      {
+        name: `multiple items`,
+        input: { FOO: 'bar', ZIP: 'zap' },
+        exp: `FOO=bar,ZIP=zap`,
+      },
+    ];
+
+    cases.forEach((tc) => {
+      it(tc.name, () => {
+        const result = kvToString(tc.input as Record<string, string>);
+        expect(result).to.eql(tc.exp);
+      });
     });
   });
 
