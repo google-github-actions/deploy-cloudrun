@@ -18,30 +18,20 @@ limitations under the License.
 Deploys your container image to [Cloud Run][cloud-run] and makes the URL
 available to later build steps via outputs.
 
-## Table of Contents
-
-* [Prerequisites](#prerequisites)
-* [Usage](#usage)
-* [Inputs](#inputs)
-  * [Metadata customizations](#metadata-customizations)
-  * [Allow unauthenticated requests](#Allow-unauthenticated-requests)
-* [Outputs](#outputs)
-* [Credentials](#credentials)
-  * [Via google-github-actions/auth](#via-google-github-actionsauth)
-  * [Via Application Default Credentials](#Via-Application-Default-Credentials)
-* [Example Workflows](#example-workflows)
-* [Migrating from `setup-gcloud`](#migrating-from-setup-gcloud)
-* [Contributing](#contributing)
-* [License](#License)
 
 ## Prerequisites
 
 This action requires:
 
-* Google Cloud credentials that are authorized to deploy a
-Cloud Run service. See the [Credentials](#credentials) below for more information.
+-   Google Cloud credentials that are authorized to deploy a Cloud Run service.
+    See the [Credentials](#credentials) below for more information.
 
-* [Enable the Cloud Run API](http://console.cloud.google.com/apis/library/run.googleapis.com?_ga=2.267842766.1374248275.1591025444-475066991.1589991158)
+-   [Enable the Cloud Run API](http://console.cloud.google.com/apis/library/run.googleapis.com)
+
+-   This action runs using Node 16. If you are using self-hosted GitHub Actions
+    runners, you must use runner version [2.285.0](https://github.com/actions/virtual-environments)
+    or newer.
+
 
 ## Usage
 
@@ -164,7 +154,7 @@ jobs:
       id-token: 'write'
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - id: 'auth'
       uses: 'google-github-actions/auth@v0'
       with:
@@ -321,5 +311,5 @@ See [LICENSE](LICENSE).
 [gh-runners]: https://help.github.com/en/actions/hosting-your-own-runners/about-self-hosted-runners
 [gh-secret]: https://help.github.com/en/actions/configuring-and-managing-workflows/creating-and-storing-encrypted-secrets
 [setup-gcloud]: ./setup-gcloud
-[artifact-api]: https://console.cloud.google.com/flows/enableapi?apiid=artifactregistry.googleapis.com&redirect=https://cloud.google.com/artifact-registry/docs/docker/quickstart&_ga=2.234012894.1325218733.1623704963-2035038643.1623704963
+[artifact-api]: https://console.cloud.google.com/flows/enableapi?apiid=artifactregistry.googleapis.com&redirect=https://cloud.google.com/artifact-registry/docs/docker/quickstart
 [repo]: https://cloud.google.com/artifact-registry/docs/manage-repos
