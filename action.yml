@@ -146,13 +146,17 @@ inputs:
   gcloud_component:
     description: |-
       Version of the Cloud SDK components to install and use. If unspecified, the latest
-      or released version will be used. This is the equivalent of running 
+      or released version will be used. This is the equivalent of running
       'gcloud alpha run' or 'gcloud beta run'. Valid values are `alpha` or `beta`.
     required: false
 
 outputs:
   url:
     description: The URL of your Cloud Run service
+
+branding:
+  icon: 'chevrons-right'
+  color: 'blue'
 
 runs:
   using: 'node16'
