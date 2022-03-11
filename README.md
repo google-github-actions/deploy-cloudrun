@@ -296,13 +296,27 @@ jobs:
 ```
 Note: The action is for the "managed" platform and will not set access privileges such as [allowing unauthenticated requests](#Allow-unauthenticated-requests).
 
-## Contributing
+## Versioning
 
-See [CONTRIBUTING](CONTRIBUTING.md).
+We recommend pinning to the latest available major version:
 
-## License
+```yaml
+- uses: 'google-github-actions/deploy-cloudrun@v0'
+```
 
-See [LICENSE](LICENSE).
+While this action attempts to follow semantic versioning, but we're ultimately
+human and sometimes make mistakes. To prevent accidental breaking changes, you
+can also pin to a specific version:
+
+```yaml
+- uses: 'google-github-actions/deploy-cloudrun@v0.1.1'
+```
+
+However, you will not get automatic security updates or new features without
+explicitly updating your version number. Note that we only publish `MAJOR` and
+`MAJOR.MINOR.PATCH` versions. There is **not** a floating alias for
+`MAJOR.MINOR`.
+
 
 [cloud-run]: https://cloud.google.com/run
 [sa]: https://cloud.google.com/iam/docs/creating-managing-service-accounts
