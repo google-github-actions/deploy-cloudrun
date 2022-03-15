@@ -17,7 +17,7 @@
 import * as core from '@actions/core';
 import { getExecOutput } from '@actions/exec';
 import * as toolCache from '@actions/tool-cache';
-import { presence } from '@google-github-actions/actions-utils/dist';
+import { parseKVString, presence } from '@google-github-actions/actions-utils';
 import * as setupGcloud from '@google-github-actions/setup-cloud-sdk';
 import path from 'path';
 import { parseDeployResponse, parseUpdateTrafficResponse } from './output-parser';
@@ -57,8 +57,8 @@ export async function run(): Promise<void> {
     let gcloudVersion = core.getInput('gcloud_version');
     let gcloudComponent = presence(core.getInput('gcloud_component')); // Cloud SDK component version
     // Flags
-    const envVars = core.getInput('env_vars'); // String of env vars KEY=VALUE,...
-    const secrets = core.getInput('secrets'); // String of secrets KEY=VALUE,...
+    const envVars = parseKVString(core.getInput('env_vars')); // String of env vars KEY=VALUE,...
+    const secrets = parseKVString(core.getInput('secrets')); // String of secrets KEY=VALUE,...
     const region = core.getInput('region') || 'us-central1';
     const source = core.getInput('source'); // Source directory
     const suffix = core.getInput('suffix');
@@ -155,9 +155,11 @@ export async function run(): Promise<void> {
     }
     if (!metadata) {
       // Set optional flags from inputs
-      if (envVars) cmd.push('--update-env-vars', envVars);
-      if (secrets) {
-        cmd.push('--update-secrets', secrets.replace('\n', ','));
+      if (envVars && Object.keys(envVars).length > 0) {
+        cmd.push('--update-env-vars', kvToString(envVars));
+      }
+      if (secrets && Object.keys(secrets).length > 0) {
+        cmd.push('--update-secrets', kvToString(secrets));
         gcloudComponent = gcloudComponent ?? 'beta';
       }
       if (tag) {
@@ -237,6 +239,18 @@ export async function run(): Promise<void> {
   } catch (error) {
     core.setFailed(convertUnknown(error));
   }
+}
+
+/**
+ * kvToString takes the given string=string records into a single string that
+ * the gcloud CLI expects.
+ */
+export function kvToString(kv: Record<string, string>, separator = ','): string {
+  return Object.entries(kv)
+    .map(([k, v]) => {
+      return `${k}=${v}`;
+    })
+    .join(separator);
 }
 
 // Map output response to GitHub Action outputs

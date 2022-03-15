@@ -14,8 +14,8 @@ jobs:
     steps:
     - id: service
       run: echo ::set-output name=service::run-envvars-$GITHUB_SHA
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: '16.x'
     - name: Build Javascript
@@ -71,8 +71,8 @@ jobs:
     steps:
     - id: service
       run: echo ::set-output name=service::run-secret-manager-$GITHUB_SHA
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: '16.x'
     - name: Build Javascript
@@ -131,8 +131,8 @@ jobs:
     steps:
     - id: service
       run: echo ::set-output name=service::run-yaml-$GITHUB_SHA
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: '16.x'
     - name: Build Javascript
@@ -169,8 +169,8 @@ jobs:
     steps:
     - id: service
       run: echo ::set-output name=service::run-full-yaml-$GITHUB_SHA
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: '16.x'
     - name: Build Javascript
@@ -231,8 +231,8 @@ jobs:
     steps:
     - id: service
       run: echo ::set-output name=service::run-revision-name-$GITHUB_SHA
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: '16.x'
     - name: Build Javascript
@@ -293,8 +293,8 @@ jobs:
       IMAGE_NAME: gcr.io/cloudrun/hello
       TAG: hello
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: '16.x'
     - name: Build Javascript

@@ -14,8 +14,8 @@ jobs:
     steps:
     - id: service
       run: echo ::set-output name=service::run-source-$GITHUB_SHA
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: '16.x'
     - name: Build Javascript
@@ -71,8 +71,8 @@ jobs:
     steps:
     - id: service
       run: echo ::set-output name=service::run-suffix-$GITHUB_SHA
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: '16.x'
     - name: Build Javascript
@@ -109,8 +109,8 @@ jobs:
     steps:
     - id: service
       run: echo ::set-output name=service::run-tag-$(echo $GITHUB_SHA | cut -c1-6)
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: '16.x'
 

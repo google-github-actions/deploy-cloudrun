@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.9.0](https://www.github.com/google-github-actions/deploy-cloudrun/compare/v0.8.0...v0.9.0) (2022-03-08)
+
+
+### ⚠ BREAKING CHANGES
+
+* require Node 16 (#315)
+* switch to nodejs 16 (#295)
+
+### Features
+
+* added gcloud_component flag to force alpha or beta ([#294](https://www.github.com/google-github-actions/deploy-cloudrun/issues/294)) ([08e594e](https://www.github.com/google-github-actions/deploy-cloudrun/commit/08e594ea50dd3b8b1f9e6f13179f1f5b18d5144a))
+
+
+### Bug Fixes
+
+* switch to actions-utils for multi-line KV parsing ([#312](https://www.github.com/google-github-actions/deploy-cloudrun/issues/312)) ([1cd5368](https://www.github.com/google-github-actions/deploy-cloudrun/commit/1cd5368e199e5944edfc7c9d953516a5f1642e78))
+
+
+### Miscellaneous Chores
+
+* require Node 16 ([#315](https://www.github.com/google-github-actions/deploy-cloudrun/issues/315)) ([20d7967](https://www.github.com/google-github-actions/deploy-cloudrun/commit/20d79677d49bd483b53e2e6755cde241ce76a85c))
+* switch to nodejs 16 ([#295](https://www.github.com/google-github-actions/deploy-cloudrun/issues/295)) ([7c8e7d0](https://www.github.com/google-github-actions/deploy-cloudrun/commit/7c8e7d0b8066be63d8254cfdd7524186c8175b9e))
+
 ## [0.8.0](https://www.github.com/google-github-actions/deploy-cloudrun/compare/v0.7.0...v0.8.0) (2022-01-31)
 
 
