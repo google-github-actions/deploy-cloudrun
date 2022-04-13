@@ -20,7 +20,7 @@ import * as core from '@actions/core';
 import * as exec from '@actions/exec';
 import * as setupGcloud from '@google-github-actions/setup-cloud-sdk';
 import { expect } from 'chai';
-import { run, kvToString, parseFlags } from '../../src/deploy-cloudrun';
+import { run, kvToString } from '../../src/deploy-cloudrun';
 
 // These are mock data for github actions inputs, where camel case is expected.
 const fakeInputs: { [key: string]: string } = {
@@ -209,78 +209,6 @@ describe('#deploy-cloudrun', function () {
     cases.forEach((tc) => {
       it(tc.name, () => {
         const result = kvToString(tc.input as Record<string, string>);
-        expect(result).to.eql(tc.exp);
-      });
-    });
-  });
-
-  describe('#parseFlags', () => {
-    const cases = [
-      {
-        name: `with equals`,
-        input: `--concurrency=2 --memory=2Gi`,
-        exp: [`--concurrency`, `2`, `--memory`, `2Gi`],
-      },
-      {
-        name: `with spaces`,
-        input: `--concurrency 2 --memory 2Gi`,
-        exp: [`--concurrency`, `2`, `--memory`, `2Gi`],
-      },
-      {
-        name: `with equals and spaces`,
-        input: `--concurrency 2 --memory=2Gi`,
-        exp: [`--concurrency`, `2`, `--memory`, `2Gi`],
-      },
-      {
-        name: `with equals and double quotes`,
-        input: `--memory="2Gi"`,
-        exp: [`--memory`, `"2Gi"`],
-      },
-      {
-        name: `with space and double quotes`,
-        input: `--memory "2Gi"`,
-        exp: [`--memory`, `"2Gi"`],
-      },
-      {
-        name: `with equals and space and double quotes`,
-        input: `--memory="2Gi" --concurrency "2"`,
-        exp: [`--memory`, `"2Gi"`, `--concurrency`, `"2"`],
-      },
-      {
-        name: `with equals and space and some double quotes`,
-        input: `--memory="2Gi" --concurrency 2`,
-        exp: [`--memory`, `"2Gi"`, `--concurrency`, `2`],
-      },
-      {
-        name: `with equals and single quotes`,
-        input: `--memory='2Gi'`,
-        exp: [`--memory`, `'2Gi'`],
-      },
-      {
-        name: `with space and single quotes`,
-        input: `--memory '2Gi'`,
-        exp: [`--memory`, `'2Gi'`],
-      },
-      {
-        name: `with equals and space and single quotes`,
-        input: `--memory='2Gi' --concurrency '2'`,
-        exp: [`--memory`, `'2Gi'`, `--concurrency`, `'2'`],
-      },
-      {
-        name: `with equals and space and some single quotes`,
-        input: `--memory='2Gi' --concurrency 2`,
-        exp: [`--memory`, `'2Gi'`, `--concurrency`, `2`],
-      },
-      {
-        name: `with double and single quotes`,
-        input: `--memory='2Gi' --concurrency="2"`,
-        exp: [`--memory`, `'2Gi'`, `--concurrency`, `"2"`],
-      },
-    ];
-
-    cases.forEach((tc) => {
-      it(tc.name, () => {
-        const result = parseFlags(tc.input);
         expect(result).to.eql(tc.exp);
       });
     });

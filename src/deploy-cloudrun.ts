@@ -17,7 +17,12 @@
 import * as core from '@actions/core';
 import { getExecOutput } from '@actions/exec';
 import * as toolCache from '@actions/tool-cache';
-import { parseKVString, presence } from '@google-github-actions/actions-utils';
+import {
+  errorMessage,
+  parseKVString,
+  parseFlags,
+  presence,
+} from '@google-github-actions/actions-utils';
 import * as setupGcloud from '@google-github-actions/setup-cloud-sdk';
 import path from 'path';
 import { parseDeployResponse, parseUpdateTrafficResponse } from './output-parser';
@@ -172,7 +177,7 @@ export async function run(): Promise<void> {
     if (timeout) cmd.push('--timeout', timeout);
     // Add optional flags
     if (flags) {
-      const flagList = parseFlags(flags.replace('\n', ' '));
+      const flagList = parseFlags(flags);
       if (flagList) cmd = cmd.concat(flagList);
     }
 
@@ -236,8 +241,9 @@ export async function run(): Promise<void> {
 
     // Map outputs to GitHub actions output
     setActionOutputs(outputs);
-  } catch (error) {
-    core.setFailed(convertUnknown(error));
+  } catch (err) {
+    const msg = errorMessage(err);
+    core.setFailed(`google-github-actions/deploy-cloudrun failed with: ${msg}`);
   }
 }
 
@@ -258,16 +264,4 @@ export function setActionOutputs(outputs: DeployCloudRunOutputs): void {
   Object.keys(outputs).forEach((key: string) => {
     core.setOutput(key, outputs[key as keyof DeployCloudRunOutputs]);
   });
-}
-
-export function parseFlags(flags: string): RegExpMatchArray {
-  return flags.match(/(".*?"|'.*?'|[^"\s=]+)+(?=\s*|\s*$)/g)!; // Split on space or "=" if not in quotes
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function convertUnknown(unknown: any): string {
-  if (unknown instanceof Error) {
-    return unknown.message;
-  }
-  return unknown as string;
 }
