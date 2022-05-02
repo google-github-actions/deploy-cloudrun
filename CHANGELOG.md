@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.10.0](https://www.github.com/google-github-actions/deploy-cloudrun/compare/v0.9.0...v0.10.0) (2022-05-02)
+
+
+### Features
+
+* allow for multi line flags ([#320](https://www.github.com/google-github-actions/deploy-cloudrun/issues/320)) ([c5ec47b](https://www.github.com/google-github-actions/deploy-cloudrun/commit/c5ec47bd62298b802bfff30783b634810a057e5b))
+
+
+### Bug Fixes
+
+* migrate to actions-utils parseFlags ([#332](https://www.github.com/google-github-actions/deploy-cloudrun/issues/332)) ([a695629](https://www.github.com/google-github-actions/deploy-cloudrun/commit/a6956293801f1f9078b3c25be42db7ad46b1d83d))
+
 ## [0.9.0](https://www.github.com/google-github-actions/deploy-cloudrun/compare/v0.8.0...v0.9.0) (2022-03-08)
 
 
