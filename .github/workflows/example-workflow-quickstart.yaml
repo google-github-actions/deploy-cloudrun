@@ -21,8 +21,18 @@ name: Quickstart - Deploy Prebuilt Container
 
 jobs:
   deploy:
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
     runs-on: ubuntu-latest
     steps:
+
+    - name: Authorize Google Cloud
+      uses: 'google-github-actions/auth@v0'
+      with:
+        workload_identity_provider: 'projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider'
+        service_account: 'my-service-account@my-project.iam.gserviceaccount.com'
 
     - name: Deploy to Cloud Run
       id: deploy
@@ -30,7 +40,6 @@ jobs:
       with:
         image: gcr.io/cloudrun/hello
         service: hello-cloud-run
-        credentials: ${{ secrets.GCP_SA_KEY }}
 
     - name: Show Output
       run: echo ${{ steps.deploy.outputs.url }}

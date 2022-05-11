@@ -25,17 +25,21 @@ env:
 
 jobs:
   deploy:
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
     runs-on: ubuntu-latest
+
     steps:
     - name: Checkout
       uses: actions/checkout@v3
 
-    - name: Setup Cloud SDK
-      uses: google-github-actions/setup-gcloud@v0
+    - name: Authorize Google Cloud
+      uses: 'google-github-actions/auth@v0'
       with:
-        project_id: ${{ env.PROJECT_ID }}
-        service_account_key: ${{ secrets.GCP_SA_KEY }}
-        export_default_credentials: true  # Set to true to authenticate the Cloud Run action
+        workload_identity_provider: 'projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider'
+        service_account: 'my-service-account@my-project.iam.gserviceaccount.com'
 
     - name: Authorize Docker push
       run: gcloud auth configure-docker
