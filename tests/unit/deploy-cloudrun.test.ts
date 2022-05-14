@@ -170,10 +170,8 @@ describe('#deploy-cloudrun', function () {
     it('throws error with invalid gcloud component flag', async function () {
       this.stubs.getInput.withArgs('gcloud_component').returns('wrong_value');
       await run();
-      expect(
-        this.stubs.setFailed.withArgs(`invalid input received for gcloud_component: wrong_value`)
-          .callCount,
-      ).to.be.at.least(1);
+      const msg = `google-github-actions/deploy-cloudrun failed with: invalid input received for gcloud_component: wrong_value`;
+      expect(this.stubs.setFailed.withArgs(`${msg}`).callCount).to.be.at.least(1);
     });
     it('installs alpha component with alpha flag', async function () {
       this.stubs.getInput.withArgs('gcloud_component').returns('alpha');
@@ -187,7 +185,7 @@ describe('#deploy-cloudrun', function () {
     });
   });
 
-  describe.only('#kvToString', () => {
+  describe('#kvToString', () => {
     const cases = [
       {
         name: `empty`,
