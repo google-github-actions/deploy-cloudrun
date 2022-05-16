@@ -265,3 +265,7 @@ export function setActionOutputs(outputs: DeployCloudRunOutputs): void {
     core.setOutput(key, outputs[key as keyof DeployCloudRunOutputs]);
   });
 }
+
+if (require.main === module) {
+  run();
+}
