@@ -20,7 +20,7 @@ import * as core from '@actions/core';
 import * as exec from '@actions/exec';
 import * as setupGcloud from '@google-github-actions/setup-cloud-sdk';
 import { expect } from 'chai';
-import { run, kvToString } from '../../src/deploy-cloudrun';
+import { run, kvToString } from '../../src/main';
 
 // These are mock data for github actions inputs, where camel case is expected.
 const fakeInputs: { [key: string]: string } = {

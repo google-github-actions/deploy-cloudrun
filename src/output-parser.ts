@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { DeployCloudRunOutputs } from './deploy-cloudrun';
+import { DeployCloudRunOutputs } from './main';
 import { run_v1 } from 'googleapis';
 import { errorMessage, presence } from '@google-github-actions/actions-utils';
 

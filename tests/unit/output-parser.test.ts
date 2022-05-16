@@ -21,7 +21,7 @@ import {
   parseDeployResponse,
   ParseInputs,
 } from '../../src/output-parser';
-import { DeployCloudRunOutputs } from '../../src/deploy-cloudrun';
+import { DeployCloudRunOutputs } from '../../src/main';
 
 describe('#output-parser', () => {
   describe('#parseUpdateTrafficResponse', () => {
