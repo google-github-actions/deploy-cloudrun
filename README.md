@@ -207,51 +207,9 @@ jobs:
 
 ## Example Workflows
 
-* [Deploy a prebuilt container](#deploy-a-prebuilt-container)
+* [Deploy from source](https://github.com/google-github-actions/example-workflows/blob/main/workflows/deploy-cloudrun/cloudrun-source.yml)
 
-* [Build and deploy a container](#build-and-deploy-a-container)
-
-### Setup
-
-1.  Create a new Google Cloud Project (or select an existing project).
-
-1. [Enable the Cloud Run API](https://console.cloud.google.com/flows/enableapi?apiid=run.googleapis.com).
-
-1.  [Create a Google Cloud service account][sa] or select an existing one.
-
-1.  Add the the following [Cloud IAM roles][roles] to your service account:
-
-    - `Cloud Run Admin` - allows for the creation of new Cloud Run services
-
-    - `Service Account User` -  required to deploy to Cloud Run as service account
-
-    - `Storage Admin` - allow push to Google Container Registry (this grants project level access, but recommend reducing this scope to [bucket level permissions](https://cloud.google.com/container-registry/docs/access-control#grant).)
-
-1.  [Download a JSON service account key][create-key] for the service account.
-
-1.  Add the following [secrets to your repository's secrets][gh-secret]:
-
-    - `GCP_PROJECT`: Google Cloud project ID
-
-    - `GCP_SA_KEY`: the downloaded service account key
-
-### Deploy a prebuilt container
-
-To run this [workflow](.github/workflows/example-workflow-quickstart.yaml), push to the branch named `example-deploy`:
-
-```sh
-git push YOUR-FORK main:example-deploy
-```
-
-### Build and deploy a container
-
-To run this [workflow](.github/workflows/example-workflow.yaml), push to the branch named `example-build-deploy`:
-
-```sh
-git push YOUR-FORK main:example-build-deploy
-```
-
-**Reminder: If this is your first deployment of a service, it will reject all unauthenticated requests. Learn more at [allowing unauthenticated requests](#Allow-unauthenticated-requests)**
+* [Build and deploy a container](https://github.com/google-github-actions/example-workflows/blob/main/workflows/deploy-cloudrun/cloudrun-docker.yml)
 
 ## Migrating from `setup-gcloud`
 
