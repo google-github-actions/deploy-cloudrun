@@ -50,6 +50,12 @@ inputs:
       secrets will be retained.
     required: false
 
+  labels:
+    description: |-
+      List of key-value pairs to set as labels of cloud run service in the format:
+      KEY1=VALUE1,KEY2=VALUE2. Existing labels will be retained.
+    required: false
+
   metadata:
     description: |-
       YAML service description for the Cloud Run service.

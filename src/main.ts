@@ -72,6 +72,7 @@ export async function run(): Promise<void> {
     const noTraffic = core.getBooleanInput('no_traffic');
     const revTraffic = core.getInput('revision_traffic');
     const tagTraffic = core.getInput('tag_traffic');
+    const labels = parseKVString(core.getInput('labels'));
     const flags = core.getInput('flags');
 
     // Add warning if using credentials
@@ -136,9 +137,9 @@ export async function run(): Promise<void> {
       if (timeout) cmd.push('--timeout', timeout);
     } else if (metadata) {
       // Deploy service from metadata
-      if (image || name || envVars || secrets || timeout) {
+      if (image || name || envVars || secrets || timeout || labels) {
         core.warning(
-          `Metadata YAML provided, ignoring: "image", "service", "env_vars", "secrets", and "timeout" inputs.`,
+          `Metadata YAML provided, ignoring: "image", "service", "env_vars", "secrets", "labels", and "timeout" inputs.`,
         );
       }
       cmd = ['run', 'services', 'replace', metadata, '--platform', 'managed', '--region', region];
@@ -173,6 +174,9 @@ export async function run(): Promise<void> {
       }
       if (suffix) cmd.push('--revision-suffix', suffix);
       if (noTraffic) cmd.push('--no-traffic');
+      if (labels && Object.keys(labels).length > 0) {
+        cmd.push('--update-labels', kvToString(labels));
+      }
     }
     if (timeout) cmd.push('--timeout', timeout);
     // Add optional flags
