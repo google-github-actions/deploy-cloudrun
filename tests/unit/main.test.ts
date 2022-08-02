@@ -113,18 +113,24 @@ describe('#deploy-cloudrun', function () {
       await run();
       expect(this.stubs.setFailed.callCount).to.be.at.least(1);
     });
-    it('installs beta components with source', async function () {
+    it('sets source if given', async function () {
       this.stubs.getInput.withArgs('source').returns('example-app');
       this.stubs.getInput.withArgs('image').returns('');
       await run();
-      expect(this.stubs.installComponent.withArgs('beta').callCount).to.eq(1);
+      const call = this.stubs.getExecOutput.getCall(0);
+      expect(call).to.be;
+      const args = call.args[1];
+      expect(args).to.include.members(['--source', 'example-app']);
     });
-    it('installs beta components with metadata', async function () {
+    it('sets metadata if given', async function () {
       this.stubs.getInput.withArgs('metadata').returns('yaml');
       this.stubs.getInput.withArgs('image').returns('');
       this.stubs.getInput.withArgs('service').returns('');
       await run();
-      expect(this.stubs.installComponent.withArgs('beta').callCount).to.eq(1);
+      const call = this.stubs.getExecOutput.getCall(0);
+      expect(call).to.be;
+      const args = call.args[1];
+      expect(args).to.include.members(['services', 'replace', 'yaml']);
     });
     it('sets timeout if given', async function () {
       this.stubs.getInput.withArgs('timeout').returns('55m12s');
@@ -134,16 +140,22 @@ describe('#deploy-cloudrun', function () {
       const args = call.args[1];
       expect(args).to.include.members(['--timeout', '55m12s']);
     });
-    it('installs beta components with tag', async function () {
+    it('sets tag if given', async function () {
       this.stubs.getInput.withArgs('tag').returns('test');
       await run();
-      expect(this.stubs.installComponent.withArgs('beta').callCount).to.eq(1);
+      const call = this.stubs.getExecOutput.getCall(0);
+      expect(call).to.be;
+      const args = call.args[1];
+      expect(args).to.include.members(['--tag', 'test']);
     });
-    it('installs beta components with tag traffic', async function () {
+    it('sets tag traffic if given', async function () {
       this.stubs.getInput.withArgs('tag').returns('test');
       this.stubs.getInput.withArgs('name').returns('service-name');
       await run();
-      expect(this.stubs.installComponent.withArgs('beta').callCount).to.eq(1);
+      const call = this.stubs.getExecOutput.getCall(0);
+      expect(call).to.be;
+      const args = call.args[1];
+      expect(args).to.include.members(['--tag', 'test']);
     });
     it('fails if tag traffic and revision traffic are provided', async function () {
       this.stubs.getInput.withArgs('revision_traffic').returns('TEST=100');
