@@ -60,7 +60,7 @@ export async function run(): Promise<void> {
     const credentials = core.getInput('credentials'); // Service account key
     let projectId = core.getInput('project_id');
     let gcloudVersion = core.getInput('gcloud_version');
-    let gcloudComponent = presence(core.getInput('gcloud_component')); // Cloud SDK component version
+    const gcloudComponent = presence(core.getInput('gcloud_component')); // Cloud SDK component version
     // Flags
     const envVars = parseKVString(core.getInput('env_vars')); // String of env vars KEY=VALUE,...
     const secrets = parseKVString(core.getInput('secrets')); // String of secrets KEY=VALUE,...
@@ -116,7 +116,6 @@ export async function run(): Promise<void> {
         '--region',
         region,
       ];
-      gcloudComponent = gcloudComponent ?? 'beta';
       if (revTraffic) cmd.push('--to-revisions', revTraffic);
       if (tagTraffic) cmd.push('--to-tags', tagTraffic);
     } else if (source) {
@@ -133,7 +132,6 @@ export async function run(): Promise<void> {
         '--source',
         source,
       ];
-      gcloudComponent = gcloudComponent ?? 'beta';
       if (timeout) cmd.push('--timeout', timeout);
     } else if (metadata) {
       // Deploy service from metadata
@@ -143,7 +141,6 @@ export async function run(): Promise<void> {
         );
       }
       cmd = ['run', 'services', 'replace', metadata, '--platform', 'managed', '--region', region];
-      gcloudComponent = gcloudComponent ?? 'beta';
     } else {
       // Deploy service with image specified
       cmd = [
@@ -166,11 +163,9 @@ export async function run(): Promise<void> {
       }
       if (secrets && Object.keys(secrets).length > 0) {
         cmd.push('--update-secrets', kvToString(secrets));
-        gcloudComponent = gcloudComponent ?? 'beta';
       }
       if (tag) {
         cmd.push('--tag', tag);
-        gcloudComponent = gcloudComponent ?? 'beta';
       }
       if (suffix) cmd.push('--revision-suffix', suffix);
       if (noTraffic) cmd.push('--no-traffic');
