@@ -140,7 +140,7 @@ with the following roles:
   - Can create, update, and delete services.
   - Can get and set IAM policies.
 
-This service account needs to a member of the `Compute Engine default service account`,
+This service account needs to be a member of the `Compute Engine default service account`,
 `(PROJECT_NUMBER-compute@developer.gserviceaccount.com)`, with role
 `Service Account User`. To grant a user permissions for a service account, use
 one of the methods found in [Configuring Ownership and access to a service account](https://cloud.google.com/iam/docs/granting-roles-to-service-accounts#granting_access_to_a_user_for_a_service_account).
