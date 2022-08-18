@@ -29,7 +29,7 @@
   },
   "homepage": "https://github.com/google-github-actions/deploy-cloudrun#readme",
   "dependencies": {
-    "@actions/core": "^1.9.0",
+    "@actions/core": "^1.9.1",
     "@actions/exec": "^1.1.1",
     "@actions/tool-cache": "^2.0.1",
     "@google-github-actions/actions-utils": "^0.4.2",
