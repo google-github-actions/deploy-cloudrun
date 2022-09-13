@@ -26,6 +26,7 @@ import {
 import * as setupGcloud from '@google-github-actions/setup-cloud-sdk';
 import path from 'path';
 import { parseDeployResponse, parseUpdateTrafficResponse } from './output-parser';
+import fs from 'fs'
 
 export const GCLOUD_METRICS_ENV_VAR = 'CLOUDSDK_METRICS_ENVIRONMENT';
 export const GCLOUD_METRICS_LABEL = 'github-actions-deploy-cloudrun';
@@ -62,6 +63,7 @@ export async function run(): Promise<void> {
     let gcloudVersion = core.getInput('gcloud_version');
     const gcloudComponent = presence(core.getInput('gcloud_component')); // Cloud SDK component version
     // Flags
+    const envVarsFile = core.getInput('env_vars_file');
     const envVars = parseKVString(core.getInput('env_vars')); // String of env vars KEY=VALUE,...
     const secrets = parseKVString(core.getInput('secrets')); // String of secrets KEY=VALUE,...
     const region = core.getInput('region') || 'us-central1';
@@ -135,9 +137,9 @@ export async function run(): Promise<void> {
       if (timeout) cmd.push('--timeout', timeout);
     } else if (metadata) {
       // Deploy service from metadata
-      if (image || name || envVars || secrets || timeout || labels) {
+      if (image || name || envVars || envVarsFile || secrets || timeout || labels) {
         core.warning(
-          `Metadata YAML provided, ignoring: "image", "service", "env_vars", "secrets", "labels", and "timeout" inputs.`,
+          `Metadata YAML provided, ignoring: "image", "service", "env_vars", "env_vars_file", "secrets", "labels", and "timeout" inputs.`,
         );
       }
       cmd = ['run', 'services', 'replace', metadata, '--platform', 'managed', '--region', region];
@@ -158,6 +160,16 @@ export async function run(): Promise<void> {
     }
     if (!metadata) {
       // Set optional flags from inputs
+      if (envVarsFile) {
+        try {
+          const envFile = await fs.promises.readFile(envVarsFile)
+          const envs = parseKVString(envFile.toString());
+          cmd.push('--update-env-vars', kvToString(envs));
+        } catch (error) {
+          if (error instanceof Error) core.error(error.message);
+        }
+      }
+
       if (envVars && Object.keys(envVars).length > 0) {
         cmd.push('--update-env-vars', kvToString(envVars));
       }

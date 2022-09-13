@@ -21,6 +21,7 @@ import * as exec from '@actions/exec';
 import * as setupGcloud from '@google-github-actions/setup-cloud-sdk';
 import { expect } from 'chai';
 import { run, kvToString } from '../../src/main';
+import fs from 'fs';
 
 // These are mock data for github actions inputs, where camel case is expected.
 const fakeInputs: { [key: string]: string } = {
@@ -30,6 +31,7 @@ const fakeInputs: { [key: string]: string } = {
   credentials: '{}',
   project_id: 'my-test-project',
   env_vars: '',
+  env_vars_file: '',
   source: '',
   suffix: '',
   tag: '',
@@ -194,6 +196,23 @@ describe('#deploy-cloudrun', function () {
       this.stubs.getInput.withArgs('gcloud_component').returns('beta');
       await run();
       expect(this.stubs.installComponent.withArgs('beta').callCount).to.eq(1);
+    });
+
+    it('sets the env variables from a file correctly', async function () {
+      this.stubs.getInput.withArgs('env_vars_file').returns('.env-test');
+      sinon
+        .stub(fs.promises, 'readFile')
+        .withArgs('.env-test')
+        .returns(
+          Promise.resolve(`ENV1=VALUE1
+                           ENV2=VALUE2
+                           ENV3=VALUE3`),
+        );
+      await run();
+      const call = this.stubs.getExecOutput.getCall(0);
+      expect(call).to.be;
+      const args = call.args[1];
+      expect(args).to.include.members(['--update-env-vars', 'ENV1=VALUE1,ENV2=VALUE2,ENV3=VALUE3']);
     });
   });
 
