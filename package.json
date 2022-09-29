@@ -39,7 +39,7 @@
     "@types/chai": "^4.3.3",
     "@types/js-yaml": "^4.0.5",
     "@types/lodash": "^4.14.184",
-    "@types/mocha": "^9.1.1",
+    "@types/mocha": "^10.0.0",
     "@types/node": "^18.7.13",
     "@types/sinon": "^10.0.13",
     "@typescript-eslint/eslint-plugin": "^5.35.1",
