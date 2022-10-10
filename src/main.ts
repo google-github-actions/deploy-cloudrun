@@ -63,6 +63,7 @@ export async function run(): Promise<void> {
     const gcloudComponent = presence(core.getInput('gcloud_component')); // Cloud SDK component version
     // Flags
     const envVars = parseKVString(core.getInput('env_vars')); // String of env vars KEY=VALUE,...
+    const cloudsqlInstances = core.getInput('cloudsql_instances'); // String of cloudsql instances...
     const secrets = parseKVString(core.getInput('secrets')); // String of secrets KEY=VALUE,...
     const region = core.getInput('region') || 'us-central1';
     const source = core.getInput('source'); // Source directory
@@ -135,9 +136,9 @@ export async function run(): Promise<void> {
       if (timeout) cmd.push('--timeout', timeout);
     } else if (metadata) {
       // Deploy service from metadata
-      if (image || name || envVars || secrets || timeout || labels) {
+      if (image || name || envVars || cloudsqlInstances || secrets || timeout || labels) {
         core.warning(
-          `Metadata YAML provided, ignoring: "image", "service", "env_vars", "secrets", "labels", and "timeout" inputs.`,
+          `Metadata YAML provided, ignoring: "image", "service", "env_vars", "cloudsql_instances", "secrets", "labels", and "timeout" inputs.`,
         );
       }
       cmd = ['run', 'services', 'replace', metadata, '--platform', 'managed', '--region', region];
@@ -160,6 +161,9 @@ export async function run(): Promise<void> {
       // Set optional flags from inputs
       if (envVars && Object.keys(envVars).length > 0) {
         cmd.push('--update-env-vars', kvToString(envVars));
+      }
+      if (cloudsqlInstances) {
+        cmd.push('--add-cloudsql-instances', cloudsqlInstances);
       }
       if (secrets && Object.keys(secrets).length > 0) {
         cmd.push('--update-secrets', kvToString(secrets));
