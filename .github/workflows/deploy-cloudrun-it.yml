@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - id: service
-      run: echo ::set-output name=service::run-envvars-$GITHUB_SHA
+      run: echo service=run-envvars-$GITHUB_SHA >> $GITHUB_OUTPUT
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
@@ -70,7 +70,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - id: service
-      run: echo ::set-output name=service::run-secret-manager-$GITHUB_SHA
+      run: echo service=run-secret-manager-$GITHUB_SHA >> $GITHUB_OUTPUT
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
@@ -130,7 +130,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - id: service
-      run: echo ::set-output name=service::run-yaml-$GITHUB_SHA
+      run: echo service=run-yaml-$GITHUB_SHA >> $GITHUB_OUTPUT
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
@@ -168,7 +168,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - id: service
-      run: echo ::set-output name=service::run-full-yaml-$GITHUB_SHA
+      run: echo service=run-full-yaml-$GITHUB_SHA >> $GITHUB_OUTPUT
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
@@ -230,7 +230,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - id: service
-      run: echo ::set-output name=service::run-revision-name-$GITHUB_SHA
+      run: echo service=run-revision-name-$GITHUB_SHA >> $GITHUB_OUTPUT
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
