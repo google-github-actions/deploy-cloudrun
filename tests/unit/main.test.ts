@@ -148,6 +148,14 @@ describe('#deploy-cloudrun', function () {
       const args = call.args[1];
       expect(args).to.include.members(['--tag', 'test']);
     });
+    it('sets service-account if given', async function () {
+      this.stubs.getInput.withArgs('service_account').returns('test-sa@test-project-12345.iam.gserviceaccount.com');
+      await run();
+      const call = this.stubs.getExecOutput.getCall(0);
+      expect(call).to.be;
+      const args = call.args[1];
+      expect(args).to.include.members(['--service-account', 'test-sa@test-project-12345.iam.gserviceaccount.com']);
+    });
     it('sets tag traffic if given', async function () {
       this.stubs.getInput.withArgs('tag').returns('test');
       this.stubs.getInput.withArgs('name').returns('service-name');

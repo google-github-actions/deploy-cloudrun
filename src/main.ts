@@ -72,6 +72,7 @@ export async function run(): Promise<void> {
     const noTraffic = core.getBooleanInput('no_traffic');
     const revTraffic = core.getInput('revision_traffic');
     const tagTraffic = core.getInput('tag_traffic');
+    const serviceAccount = core.getInput('service_account');
     const labels = parseKVString(core.getInput('labels'));
     const flags = core.getInput('flags');
 
@@ -179,6 +180,9 @@ export async function run(): Promise<void> {
       const flagList = parseFlags(flags);
       if (flagList) cmd = cmd.concat(flagList);
     }
+    
+    // set service account to be used by Cloud Run service
+    if (serviceAccount) cmd.push('--service-account', serviceAccount);
 
     // Install gcloud if not already installed.
     if (!gcloudVersion || gcloudVersion == 'latest') {
