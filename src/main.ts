@@ -19,8 +19,9 @@ import { getExecOutput } from '@actions/exec';
 import * as toolCache from '@actions/tool-cache';
 import {
   errorMessage,
-  parseKVString,
+  KVPair,
   parseFlags,
+  parseKVString,
   presence,
 } from '@google-github-actions/actions-utils';
 import * as setupGcloud from '@google-github-actions/setup-cloud-sdk';
@@ -51,6 +52,7 @@ enum ResponseTypes {
  */
 export async function run(): Promise<void> {
   core.exportVariable(GCLOUD_METRICS_ENV_VAR, GCLOUD_METRICS_LABEL);
+
   try {
     // Get inputs
     // Core inputs
@@ -72,7 +74,7 @@ export async function run(): Promise<void> {
     const noTraffic = core.getBooleanInput('no_traffic');
     const revTraffic = core.getInput('revision_traffic');
     const tagTraffic = core.getInput('tag_traffic');
-    const labels = parseKVString(core.getInput('labels'));
+    const labels = Object.assign({}, defaultLabels(), parseKVString(core.getInput('labels')));
     const flags = core.getInput('flags');
 
     // Add warning if using credentials
@@ -89,10 +91,13 @@ export async function run(): Promise<void> {
 
     // Throw errors if inputs aren't valid
     if (revTraffic && tagTraffic) {
-      throw new Error('Both `revision_traffic` and `tag_traffic` inputs set - Please select one.');
+      throw new Error('Only one of `revision_traffic` or `tag_traffic` inputs can be set.');
     }
     if ((revTraffic || tagTraffic) && !name) {
       throw new Error('No service name set.');
+    }
+    if (source && image) {
+      throw new Error('Only one of `source` or `image` inputs can be set.');
     }
 
     // Validate gcloud component input
@@ -118,45 +123,31 @@ export async function run(): Promise<void> {
       ];
       if (revTraffic) cmd.push('--to-revisions', revTraffic);
       if (tagTraffic) cmd.push('--to-tags', tagTraffic);
-    } else if (source) {
-      // Deploy service from source
-      cmd = [
-        'run',
-        'deploy',
-        name,
-        '--quiet',
-        '--platform',
-        'managed',
-        '--region',
-        region,
-        '--source',
-        source,
-      ];
-      if (timeout) cmd.push('--timeout', timeout);
-    } else if (metadata) {
-      // Deploy service from metadata
-      if (image || name || envVars || secrets || timeout || labels) {
+
+      if (image || envVars?.length || secrets?.length || timeout || labels?.length) {
         core.warning(
-          `Metadata YAML provided, ignoring: "image", "service", "env_vars", "secrets", "labels", and "timeout" inputs.`,
+          `Updating traffic, ignoring inputs "image", "env_vars", "secrets", "timeout", and "labels"`,
         );
       }
+    } else if (metadata) {
       cmd = ['run', 'services', 'replace', metadata, '--platform', 'managed', '--region', region];
+
+      if (image || name || envVars?.length || secrets?.length || timeout || labels?.length) {
+        core.warning(
+          `Using metadata YAML, ignoring inputs "image", "name", "env_vars", "secrets", "timeout", and "labels"`,
+        );
+      }
     } else {
-      // Deploy service with image specified
-      cmd = [
-        'run',
-        'deploy',
-        name,
-        '--image',
-        image,
-        '--quiet',
-        '--platform',
-        'managed',
-        '--region',
-        region,
-      ];
-    }
-    if (!metadata) {
+      cmd = ['run', 'deploy', name, '--quiet', '--platform', 'managed', '--region', region];
+
+      if (image) {
+        // Deploy service with image specified
+        cmd.push('--image', image);
+      } else if (source) {
+        // Deploy service from source
+        cmd.push('--source', source);
+      }
+
       // Set optional flags from inputs
       if (envVars && Object.keys(envVars).length > 0) {
         cmd.push('--update-env-vars', kvToString(envVars));
@@ -172,8 +163,9 @@ export async function run(): Promise<void> {
       if (labels && Object.keys(labels).length > 0) {
         cmd.push('--update-labels', kvToString(labels));
       }
+      if (timeout) cmd.push('--timeout', timeout);
     }
-    if (timeout) cmd.push('--timeout', timeout);
+
     // Add optional flags
     if (flags) {
       const flagList = parseFlags(flags);
@@ -263,6 +255,29 @@ export function setActionOutputs(outputs: DeployCloudRunOutputs): void {
   Object.keys(outputs).forEach((key: string) => {
     core.setOutput(key, outputs[key as keyof DeployCloudRunOutputs]);
   });
+}
+
+/**
+ * defaultLabels returns the default labels to apply to the Cloud Run service.
+ *
+ * @return KVPair
+ */
+function defaultLabels(): KVPair {
+  const rawValues: Record<string, string | undefined> = {
+    'managed-by': 'github-actions',
+    'commit-sha': process.env.GITHUB_SHA,
+  };
+
+  const labels: KVPair = {};
+  for (const key in rawValues) {
+    const value = rawValues[key];
+    if (value) {
+      // Labels can only be lowercase
+      labels[key] = value.toLowerCase();
+    }
+  }
+
+  return labels;
 }
 
 if (require.main === module) {

@@ -206,7 +206,7 @@ jobs:
         SERVICE: ${{ steps.service.outputs.service }}
         PARAMS: "{\"cpu\": 2,\"memory\": \"1Gi\", \"containerConcurrency\": 20}"
         ANNOTATIONS: "{\"run.googleapis.com/cloudsql-instances\": \"test-project:us-central1:my-test-instance\"}"
-        LABELS: "{\"test_label\": \"test_value\"}"
+        LABELS: '{"test_label":"test_value"}'
 
     - name: Update service with new image
       id: deploy_2
@@ -224,7 +224,7 @@ jobs:
         SERVICE: ${{ steps.service.outputs.service }}
         PARAMS: "{\"cpu\": 2,\"memory\": \"1Gi\", \"containerConcurrency\": 20}"
         ANNOTATIONS: "{\"run.googleapis.com/cloudsql-instances\": \"test-project:us-central1:my-test-instance\"}"
-        LABELS: "{\"test_label\": \"test_value\"}"
+        LABELS: '{"managed-by":"github-actions", "commit-sha":"${{ github.sha }}"}'
         COUNT: 2
 
   revision:
