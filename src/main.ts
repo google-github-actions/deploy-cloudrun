@@ -19,8 +19,9 @@ import { getExecOutput } from '@actions/exec';
 import * as toolCache from '@actions/tool-cache';
 import {
   errorMessage,
-  parseKVString,
+  KVPair,
   parseFlags,
+  parseKVString,
   presence,
 } from '@google-github-actions/actions-utils';
 import * as setupGcloud from '@google-github-actions/setup-cloud-sdk';
@@ -51,6 +52,7 @@ enum ResponseTypes {
  */
 export async function run(): Promise<void> {
   core.exportVariable(GCLOUD_METRICS_ENV_VAR, GCLOUD_METRICS_LABEL);
+
   try {
     // Get inputs
     // Core inputs
@@ -72,7 +74,7 @@ export async function run(): Promise<void> {
     const noTraffic = core.getBooleanInput('no_traffic');
     const revTraffic = core.getInput('revision_traffic');
     const tagTraffic = core.getInput('tag_traffic');
-    const labels = parseKVString(core.getInput('labels'));
+    const labels = Object.assign({}, defaultLabels(), parseKVString(core.getInput('labels')));
     const flags = core.getInput('flags');
 
     // Add warning if using credentials
@@ -156,6 +158,7 @@ export async function run(): Promise<void> {
         region,
       ];
     }
+
     if (!metadata) {
       // Set optional flags from inputs
       if (envVars && Object.keys(envVars).length > 0) {
@@ -173,7 +176,9 @@ export async function run(): Promise<void> {
         cmd.push('--update-labels', kvToString(labels));
       }
     }
+
     if (timeout) cmd.push('--timeout', timeout);
+
     // Add optional flags
     if (flags) {
       const flagList = parseFlags(flags);
@@ -263,6 +268,35 @@ export function setActionOutputs(outputs: DeployCloudRunOutputs): void {
   Object.keys(outputs).forEach((key: string) => {
     core.setOutput(key, outputs[key as keyof DeployCloudRunOutputs]);
   });
+}
+
+/**
+ * defaultLabels returns the default labels to apply to the Cloud Run service.
+ *
+ * @return KVPair
+ */
+function defaultLabels(): KVPair {
+  const labels: KVPair = {
+    'managed-by': 'github-actions',
+  };
+
+  const sha = process.env.GITHUB_SHA;
+  if (sha) {
+    labels['commit-sha'] = sha;
+  }
+
+  const githubRepoURL = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}`;
+  labels['github-repo-url'] = githubRepoURL;
+
+  const githubActionsWorkflowURL = `${githubRepoURL}/actions/runs/${process.env.GITHUB_RUN_ID}`;
+  labels['github-actions-workflow-url'] = githubActionsWorkflowURL;
+
+  const githubActor = process.env.GITHUB_ACTOR;
+  if (githubActor) {
+    labels['github-actor'] = githubActor;
+  }
+
+  return labels;
 }
 
 if (require.main === module) {
