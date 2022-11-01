@@ -189,13 +189,7 @@ describe('E2E tests', function () {
     if (LABELS && service) {
       const expected = JSON.parse(LABELS);
       const actual = _.get(service, 'spec.template.metadata.labels')!;
-
-      Object.entries(expected).forEach((label: object) => {
-        const found = Object.entries(actual).find((actualLabel: object) =>
-          _.isEqual(label, actualLabel),
-        );
-        expect(found).to.not.equal(undefined);
-      });
+      expect(actual).to.deep.equal(expected);
     }
   });
 
@@ -254,6 +248,7 @@ describe('E2E tests', function () {
       expect(TAG).to.equal(actual['tag']);
     }
   });
+
   it('has the correct traffic', function () {
     if (TAG && TRAFFIC && service) {
       const traffic = _.get(service, 'spec.traffic')!;

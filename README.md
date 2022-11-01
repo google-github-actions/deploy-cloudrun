@@ -77,7 +77,7 @@ jobs:
 | `no_traffic` | _optional_ | `false` | Set to `true` to avoid sending traffic to the revision being deployed.|
 | `revision_traffic` | _optional_ | | Comma separated list of traffic assignments in the form REVISION-NAME=PERCENTAGE. |
 | `tag_traffic` | _optional_ | | Comma separated list of traffic assignments in the form TAG=PERCENTAGE. |
-| `labels` | _optional_ | | List of key-value pairs to set as labels of cloud run service in the format: KEY1=VALUE1,KEY2=VALUE2. Existing labels will be retained. |
+| `labels` | _optional_ | | List of key-value pairs to set as labels of cloud run service in the format: KEY1=VALUE1,KEY2=VALUE2. Existing labels will be overwritten. The GitHub Action will also set additional labels that Cloud Run uses to identify the deployment came from GitHub Actions to enhance the Cloud Run experience. |
 | `flags` | _optional_ | | Space separated list of other Cloud Run flags, examples can be found: https://cloud.google.com/sdk/gcloud/reference/run/deploy#FLAGS. |
 | `gcloud_version` | _optional_ | `latest` | Pin the version of Cloud SDK `gcloud` CLI. |
 | `gcloud_component` | _optional_ | | Pin the Cloud SDK `gcloud` CLI components version, valid values are `alpha` or `beta`. |
