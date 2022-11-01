@@ -20,7 +20,7 @@ import { getExecOutput } from '@actions/exec';
 import * as _ from 'lodash';
 import 'mocha';
 import { run_v1 } from 'googleapis';
-import yaml = require('js-yaml');
+import yaml from 'js-yaml';
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms, []));
@@ -79,7 +79,7 @@ describe('E2E tests', function () {
       }
 
       service = yaml.load(output.stdout) as run_v1.Schema$Service;
-      if (!service) console.log('no service found');
+      if (!service) console.error('no service found');
     }
   });
 
@@ -103,10 +103,9 @@ describe('E2E tests', function () {
   it('has the correct env vars', function () {
     if (ENV && service) {
       const expected = parseEnvVars(ENV);
-      const containers = _.get(service, 'spec.template.spec.containers');
-      const actual = containers[0]?.env;
-      expect(actual).to.have.lengthOf(expected.length);
-      actual.forEach((envVar: run_v1.Schema$EnvVar) => {
+      const env = _.get(service, 'spec.template.spec.containers[0].env')!;
+      expect(env).to.have.lengthOf(expected.length);
+      env.forEach((envVar: run_v1.Schema$EnvVar) => {
         const found = expected.find((expectedEnvVar) => _.isEqual(envVar, expectedEnvVar));
         expect(found).to.not.equal(undefined);
       });
@@ -116,10 +115,9 @@ describe('E2E tests', function () {
   it('has the correct secret vars', function () {
     if (SECRET_ENV && service) {
       const expected = parseEnvVars(SECRET_ENV);
-      const containers = _.get(service, 'spec.template.spec.containers');
-      const actual = containers[0]?.env;
-      expect(actual).to.have.lengthOf(expected.length);
-      actual.forEach((secretEnvVar: run_v1.Schema$EnvVar) => {
+      const env = _.get(service, 'spec.template.spec.containers[0].env')!;
+      expect(env).to.have.lengthOf(expected.length);
+      env.forEach((secretEnvVar: run_v1.Schema$EnvVar) => {
         const found = expected.find((expectedSecretEnvVar) =>
           _.isEqual(secretEnvVar.name, expectedSecretEnvVar.name),
         );
@@ -131,7 +129,7 @@ describe('E2E tests', function () {
   it('has the correct secret volumes', function () {
     if (SECRET_VOLUMES && service) {
       const expected = parseEnvVars(SECRET_VOLUMES);
-      const spec: run_v1.Schema$RevisionSpec = _.get(service, 'spec.template.spec');
+      const spec: run_v1.Schema$RevisionSpec = _.get(service, 'spec.template.spec')!;
       const volumes = spec.volumes;
       const volumeMounts = spec.containers![0]?.volumeMounts;
       expect(volumes).to.have.lengthOf(expected.length);
@@ -154,20 +152,21 @@ describe('E2E tests', function () {
   it('has the correct params', function () {
     if (PARAMS && service) {
       const expected = JSON.parse(PARAMS);
-      const actual = _.get(service, 'spec.template.spec');
+      const actual = _.get(service, 'spec.template.spec')!;
 
       if (expected.containerConncurrency) {
-        expect(actual.containerConncurrency).to.equal(expected.containerConncurrency);
+        expect(actual.containerConcurrency).to.equal(expected.containerConncurrency);
       }
       if (expected.timeoutSeconds) {
         expect(actual.timeoutSeconds).to.equal(expected.timeoutSeconds);
       }
-      const actualResources = actual.containers[0].resources;
+
+      const actualResources = actual.containers![0]?.resources;
       if (expected.cpu) {
-        expect(actualResources.limits.cpu).to.equal(expected.cpu.toString());
+        expect(actualResources!.limits!.cpu).to.equal(expected.cpu.toString());
       }
       if (expected.memory) {
-        expect(actualResources.limits.memory).to.equal(expected.memory);
+        expect(actualResources!.limits!.memory).to.equal(expected.memory);
       }
     }
   });
@@ -175,12 +174,10 @@ describe('E2E tests', function () {
   it('has the correct annotations', function () {
     if (ANNOTATIONS && service) {
       const expected = JSON.parse(ANNOTATIONS);
-      const actual = _.get(service, 'spec.template.metadata.annotations');
-      console.log(_.get(service, 'spec.template.metadata'));
+      const actual = _.get(service, 'spec.template.metadata.annotations')!;
 
       Object.entries(expected).forEach((annot: object) => {
         const found = Object.entries(actual).find((actualAnnot: object) => {
-          console.log(annot, actualAnnot);
           return _.isEqual(annot, actualAnnot);
         });
         expect(found).to.not.equal(undefined);
@@ -191,7 +188,7 @@ describe('E2E tests', function () {
   it('has the correct labels', function () {
     if (LABELS && service) {
       const expected = JSON.parse(LABELS);
-      const actual = _.get(service, 'spec.template.metadata.labels');
+      const actual = _.get(service, 'spec.template.metadata.labels')!;
 
       Object.entries(expected).forEach((label: object) => {
         const found = Object.entries(actual).find((actualLabel: object) =>
@@ -250,23 +247,24 @@ describe('E2E tests', function () {
 
   it('has the correct tag', function () {
     if (TAG && service) {
-      const traffic = _.get(service, 'spec.traffic');
+      const traffic = _.get(service, 'spec.traffic')!;
       const actual = traffic.find((rev: run_v1.Schema$TrafficTarget) => {
         return rev['tag'] == TAG;
-      });
+      })!;
       expect(TAG).to.equal(actual['tag']);
     }
   });
   it('has the correct traffic', function () {
     if (TAG && TRAFFIC && service) {
-      const traffic = _.get(service, 'spec.traffic');
+      const traffic = _.get(service, 'spec.traffic')!;
       const tagged = traffic.find((rev: run_v1.Schema$TrafficTarget) => {
         return rev['tag'] == TAG;
-      });
+      })!;
       const actual = traffic.find((rev: run_v1.Schema$TrafficTarget) => {
         return rev['revisionName'] == tagged['revisionName'];
-      });
-      expect(parseInt(TRAFFIC)).to.equal(parseInt(actual['percent']));
+      })!;
+      const percent = actual['percent']!;
+      expect(parseInt(TRAFFIC)).to.equal(percent);
     }
   });
 
