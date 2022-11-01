@@ -40,7 +40,7 @@
     "@types/js-yaml": "^4.0.5",
     "@types/lodash": "^4.14.187",
     "@types/mocha": "^10.0.0",
-    "@types/node": "^18.11.8",
+    "@types/node": "^18.11.9",
     "@types/sinon": "^10.0.13",
     "@typescript-eslint/eslint-plugin": "^5.42.0",
     "@typescript-eslint/parser": "^5.42.0",

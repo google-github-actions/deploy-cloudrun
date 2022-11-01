@@ -1,4 +1,4 @@
-name: deploy-cloudrun Traffic Integration
+name: 'traffic'
 
 on:
   push:

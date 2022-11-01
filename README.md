@@ -1,32 +1,20 @@
-<!--
-Copyright 2020 Google LLC
+# deploy-cloudrun
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
--->
-# `deploy-cloudrun` GitHub Action
-
-Deploys your container image to [Cloud Run][cloud-run] and makes the URL
-available to later build steps via outputs.
+The `deploy-cloudrun` GitHub Action deploys to Google [Cloud Run][cloud-run]. It
+can deploy a container image or from source, and the resulting service URL is
+available as a GitHub Actions output for use in future steps.
 
 
 ## Prerequisites
 
-This action requires:
+-   For authenticating to Google Cloud, you must create a Workload Identity
+    Provider or export credentials. See [Credentials](#credentials) for more
+    information.
 
--   Google Cloud credentials that are authorized to deploy a Cloud Run service.
-    See the [Credentials](#credentials) below for more information.
+-   For deploying from source, you must run the `actions/checkout@v3` step
+    _before_ this action.
 
--   [Enable the Cloud Run API](http://console.cloud.google.com/apis/library/run.googleapis.com)
+-   You must [enable the Cloud Run API](http://console.cloud.google.com/apis/library/run.googleapis.com).
 
 -   This action runs using Node 16. If you are using self-hosted GitHub Actions
     runners, you must use runner version [2.285.0](https://github.com/actions/virtual-environments)
@@ -38,6 +26,8 @@ This action requires:
 ```yaml
 jobs:
   job_id:
+    # ...
+
     permissions:
       contents: 'read'
       id-token: 'write'
@@ -61,41 +51,150 @@ jobs:
 
 ## Inputs
 
-| Name          | Requirement | Default | Description |
-| ------------- | ----------- | ------- | ----------- |
-| `service`| Required if not using a service YAML via `metadata` input. | | ID of the service or fully qualified identifier for the service. |
-| `image`| Required if not using a service YAML via `metadata` input. | | Name of the container image to deploy (Example: `gcr.io/cloudrun/hello:latest`). |
-| `region`| _optional_ | `us-central1` | Region in which the resource can be found. |
-| `env_vars`| _optional_ | | List of key-value pairs to set as environment variables in the format: `KEY1=VALUE1,KEY2=VALUE2`. **All existing environment variables will be retained**. |
-| `secrets`| _optional_ | | List of key-value pairs to set as either environment variables or mounted volumes in the format: `KEY1=secret-key-1:latest,/secrets/api/key=secret-key-2:latest`. The secrets will be fetched from the Secret Manager. The service identity must have permissions to read the secrets. Multiple secrets can be split across multiple lines: <pre>secrets: \|<br>&emsp;&emsp;SECRET_NAME=secret_name<br>&emsp;&emsp;SECRET_NAME2=secret_name2</pre> <br>**All existing environment secrets or volumes will be retained**. |
-| `metadata`| _optional_ | | YAML service description for the Cloud Run service (**Other inputs will be overridden**). See [Metadata customizations](#metadata-customizations) for more information. |
-| `project_id`| _optional_ | | ID of the Google Cloud project. If provided, this will override the project configured by `setup-gcloud`. |
-| `source` | _optional_ | | Deploy from source by specifying the source directory. The [Artifact Registry API][artifact-api] needs to be enabled and the service account role `Cloud Build Service Account` is required. The first deployment will create an [Artifact Registry repository][repo] which requires the `Artifact Registry Admin` role. Learn more about [Deploying from source code](https://cloud.google.com/run/docs/deploying-source-code). |
-| `suffix` | _optional_ | | Specify the suffix of the revision name. Revision names always start with named 'helloworld', would lead to a revision named 'helloworld-v1'. |
-| `tag` | _optional_ | | Traffic tag to assign to the newly created revision. |
-| `timeout` | _optional_ | | Set the maximum request execution time. It is specified as a duration; for example, "10m5s" is ten minutes and five seconds. If you don't specify a unit, seconds is assumed. |
-| `no_traffic` | _optional_ | `false` | Set to `true` to avoid sending traffic to the revision being deployed.|
-| `revision_traffic` | _optional_ | | Comma separated list of traffic assignments in the form REVISION-NAME=PERCENTAGE. |
-| `tag_traffic` | _optional_ | | Comma separated list of traffic assignments in the form TAG=PERCENTAGE. |
-| `labels` | _optional_ | | List of key-value pairs to set as labels of cloud run service in the format: KEY1=VALUE1,KEY2=VALUE2. Existing labels will be overwritten. The GitHub Action will also set additional labels that Cloud Run uses to identify the deployment came from GitHub Actions to enhance the Cloud Run experience. |
-| `flags` | _optional_ | | Space separated list of other Cloud Run flags, examples can be found: https://cloud.google.com/sdk/gcloud/reference/run/deploy#FLAGS. |
-| `gcloud_version` | _optional_ | `latest` | Pin the version of Cloud SDK `gcloud` CLI. |
-| `gcloud_component` | _optional_ | | Pin the Cloud SDK `gcloud` CLI components version, valid values are `alpha` or `beta`. |
-| `credentials`| Required if not using the `setup-gcloud` action with exported credentials. | | (**Deprecated**) This input is deprecated. See [auth section](https://github.com/google-github-actions/deploy-cloudrun#via-google-github-actionsauth) for more details. Service account key to use for authentication. This should be the JSON formatted private key which can be exported from the Cloud Console. The value can be raw or base64-encoded.  |
+-   `service`: (Required, unless providing `metadata`) ID of the service or
+    fully-qualified identifier of the service.
 
-### Metadata customizations
+-   `image`: (Required, unless providing `metadata` or `source`) Fully-qualified
+    name of the container image to deploy. For example:
 
-You can store your service specification in a YAML file. This will allow for
-further service configuration, such as [memory limits](https://cloud.google.com/run/docs/configuring/memory-limits),
-[CPU allocation](https://cloud.google.com/run/docs/configuring/cpu),
-[max instances](https://cloud.google.com/run/docs/configuring/max-instances),
-and [more](https://cloud.google.com/sdk/gcloud/reference/run/deploy#OPTIONAL-FLAGS).
-**Other inputs will be overridden when using `metadata`**
+    ```text
+    gcr.io/cloudrun/hello:latest
+    ```
 
-- See [Deploying a new service](https://cloud.google.com/run/docs/deploying#yaml)
-to create a new YAML service definition, for example:
+    or
 
-```YAML
+    ```text
+    us-docker.pkg.dev/my-project/my-container/image:1.2.3
+    ```
+
+-   `source`: (Required, unless providing `metadata` or `image`) Path to source
+    to deploy. If specified, this will deploy the Cloud Run service from the
+    code specified at the given source directory.
+
+    This requires the [Artifact Registry API][artifact-api] to be enabled.
+    Furthermore, the deploying service account must have the `Cloud Build
+    Service Account` role. The initial deployment will create an [Artifact
+    Registry repository][repo] which requires the `Artifact Registry Admin`
+    role.
+
+    Learn more about [Deploying from source
+    code](https://cloud.google.com/run/docs/deploying-source-code).
+
+-   `suffix`: (Optional) String suffix to append to the revision name. The
+    default value is no suffix.
+
+-   `env_vars`: (Optional) List of key=value pairs to set as environment
+    variables. All existing environment variables will be retained.
+
+    ```yaml
+    with:
+      env_vars: |
+        FOO=bar
+        ZIP=zap
+    ```
+
+-   `secrets`: (Optional) List of key=value pairs to use as secrets. These can
+    either be injected as environment variables or mounted as volumes. All
+    existing environment secrets and volume mounts will be retained.
+
+    ```yaml
+    with:
+      secrets: |
+        # As an environment variable:
+        KEY1=secret-key-1:latest
+
+        # As a volume mount:
+        /secrets/api/key=secret-key-2:latest
+    ```
+
+-   `labels`: (Optional) List of key=value pairs to set as labels on the Cloud
+    Run service. Existing labels will be overwritten.
+
+    ```yaml
+    with:
+      labels:
+        my-label=my-value
+    ```
+
+    The GitHub Action will automatically apply the following labels which Cloud
+    Run uses to enhance the user experience:
+
+    ```text
+    managed-by: github-actions
+    commit-sha: <sha>
+    ```
+
+    Labels have strict naming and casing requirements. See [Requirements for
+    labels](https://cloud.google.com/resource-manager/docs/creating-managing-labels#requirements)
+    for more information.
+
+-   `tag`: (Optional) Traffic tag to assign to the newly-created revision.
+
+-   `timeout`: (Optional) Maximum request execution time, specified as a
+    duration like "10m5s" for ten minutes and 5 seconds.
+
+-   `flags`: (Optional) Space separate list of other Cloud Run flags. This can
+    be used to access features that are not exposed via this GitHub Action.
+
+    ```yaml
+    with:
+      flags: '--add-cloudsql-instances=...'
+    ```
+
+    See the [complete list of
+    flags](https://cloud.google.com/sdk/gcloud/reference/run/deploy#FLAGS) for
+    more information.
+
+-   `no_traffic`: (Optional) If true, the newly deployed revision will not
+    receive traffic. The default value is false.
+
+-   `revision_traffic`: (Optional, mutually-exclusive with `tag_traffic`)
+    Comma-separated list of revision traffic assignments.
+
+    ```yaml
+    with:
+      revision_traffic: 'my-revision=10' # percentage
+    ```
+
+-   `tag_traffic`: (Optional, mutually-exclusive with `revision_traffic`)
+    Comma-separated list of tag traffic assignments.
+
+    ```yaml
+    with:
+      tag_traffix: 'my-tag=10' # percentage
+    ```
+
+-   `project_id`: (Optional) ID of the Google Cloud project in which to deploy
+    the service. The default value is computed from the environment.
+
+-   `region`: (Optional) Region in which to deploy the service. The default
+    value is `us-central1`.
+
+-   `gcloud_version`: (Optional) Version of the `gcloud` CLI to use. The default
+    value is `latest`.
+
+-   `gcloud_component`: (Optional) Component of the `gcloud` CLI to use. Valid
+    values are `alpha` and `beta`.
+
+
+### Custom metadata YAML
+
+For advanced use cases, you can define a custom Cloud Run metadata file. This is
+a YAML description of the Cloud Run service. This allows you to customize your
+service configuration, such as [memory
+limits](https://cloud.google.com/run/docs/configuring/memory-limits), [CPU
+allocation](https://cloud.google.com/run/docs/configuring/cpu), [max
+instances](https://cloud.google.com/run/docs/configuring/max-instances), and
+[more](https://cloud.google.com/sdk/gcloud/reference/run/deploy#OPTIONAL-FLAGS).
+
+**⚠️ When using a custom metadata YAML file, all other inputs are ignored!**
+
+-   `metadata`: (Optional) The path to a Cloud Run service metadata file.
+
+To [deploying a new service](https://cloud.google.com/run/docs/deploying#yaml)
+to create a new YAML service definition:
+
+```yaml
 apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
@@ -107,13 +206,13 @@ spec:
       - image: IMAGE
 ```
 
-- See [Deploy a new revision of an existing service](https://cloud.google.com/run/docs/deploying#yaml_1)
-to generated a YAML service specification from an existing service:
+To update a revision or to [deploy a new revision of an existing service](https://cloud.google.com/run/docs/deploying#yaml_1), download and modify the YAML service definition:
 
-```
+```shell
 gcloud run services describe SERVICE --format yaml > service.yaml
 ```
-### Allow unauthenticated requests
+
+## Allowing unauthenticated requests
 
 A Cloud Run product recommendation is that CI/CD systems not set or change
 settings for allowing unauthenticated invocations. New deployments are

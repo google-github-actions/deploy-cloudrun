@@ -1,4 +1,4 @@
-name: deploy-cloudrun Integration
+name: 'integration'
 
 on:
   push:
