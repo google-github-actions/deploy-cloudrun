@@ -27,7 +27,7 @@ const fakeInputs: { [key: string]: string } = {
   image: 'gcr.io/cloudrun/hello',
   service: 'test',
   metadata: '',
-  credentials: '{}',
+  credentials: '',
   project_id: 'my-test-project',
   env_vars: '',
   source: '',
@@ -45,6 +45,17 @@ function getInputMock(name: string): string {
 describe('#deploy-cloudrun', function () {
   describe('#run', function () {
     beforeEach(async function () {
+      // Stub somewhat annoying logs
+      const doNothing = () => {
+        /** do nothing */
+      };
+      sinon.stub(core, 'debug').callsFake(doNothing);
+      sinon.stub(core, 'endGroup').callsFake(doNothing);
+      sinon.stub(core, 'info').callsFake(doNothing);
+      sinon.stub(core, 'setOutput').callsFake(doNothing);
+      sinon.stub(core, 'startGroup').callsFake(doNothing);
+      sinon.stub(core, 'warning').callsFake(doNothing);
+
       this.stubs = {
         getInput: sinon.stub(core, 'getInput').callsFake(getInputMock),
         getBooleanInput: sinon.stub(core, 'getBooleanInput').returns(false),
@@ -62,6 +73,7 @@ describe('#deploy-cloudrun', function () {
     });
 
     afterEach(function () {
+      sinon.restore();
       Object.keys(this.stubs).forEach((k) => this.stubs[k].restore());
     });
 
