@@ -161,7 +161,7 @@ jobs:
 
     ```yaml
     with:
-      tag_traffix: 'my-tag=10' # percentage
+      tag_traffic: 'my-tag=10' # percentage
     ```
 
 -   `project_id`: (Optional) ID of the Google Cloud project in which to deploy
