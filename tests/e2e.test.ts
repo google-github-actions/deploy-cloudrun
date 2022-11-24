@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import { expect } from 'chai';
-import { GoogleAuth } from 'google-auth-library';
-import { getExecOutput } from '@actions/exec';
-import * as _ from 'lodash';
 import 'mocha';
+import { expect } from 'chai';
+
+import _ from 'lodash';
+import { getExecOutput } from '@actions/exec';
 import { run_v1 } from 'googleapis';
 import yaml from 'js-yaml';
 
@@ -26,6 +26,7 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms, []));
 }
 
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 describe('E2E tests', function () {
   const {
     PROJECT_ID,
@@ -36,21 +37,15 @@ describe('E2E tests', function () {
     SECRET_ENV,
     SECRET_VOLUMES,
     SERVICE,
-    COUNT,
+    REVISION_COUNT,
     REVISION,
     TAG,
     TRAFFIC,
   } = process.env;
 
-  let URL: string;
   let service: run_v1.Schema$Service;
   let toolCommand: string;
   before(async function () {
-    if (process.env.URL) {
-      URL = process.env.URL;
-    } else {
-      throw Error('URL not found.');
-    }
     toolCommand = 'gcloud';
     if (SERVICE && PROJECT_ID) {
       // get Service yaml
@@ -83,46 +78,26 @@ describe('E2E tests', function () {
     }
   });
 
-  it('can make a request', async function () {
-    // Requires ADC to be set
-    const auth = new GoogleAuth();
-    let url;
-    if (URL.includes('---')) {
-      //https://tag---test-cy7cdwrvha-uc.a.run.app/
-      const index = URL.indexOf('---');
-      url = 'https://' + URL.substring(index + 3, URL.length);
-    } else {
-      url = URL;
-    }
-    const client = await auth.getIdTokenClient(url);
-    const response = await client.request({ url: URL });
-    expect(response.status).to.be.equal(200);
-    expect(response.data).to.include('Congrat');
-  });
-
   it('has the correct env vars', function () {
     if (ENV && service) {
       const expected = parseEnvVars(ENV);
-      const env = _.get(service, 'spec.template.spec.containers[0].env')!;
-      expect(env).to.have.lengthOf(expected.length);
-      env.forEach((envVar: run_v1.Schema$EnvVar) => {
-        const found = expected.find((expectedEnvVar) => _.isEqual(envVar, expectedEnvVar));
-        expect(found).to.not.equal(undefined);
-      });
+      const env = _.get(service, 'spec.template.spec.containers[0].env')!.filter(
+        (entry) => entry && entry.value,
+      );
+      expect(env).to.deep.eq(expected);
     }
   });
 
   it('has the correct secret vars', function () {
     if (SECRET_ENV && service) {
       const expected = parseEnvVars(SECRET_ENV);
-      const env = _.get(service, 'spec.template.spec.containers[0].env')!;
-      expect(env).to.have.lengthOf(expected.length);
-      env.forEach((secretEnvVar: run_v1.Schema$EnvVar) => {
-        const found = expected.find((expectedSecretEnvVar) =>
-          _.isEqual(secretEnvVar.name, expectedSecretEnvVar.name),
-        );
-        expect(found).to.not.equal(undefined);
-      });
+      const env = _.get(service, 'spec.template.spec.containers[0].env')!
+        .filter((entry) => entry && entry.valueFrom)
+        .map((entry) => {
+          const ref = entry.valueFrom!.secretKeyRef!;
+          return { name: entry.name, value: `${ref.name}:${ref.key}` };
+        });
+      expect(env).to.deep.eq(expected);
     }
   });
 
@@ -175,13 +150,7 @@ describe('E2E tests', function () {
     if (ANNOTATIONS && service) {
       const expected = JSON.parse(ANNOTATIONS);
       const actual = _.get(service, 'spec.template.metadata.annotations')!;
-
-      Object.entries(expected).forEach((annot: object) => {
-        const found = Object.entries(actual).find((actualAnnot: object) => {
-          return _.isEqual(annot, actualAnnot);
-        });
-        expect(found).to.not.equal(undefined);
-      });
+      expect(actual).to.deep.include(expected);
     }
   });
 
@@ -189,16 +158,16 @@ describe('E2E tests', function () {
     if (LABELS && service) {
       const expected = JSON.parse(LABELS);
       const actual = _.get(service, 'spec.template.metadata.labels')!;
-      expect(actual).to.deep.equal(expected);
+      expect(actual).to.deep.eq(expected);
     }
   });
 
   it('has the correct revision count', async function () {
-    if (COUNT && SERVICE && PROJECT_ID) {
+    if (REVISION_COUNT && SERVICE && PROJECT_ID) {
       const max = 3;
       const attempt = 0;
       let revisions = [];
-      while (attempt < max && revisions.length < parseInt(COUNT)) {
+      while (attempt < max && revisions.length < parseInt(REVISION_COUNT)) {
         await sleep(1000 * attempt);
         const cmd = [
           'run',
@@ -228,14 +197,14 @@ describe('E2E tests', function () {
         revisions = JSON.parse(output.stdout);
       }
 
-      expect(revisions.length).to.equal(parseInt(COUNT));
+      expect(revisions.length).to.equal(parseInt(REVISION_COUNT));
     }
   });
 
   it('has the correct revision name', function () {
     if (REVISION && service) {
       const actual = _.get(service, 'spec.template.metadata.name');
-      expect(REVISION).to.equal(actual);
+      expect(REVISION).to.eq(actual);
     }
   });
 
@@ -245,7 +214,7 @@ describe('E2E tests', function () {
       const actual = traffic.find((rev: run_v1.Schema$TrafficTarget) => {
         return rev['tag'] == TAG;
       })!;
-      expect(TAG).to.equal(actual['tag']);
+      expect(TAG).to.eq(actual['tag']);
     }
   });
 

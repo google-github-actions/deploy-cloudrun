@@ -62,15 +62,8 @@ inputs:
     required: false
 
   project_id:
-    description: The GCP project ID. Overrides project ID set by credentials.
-    required: false
-
-  credentials:
     description: |-
-      Service account key to use for authentication. This should be the JSON
-      formatted private key which can be exported from the Cloud Console. The
-      value can be raw or base64-encoded. Required if not using a the
-      setup-gcloud action with exported credentials.
+      The Google Cloud Project ID. If unset, this is inherited from the environment.
     required: false
 
   source:

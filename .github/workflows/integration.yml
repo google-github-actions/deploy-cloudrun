@@ -1,4 +1,4 @@
-name: 'integration'
+name: 'Integration'
 
 on:
   push:
@@ -9,394 +9,144 @@ on:
     - 'main'
   workflow_dispatch:
 
+concurrency:
+  group: '${{ github.workflow }}-${{ github.head_ref || github.ref }}'
+  cancel-in-progress: true
+
+permissions:
+  contents: 'read'
+  id-token: 'write'
+
 jobs:
-  envvars:
-    name: with Env Vars
+  deploy:
     if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name && github.actor != 'dependabot[bot]' }}
-    runs-on: ubuntu-latest
+    runs-on: 'ubuntu-latest'
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - name: 'image'
+          image: 'gcr.io/cloudrun/hello'
+        - name: 'source'
+          source: 'example-app'
+
+    name: 'from_${{ matrix.name }}'
+
     steps:
-    - id: service
-      run: echo service=run-envvars-$GITHUB_SHA >> $GITHUB_OUTPUT
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: 'actions/checkout@v3'
+
+    - name: 'Compute service name'
+      run: |-
+        echo "SERVICE_NAME=${GITHUB_JOB}-${{ matrix.name }}-${GITHUB_SHA::7}-${GITHUB_RUN_NUMBER}" >> ${GITHUB_ENV}
+
+    - uses: 'actions/setup-node@v3'
       with:
         node-version: '16.x'
-    - name: Build Javascript
-      run: |-
-        npm ci
-        npm run build
 
-    - name: Create Service with one env var
-      id: deploy_1
-      uses: ./
+    - run: 'npm ci && npm run build'
+
+    - uses: 'google-github-actions/auth@main'
       with:
-        credentials: ${{ secrets.DEPLOY_CLOUDRUN_SA_KEY_JSON }}
-        image: gcr.io/cloudrun/hello
-        service: ${{ steps.service.outputs.service }}
-        env_vars: TEST_ENV=TEST_VAR
+        workload_identity_provider: '${{ secrets.WIF_PROVIDER_NAME }}'
+        service_account: '${{ secrets.DEPLOY_CLOUDRUN_SA_EMAIL }}'
 
-    - name: Setup Authentication with gcloud
-      uses: google-github-actions/setup-gcloud@main
+    - id: 'deploy-cloudrun'
+      name: 'Deploy'
+      uses: './'
       with:
-        service_account_key: ${{ secrets.DEPLOY_CLOUDRUN_SA_KEY_B64 }}
-        export_default_credentials: true
-
-    - name: Integration Tests
-      run: npm run e2e-tests
-      env:
-        URL: ${{ steps.deploy_1.outputs.url }}
-        PROJECT_ID: ${{ secrets.DEPLOY_CLOUDRUN_PROJECT_ID }}
-        SERVICE: ${{ steps.service.outputs.service }}
-        ENV: TEST_ENV=TEST_VAR
-
-    - name: Update Service with second env var
-      id: deploy_2
-      uses: ./
-      with:
-        credentials: ${{ secrets.DEPLOY_CLOUDRUN_SA_KEY_JSON }}
-        image: gcr.io/cloudrun/hello
-        service: ${{ steps.service.outputs.service }}
-        env_vars: TEST_ENV2=TEST_VAR2
-
-    - name: Integration Tests # Check that config isn't overwritten
-      run: npm run e2e-tests
-      env:
-        URL: ${{ steps.deploy_2.outputs.url }}
-        PROJECT_ID: ${{ secrets.DEPLOY_CLOUDRUN_PROJECT_ID }}
-        SERVICE: ${{ steps.service.outputs.service }}
-        ENV: TEST_ENV=TEST_VAR,TEST_ENV2=TEST_VAR2
-        COUNT: 2
-
-  secret-manager:
-    name: with Secret Manager
-    if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name && github.actor != 'dependabot[bot]' }}
-    runs-on: ubuntu-latest
-    steps:
-    - id: service
-      run: echo service=run-secret-manager-$GITHUB_SHA >> $GITHUB_OUTPUT
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
-      with:
-        node-version: '16.x'
-    - name: Build Javascript
-      run: |-
-        npm ci
-        npm run build
-
-    - name: Create Service with Secret Manager
-      id: deploy_1
-      uses: ./
-      with:
-        credentials: ${{ secrets.DEPLOY_CLOUDRUN_SA_KEY_JSON }}
-        image: gcr.io/cloudrun/hello
-        service: ${{ steps.service.outputs.service }}
-        secrets: |
+        image: '${{ matrix.image }}'
+        source: '${{ matrix.source }}'
+        service: '${{ env.SERVICE_NAME }}'
+        env_vars: |-
+          FOO=bar
+          ZIP=zap
+        secrets: |-
           MY_SECRET=secret_value:latest
           MY_SECOND_SECRET=new_value:latest
+        flags: "--cpu=2 --concurrency=20"
 
-    - name: Setup Authentication with gcloud
-      uses: google-github-actions/setup-gcloud@main
-      with:
-        service_account_key: ${{ secrets.DEPLOY_CLOUDRUN_SA_KEY_B64 }}
-        export_default_credentials: true
-
-    - name: Integration Tests
-      run: npm run e2e-tests
+    - run: 'npm run e2e-tests'
       env:
-        URL: ${{ steps.deploy_1.outputs.url }}
         PROJECT_ID: ${{ secrets.DEPLOY_CLOUDRUN_PROJECT_ID }}
-        SERVICE: ${{ steps.service.outputs.service }}
+        SERVICE: '${{ env.SERVICE_NAME }}'
+        ENV: 'FOO=bar,ZIP=zap'
         SECRET_ENV: MY_SECRET=secret_value:latest,MY_SECOND_SECRET=new_value:latest
+        PARAMS: '{"cpu":2, "containerConcurrency":20}'
 
-    - name: Update service with mounted secret
-      id: deploy_2
-      uses: ./
+    - id: 'deploy-cloudrun-again'
+      name: 'Deploy again'
+      uses: './'
       with:
-        credentials: ${{ secrets.DEPLOY_CLOUDRUN_SA_KEY_JSON }}
-        image: gcr.io/cloudrun/hello
-        service: ${{ steps.service.outputs.service }}
+        image: '${{ matrix.image }}'
+        source: '${{ matrix.source }}'
+        service: '${{ env.SERVICE_NAME }}'
+        env_vars: |-
+          ABC=123
+          DEF=456
         secrets: /api/secrets/my-secret=secret_value:latest
 
-    - name: Integration Tests # Check that config isn't overwritten
-      run: npm run e2e-tests
+    - run: 'npm run e2e-tests'
       env:
-        URL: ${{ steps.deploy_2.outputs.url }}
         PROJECT_ID: ${{ secrets.DEPLOY_CLOUDRUN_PROJECT_ID }}
-        SERVICE: ${{ steps.service.outputs.service }}
+        SERVICE: '${{ env.SERVICE_NAME }}'
+        ENV: 'FOO=bar,ZIP=zap,ABC=123,DEF=456'
         SECRET_ENV: MY_SECRET=secret_value:latest,MY_SECOND_SECRET=new_value:latest
         SECRET_VOLUMES: /api/secrets/my-secret=secret_value:latest
-        COUNT: 2
-
-  yaml:
-    name: with YAML metadata
-    if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name && github.actor != 'dependabot[bot]' }}
-    runs-on: ubuntu-latest
-    steps:
-    - id: service
-      run: echo service=run-yaml-$GITHUB_SHA >> $GITHUB_OUTPUT
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
-      with:
-        node-version: '16.x'
-    - name: Build Javascript
-      run: |-
-        npm ci
-        npm run build
-
-    - name: Set service name in metadata YAML
-      run: sed -i "s/test-basic-yaml/${{ steps.service.outputs.service }}/" ./tests/unit/service.basic.yaml
-
-    - name: Deploy Service
-      id: deploy
-      uses: ./
-      with:
-        credentials: ${{ secrets.DEPLOY_CLOUDRUN_SA_KEY_JSON }}
-        metadata: ./tests/unit/service.basic.yaml
-
-    - name: Setup Authentication with gcloud
-      uses: google-github-actions/setup-gcloud@main
-      with:
-        service_account_key: ${{ secrets.DEPLOY_CLOUDRUN_SA_KEY_B64 }}
-        export_default_credentials: true
-
-    - name: Integration Tests
-      run: npm run e2e-tests
-      env:
-        URL: ${{ steps.deploy.outputs.url }}
-        PROJECT_ID: ${{ secrets.DEPLOY_CLOUDRUN_PROJECT_ID }}
+        PARAMS: '{"cpu":2, "containerConcurrency":20}'
+        REVISION_COUNT: 2
 
   metadata:
-    name: with full YAML metadata
     if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name && github.actor != 'dependabot[bot]' }}
-    runs-on: ubuntu-latest
+    runs-on: 'ubuntu-latest'
+
     steps:
-    - id: service
-      run: echo service=run-full-yaml-$GITHUB_SHA >> $GITHUB_OUTPUT
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: 'actions/checkout@v3'
+
+    - name: 'Compute service name'
+      run: |-
+        echo "SERVICE_NAME=${GITHUB_JOB}-metadata-${GITHUB_SHA::7}-${GITHUB_RUN_NUMBER}" >> ${GITHUB_ENV}
+
+    - name: 'Set service name in metadata YAML'
+      run: |-
+        sed -i "s/run-full-yaml/${{ env.SERVICE_NAME }}/" ./tests/unit/service.yaml
+
+    - uses: 'actions/setup-node@v3'
       with:
         node-version: '16.x'
-    - name: Build Javascript
-      run: |-
-        npm ci
-        npm run build
 
-    - name: Set service name in metadata YAML
-      run: |-
-        sed -i "s/run-full-yaml/${{ steps.service.outputs.service }}/" ./tests/unit/service.full.yaml
+    - run: 'npm ci && npm run build'
 
-    - name: Create service from metadata yaml
-      id: deploy_1
-      uses: ./
+    - uses: 'google-github-actions/auth@main'
       with:
-        credentials: ${{ secrets.DEPLOY_CLOUDRUN_SA_KEY_JSON }}
-        metadata: ./tests/unit/service.full.yaml
+        workload_identity_provider: '${{ secrets.WIF_PROVIDER_NAME }}'
+        service_account: '${{ secrets.DEPLOY_CLOUDRUN_SA_EMAIL }}'
 
-    - name: Setup Authentication with gcloud
-      uses: google-github-actions/setup-gcloud@main
+    - id: 'deploy-cloudrun'
+      name: 'Deploy'
+      uses: './'
       with:
-        service_account_key: ${{ secrets.DEPLOY_CLOUDRUN_SA_KEY_B64 }}
-        export_default_credentials: true
+        metadata: './tests/unit/service.yaml'
 
-    - name: Integration Tests
-      run: npm run e2e-tests
+    - run: 'npm run e2e-tests'
       env:
-        URL: ${{ steps.deploy_1.outputs.url }}
-        PROJECT_ID: ${{ secrets.DEPLOY_CLOUDRUN_PROJECT_ID }}
-        SERVICE: ${{ steps.service.outputs.service }}
-        PARAMS: "{\"cpu\": 2,\"memory\": \"1Gi\", \"containerConcurrency\": 20}"
-        ANNOTATIONS: "{\"run.googleapis.com/cloudsql-instances\": \"test-project:us-central1:my-test-instance\"}"
+        PROJECT_ID: '${{ secrets.DEPLOY_CLOUDRUN_PROJECT_ID }}'
+        SERVICE: '${{ env.SERVICE_NAME }}'
+        PARAMS: '{"cpu":2, "memory":"1Gi", "containerConcurrency":20}'
+        ANNOTATIONS: '{"run.googleapis.com/cloudsql-instances":"test-project:us-central1:my-test-instance"}'
         LABELS: '{"test_label":"test_value"}'
 
-    - name: Update service with new image
-      id: deploy_2
-      uses: ./
+    - id: 'deploy-cloudrun-again'
+      name: 'Deploy again'
+      uses: './'
       with:
-        credentials: ${{ secrets.DEPLOY_CLOUDRUN_SA_KEY_JSON }}
-        image: gcr.io/cloudrun/hello
-        service: ${{ steps.service.outputs.service }}
+        image: 'gcr.io/cloudrun/hello'
+        service: '${{ env.SERVICE_NAME }}'
 
-    - name: Integration Tests # Check that config isn't overwritten
-      run: npm run e2e-tests
+    - run: 'npm run e2e-tests' # Check that config isn't overwritten
       env:
-        URL: ${{ steps.deploy_2.outputs.url }}
-        PROJECT_ID: ${{ secrets.DEPLOY_CLOUDRUN_PROJECT_ID }}
-        SERVICE: ${{ steps.service.outputs.service }}
-        PARAMS: "{\"cpu\": 2,\"memory\": \"1Gi\", \"containerConcurrency\": 20}"
-        ANNOTATIONS: "{\"run.googleapis.com/cloudsql-instances\": \"test-project:us-central1:my-test-instance\"}"
-        LABELS: '{"managed-by":"github-actions", "commit-sha":"${{ github.sha }}"}'
-        COUNT: 2
-
-  revision:
-    name: with Revision Name
-    if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name && github.actor != 'dependabot[bot]' }}
-    runs-on: ubuntu-latest
-    steps:
-    - id: service
-      run: echo service=run-revision-name-$GITHUB_SHA >> $GITHUB_OUTPUT
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
-      with:
-        node-version: '16.x'
-    - name: Build Javascript
-      run: |-
-        npm ci
-        npm run build
-
-    - run: |-
-        sed -i "s/run-revision-name/${{ steps.service.outputs.service }}/" ./tests/unit/service.namedrevision.yaml
-
-    - name: Create service from metadata yaml
-      id: deploy_1
-      uses: ./
-      with:
-        credentials: ${{ secrets.DEPLOY_CLOUDRUN_SA_KEY_JSON }}
-        metadata: ./tests/unit/service.namedrevision.yaml
-
-    - name: Setup Authentication with gcloud
-      uses: google-github-actions/setup-gcloud@main
-      with:
-        service_account_key: ${{ secrets.DEPLOY_CLOUDRUN_SA_KEY_B64 }}
-        export_default_credentials: true
-
-    - name: Integration Tests
-      run: npm run e2e-tests
-      env:
-        URL: ${{ steps.deploy_1.outputs.url }}
-        PROJECT_ID: ${{ secrets.DEPLOY_CLOUDRUN_PROJECT_ID }}
-        SERVICE: ${{ steps.service.outputs.service }}
-        REVISION: ${{ steps.service.outputs.service }}-001
-
-    - name: Update service revision name
-      run: |-
-        sed -i "s/-001/-002/" ./tests/unit/service.namedrevision.yaml
-
-    - name: Update service with new revision name
-      id: deploy_2
-      uses: ./
-      with:
-        credentials: ${{ secrets.DEPLOY_CLOUDRUN_SA_KEY_JSON }}
-        metadata: ./tests/unit/service.namedrevision.yaml
-
-    - name: Integration Tests # Check that config isn't overwritten
-      run: npm run e2e-tests
-      env:
-        URL: ${{ steps.deploy_2.outputs.url }}
-        PROJECT_ID: ${{ secrets.DEPLOY_CLOUDRUN_PROJECT_ID }}
-        SERVICE: ${{ steps.service.outputs.service }}
-        REVISION: ${{ steps.service.outputs.service }}-002
-        COUNT: 2
-
-  name:
-    name: with Bad Inputs
-    if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name && github.actor != 'dependabot[bot]' }}
-    runs-on: ubuntu-latest
-    env:
-      SERVICE_NAME: test-name
-      IMAGE_NAME: gcr.io/cloudrun/hello
-      TAG: hello
-    steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
-      with:
-        node-version: '16.x'
-    - name: Build Javascript
-      run: |-
-        npm ci
-        npm run build
-
-    - name: Name with uppercase letters
-      id: test1
-      uses: ./
-      continue-on-error: true
-      with:
-        credentials: ${{ secrets.DEPLOY_CLOUDRUN_SA_KEY_JSON }}
-        image:  gcr.io/cloudrun/hello
-        service: UPPERCASE-NAME
-    - name: Catch failure
-      run: |-
-        if [ ${{ steps.test1.outcome }} != 'failure' ]; then exit 1; fi
-
-    - name: Name with underscore
-      id: test2
-      uses: ./
-      continue-on-error: true
-      with:
-        credentials: ${{ secrets.DEPLOY_CLOUDRUN_SA_KEY_JSON }}
-        image:  gcr.io/cloudrun/hello
-        service: under_score
-    - name: Catch failure
-      run: |-
-        if [ ${{ steps.test2.outcome }} != 'failure' ]; then exit 1; fi
-
-    - name: Name starts with number
-      id: test3
-      uses: ./
-      continue-on-error: true
-      with:
-        credentials: ${{ secrets.DEPLOY_CLOUDRUN_SA_KEY_JSON }}
-        image:  gcr.io/cloudrun/hello
-        service: 1-number
-    - name: Catch failure
-      run: |-
-        if [ ${{ steps.test3.outcome }} != 'failure' ]; then exit 1; fi
-
-    - name: Name with env var
-      id: test4
-      uses: ./
-      continue-on-error: true
-      with:
-        credentials: ${{ secrets.DEPLOY_CLOUDRUN_SA_KEY_JSON }}
-        image:  gcr.io/cloudrun/hello
-        service: $SERVICE_NAME
-    - name: Catch failure
-      run: |-
-        if [ ${{ steps.test4.outcome }} != 'failure' ]; then exit 1; fi
-
-    - name: Image with env var
-      id: test5
-      uses: ./
-      continue-on-error: true
-      timeout-minutes: 1
-      with:
-        credentials: ${{ secrets.DEPLOY_CLOUDRUN_SA_KEY_JSON }}
-        image:  gcr.io/cloudrun/$TAG
-        service: test-service-name
-    - name: Catch failure
-      run: |-
-        if [ ${{ steps.test5.outcome }} != 'failure' ]; then exit 1; fi
-
-    - name: Image name as env var
-      id: test6
-      uses: ./
-      continue-on-error: true
-      with:
-        credentials: ${{ secrets.DEPLOY_CLOUDRUN_SA_KEY_JSON }}
-        image:  $IMAGE_NAME
-        service: test-service-name
-    - name: Catch failure
-      run: |-
-        if [ ${{ steps.test6.outcome }} != 'failure' ]; then exit 1; fi
-
-  cleanup:
-    name: Clean Up
-    if: ${{ (github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name && github.actor != 'dependabot[bot]') && always() }}
-    runs-on: ubuntu-latest
-    needs: [envvars, secret-manager, metadata, yaml, revision, name]
-    steps:
-    - uses: google-github-actions/setup-gcloud@main
-      with:
-        service_account_key: ${{ secrets.DEPLOY_CLOUDRUN_SA_KEY_B64 }}
-        project_id: ${{ secrets.DEPLOY_CLOUDRUN_PROJECT_ID }}
-
-    - name: Delete services
-      continue-on-error: true
-      run: |-
-        gcloud config set run/platform managed
-        gcloud config set run/region us-central1
-        gcloud run services delete run-full-yaml-$GITHUB_SHA --quiet
-        gcloud run services delete run-yaml-$GITHUB_SHA --quiet
-        gcloud run services delete run-envvars-$GITHUB_SHA --quiet
-        gcloud run services delete run-secret-manager-$GITHUB_SHA --quiet
-        gcloud run services delete run-revision-name-$GITHUB_SHA --quiet
-        gcloud run services delete test-service-name --quiet
+        PROJECT_ID: '${{ secrets.DEPLOY_CLOUDRUN_PROJECT_ID }}'
+        SERVICE: '${{ env.SERVICE_NAME }}'
+        PARAMS: '{"cpu":2, "memory":"1Gi", "containerConcurrency":20}'
+        ANNOTATIONS: '{"run.googleapis.com/cloudsql-instances":"test-project:us-central1:my-test-instance"}'
+        REVISION_COUNT: 2

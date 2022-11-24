@@ -1,4 +1,4 @@
-name: 'unit'
+name: 'Unit'
 
 on:
   push:
@@ -14,9 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  run:
-    name: 'unit'
-    runs-on: '${{ matrix.os }}'
+  unit:
     strategy:
       fail-fast: false
       matrix:
@@ -24,6 +22,8 @@ jobs:
         - 'ubuntu-latest'
         - 'windows-latest'
         - 'macos-latest'
+    runs-on: '${{ matrix.os }}'
+
     steps:
     - uses: 'actions/checkout@v3'
 
@@ -37,8 +37,8 @@ jobs:
     - name: 'npm lint'
       # There's no need to run the linter for each operating system, since it
       # will find the same thing 3x and clog up the PR review.
-      if: ${{matrix.os == 'ubuntu-latest'}}
+      if: ${{ matrix.os == 'ubuntu-latest' }}
       run: 'npm run lint'
 
     - name: 'npm test'
-      run: npm run test
+      run: 'npm run test'
