@@ -55,7 +55,7 @@ export function parseUpdateTrafficResponse(stdout: string | undefined): DeployCl
   try {
     stdout = presence(stdout);
     if (!stdout || stdout === '{}' || stdout === '[]') {
-      throw new Error(`invalid input received`);
+      return {};
     }
 
     const outputJSON: UpdateTrafficItem[] = JSON.parse(stdout);
@@ -96,7 +96,7 @@ export function parseDeployResponse(
   try {
     stdout = presence(stdout);
     if (!stdout || stdout === '{}' || stdout === '[]') {
-      throw new Error(`invalid input received`);
+      return {};
     }
 
     const outputJSON: run_v1.Schema$Service = JSON.parse(stdout);

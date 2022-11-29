@@ -1,0 +1,30 @@
+name: 'Cleanup'
+
+on:
+  schedule:
+    - cron: '0 */4 * * *'
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    runs-on: 'ubuntu-latest'
+
+    steps:
+    - uses: 'google-github-actions/setup-gcloud@main'
+
+    - uses: 'google-github-actions/auth@main'
+      with:
+        workload_identity_provider: '${{ secrets.WIF_PROVIDER_NAME }}'
+        service_account: '${{ secrets.DEPLOY_CLOUDRUN_SA_EMAIL }}'
+
+    - name: Delete services
+      run: |-
+        BUFFER="$(TZ=GMT+4 date +%Y-%m-%d)"
+
+        gcloud config set core/project "${{ secrets.DEPLOY_CLOUDRUN_PROJECT_ID }}"
+        gcloud config set run/region "us-central1"
+
+        (IFS=$'\n'; for NAME in $(gcloud run services list --format="value(name)" --filter="metadata.creationTimestamp > '${BUFFER}'"); do
+          echo "Deleting ${NAME}..."
+          gcloud run services delete ${NAME} --quiet --async
+        done)

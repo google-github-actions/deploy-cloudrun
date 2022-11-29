@@ -15,11 +15,15 @@
  */
 
 import 'mocha';
+import { expect } from 'chai';
 import * as sinon from 'sinon';
+
 import * as core from '@actions/core';
 import * as exec from '@actions/exec';
 import * as setupGcloud from '@google-github-actions/setup-cloud-sdk';
-import { expect } from 'chai';
+import { TestToolCache } from '@google-github-actions/setup-cloud-sdk';
+import { errorMessage } from '@google-github-actions/actions-utils';
+
 import { run, kvToString } from '../../src/main';
 
 // These are mock data for github actions inputs, where camel case is expected.
@@ -27,7 +31,6 @@ const fakeInputs: { [key: string]: string } = {
   image: 'gcr.io/cloudrun/hello',
   service: 'test',
   metadata: '',
-  credentials: '',
   project_id: 'my-test-project',
   env_vars: '',
   labels: '',
@@ -43,252 +46,224 @@ function getInputMock(name: string): string {
   return fakeInputs[name];
 }
 
-describe('#deploy-cloudrun', function () {
-  describe('#run', function () {
-    beforeEach(async function () {
-      // Stub somewhat annoying logs
-      const doNothing = () => {
-        /** do nothing */
-      };
-      sinon.stub(core, 'debug').callsFake(doNothing);
-      sinon.stub(core, 'endGroup').callsFake(doNothing);
-      sinon.stub(core, 'info').callsFake(doNothing);
-      sinon.stub(core, 'setOutput').callsFake(doNothing);
-      sinon.stub(core, 'startGroup').callsFake(doNothing);
-      sinon.stub(core, 'warning').callsFake(doNothing);
+describe('#run', function () {
+  beforeEach(async function () {
+    await TestToolCache.start();
 
-      this.stubs = {
-        getInput: sinon.stub(core, 'getInput').callsFake(getInputMock),
-        getBooleanInput: sinon.stub(core, 'getBooleanInput').returns(false),
-        exportVariable: sinon.stub(core, 'exportVariable'),
-        setFailed: sinon.stub(core, 'setFailed'),
-        installGcloudSDK: sinon.stub(setupGcloud, 'installGcloudSDK'),
-        authenticateGcloudSDK: sinon.stub(setupGcloud, 'authenticateGcloudSDK'),
-        isAuthenticated: sinon.stub(setupGcloud, 'isAuthenticated').resolves(true),
-        isInstalled: sinon.stub(setupGcloud, 'isInstalled').returns(false),
-        parseServiceAccountKey: sinon.stub(setupGcloud, 'parseServiceAccountKey'),
-        isProjectIdSet: sinon.stub(setupGcloud, 'isProjectIdSet').resolves(true),
-        installComponent: sinon.stub(setupGcloud, 'installComponent'),
-        getExecOutput: sinon.stub(exec, 'getExecOutput'),
-      };
-    });
+    this.stubs = {
+      getInput: sinon.stub(core, 'getInput').callsFake(getInputMock),
+      exportVariable: sinon.stub(core, 'exportVariable'),
+      setOutput: sinon.stub(core, 'setOutput'),
+      authenticateGcloudSDK: sinon.stub(setupGcloud, 'authenticateGcloudSDK'),
+      getLatestGcloudSDKVersion: sinon
+        .stub(setupGcloud, 'getLatestGcloudSDKVersion')
+        .resolves('1.2.3'),
+      isInstalled: sinon.stub(setupGcloud, 'isInstalled').returns(true),
+      installGcloudSDK: sinon.stub(setupGcloud, 'installGcloudSDK'),
+      installComponent: sinon.stub(setupGcloud, 'installComponent'),
+      getExecOutput: sinon
+        .stub(exec, 'getExecOutput')
+        .resolves({ exitCode: 0, stderr: '', stdout: '{}' }),
+    };
 
-    afterEach(function () {
-      sinon.restore();
-      Object.keys(this.stubs).forEach((k) => this.stubs[k].restore());
-      delete process.env.GITHUB_SHA;
-    });
-
-    it('sets the project ID if provided', async function () {
-      this.stubs.getInput.withArgs('project_id').returns('my-test-project');
-      await run();
-
-      const call = this.stubs.getExecOutput.getCall(0);
-      expect(call).to.be;
-      const args = call.args[1];
-      expect(args).to.include.members(['--project', 'my-test-project']);
-    });
-
-    it('sets the project ID if GCLOUD_PROJECT is provided', async function () {
-      this.stubs.getInput.withArgs('project_id').returns('');
-      this.stubs.getInput.withArgs('credentials').returns('');
-      process.env.GCLOUD_PROJECT = 'my-test-project';
-      await run();
-
-      const call = this.stubs.getExecOutput.getCall(0);
-      expect(call).to.be;
-      const args = call.args[1];
-      expect(args).to.include.members(['--project', 'my-test-project']);
-    });
-
-    it('installs the gcloud SDK if it is not already installed', async function () {
-      this.stubs.isInstalled.returns(false);
-      await run();
-      expect(this.stubs.installGcloudSDK.callCount).to.eq(1);
-    });
-
-    it('uses the cached gcloud SDK if it was already installed', async function () {
-      this.stubs.isInstalled.returns(true);
-      await run();
-      expect(this.stubs.installGcloudSDK.callCount).to.eq(0);
-    });
-
-    it('authenticates if key is provided', async function () {
-      this.stubs.getInput.withArgs('credentials').returns('key');
-      await run();
-      expect(this.stubs.authenticateGcloudSDK.withArgs('key').callCount).to.eq(1);
-    });
-
-    it('uses project id from credentials if project_id is not provided', async function () {
-      this.stubs.getInput.withArgs('credentials').returns('key');
-      this.stubs.getInput.withArgs('project_id').returns('');
-      await run();
-      expect(this.stubs.parseServiceAccountKey.withArgs('key').callCount).to.eq(1);
-    });
-
-    it('fails if credentials and project_id are not provided', async function () {
-      this.stubs.getInput.withArgs('credentials').returns('');
-      this.stubs.getInput.withArgs('project_id').returns('');
-      process.env.GCLOUD_PROJECT = '';
-      await run();
-      expect(this.stubs.setFailed.callCount).to.be.at.least(1);
-    });
-
-    it('sets labels', async function () {
-      this.stubs.getInput.withArgs('labels').returns('foo=bar,zip=zap');
-
-      process.env.GITHUB_SHA = 'abcdef123456';
-
-      const expectedLabels = {
-        'managed-by': 'github-actions',
-        'commit-sha': 'abcdef123456',
-        'foo': 'bar',
-        'zip': 'zap',
-      };
-
-      await run();
-      const call = this.stubs.getExecOutput.getCall(0);
-      expect(call).to.be;
-      const args = call.args[1];
-      expect(args).to.include.members(['--update-labels', kvToString(expectedLabels)]);
-    });
-
-    it('overwrites default labels', async function () {
-      this.stubs.getInput.withArgs('labels').returns('commit-sha=custom-value');
-
-      process.env.GITHUB_SHA = 'abcdef123456';
-
-      const expectedLabels = {
-        'managed-by': 'github-actions',
-        'commit-sha': 'custom-value',
-      };
-
-      await run();
-      const call = this.stubs.getExecOutput.getCall(0);
-      expect(call).to.be;
-      const args = call.args[1];
-      expect(args).to.include.members(['--update-labels', kvToString(expectedLabels)]);
-    });
-
-    it('sets source if given', async function () {
-      this.stubs.getInput.withArgs('source').returns('example-app');
-      this.stubs.getInput.withArgs('image').returns('');
-      await run();
-      const call = this.stubs.getExecOutput.getCall(0);
-      expect(call).to.be;
-      const args = call.args[1];
-      expect(args).to.include.members(['--source', 'example-app']);
-    });
-
-    it('sets metadata if given', async function () {
-      this.stubs.getInput.withArgs('metadata').returns('yaml');
-      this.stubs.getInput.withArgs('image').returns('');
-      this.stubs.getInput.withArgs('service').returns('');
-      await run();
-      const call = this.stubs.getExecOutput.getCall(0);
-      expect(call).to.be;
-      const args = call.args[1];
-      expect(args).to.include.members(['services', 'replace', 'yaml']);
-    });
-
-    it('sets timeout if given', async function () {
-      this.stubs.getInput.withArgs('timeout').returns('55m12s');
-      await run();
-      const call = this.stubs.getExecOutput.getCall(0);
-      expect(call).to.be;
-      const args = call.args[1];
-      expect(args).to.include.members(['--timeout', '55m12s']);
-    });
-
-    it('sets tag if given', async function () {
-      this.stubs.getInput.withArgs('tag').returns('test');
-      await run();
-      const call = this.stubs.getExecOutput.getCall(0);
-      expect(call).to.be;
-      const args = call.args[1];
-      expect(args).to.include.members(['--tag', 'test']);
-    });
-
-    it('sets tag traffic if given', async function () {
-      this.stubs.getInput.withArgs('tag').returns('test');
-      this.stubs.getInput.withArgs('name').returns('service-name');
-      await run();
-      const call = this.stubs.getExecOutput.getCall(0);
-      expect(call).to.be;
-      const args = call.args[1];
-      expect(args).to.include.members(['--tag', 'test']);
-    });
-
-    it('fails if tag traffic and revision traffic are provided', async function () {
-      this.stubs.getInput.withArgs('revision_traffic').returns('TEST=100');
-      this.stubs.getInput.withArgs('tag_traffic').returns('TEST=100');
-      await run();
-      expect(this.stubs.setFailed.callCount).to.eq(1);
-    });
-
-    it('fails if name is not provided with tag traffic', async function () {
-      this.stubs.getInput.withArgs('tag_traffic').returns('TEST=100');
-      this.stubs.getInput.withArgs('name').returns('service-name');
-      await run();
-      expect(this.stubs.setFailed.callCount).to.eq(1);
-    });
-
-    it('fails if name is not provided with revision traffic', async function () {
-      this.stubs.getInput.withArgs('revision_traffic').returns('TEST=100');
-      this.stubs.getInput.withArgs('name').returns('service-name');
-      await run();
-      expect(this.stubs.setFailed.callCount).to.eq(1);
-    });
-
-    it('uses default components without gcloud_component flag', async function () {
-      await run();
-      expect(this.stubs.installComponent.callCount).to.eq(0);
-    });
-
-    it('throws error with invalid gcloud component flag', async function () {
-      this.stubs.getInput.withArgs('gcloud_component').returns('wrong_value');
-      await run();
-      const msg = `google-github-actions/deploy-cloudrun failed with: invalid input received for gcloud_component: wrong_value`;
-      expect(this.stubs.setFailed.withArgs(`${msg}`).callCount).to.be.at.least(1);
-    });
-
-    it('installs alpha component with alpha flag', async function () {
-      this.stubs.getInput.withArgs('gcloud_component').returns('alpha');
-      await run();
-      expect(this.stubs.installComponent.withArgs('alpha').callCount).to.eq(1);
-    });
-
-    it('installs beta component with beta flag', async function () {
-      this.stubs.getInput.withArgs('gcloud_component').returns('beta');
-      await run();
-      expect(this.stubs.installComponent.withArgs('beta').callCount).to.eq(1);
-    });
+    sinon.stub(core, 'setFailed').throwsArg(0); // make setFailed throw exceptions
+    sinon.stub(core, 'addPath').callsFake(sinon.fake());
+    sinon.stub(core, 'debug').callsFake(sinon.fake());
+    sinon.stub(core, 'endGroup').callsFake(sinon.fake());
+    sinon.stub(core, 'info').callsFake(sinon.fake());
+    sinon.stub(core, 'startGroup').callsFake(sinon.fake());
+    sinon.stub(core, 'warning').callsFake(sinon.fake());
   });
 
-  describe('#kvToString', () => {
-    const cases = [
-      {
-        name: `empty`,
-        input: {},
-        exp: ``,
-      },
-      {
-        name: `single item`,
-        input: { FOO: 'bar' },
-        exp: `FOO=bar`,
-      },
-      {
-        name: `multiple items`,
-        input: { FOO: 'bar', ZIP: 'zap' },
-        exp: `FOO=bar,ZIP=zap`,
-      },
-    ];
+  afterEach(async function () {
+    Object.keys(this.stubs).forEach((k) => this.stubs[k].restore());
+    sinon.restore();
+    delete process.env.GITHUB_SHA;
 
-    cases.forEach((tc) => {
-      it(tc.name, () => {
-        const result = kvToString(tc.input as Record<string, string>);
-        expect(result).to.eql(tc.exp);
-      });
+    await TestToolCache.stop();
+  });
+
+  it('sets the project ID if provided', async function () {
+    this.stubs.getInput.withArgs('project_id').returns('my-test-project');
+    await run();
+
+    const call = this.stubs.getExecOutput.getCall(0);
+    expect(call).to.be;
+    const args = call.args[1];
+    expect(args).to.include.members(['--project', 'my-test-project']);
+  });
+
+  it('installs the gcloud SDK if it is not already installed', async function () {
+    this.stubs.isInstalled.returns(false);
+    await run();
+    expect(this.stubs.installGcloudSDK.callCount).to.eq(1);
+  });
+
+  it('uses the cached gcloud SDK if it was already installed', async function () {
+    this.stubs.isInstalled.returns(true);
+    await run();
+    expect(this.stubs.installGcloudSDK.callCount).to.eq(0);
+  });
+
+  it('sets labels', async function () {
+    this.stubs.getInput.withArgs('labels').returns('foo=bar,zip=zap');
+
+    process.env.GITHUB_SHA = 'abcdef123456';
+
+    const expectedLabels = {
+      'managed-by': 'github-actions',
+      'commit-sha': 'abcdef123456',
+      'foo': 'bar',
+      'zip': 'zap',
+    };
+
+    await run();
+    const call = this.stubs.getExecOutput.getCall(0);
+    expect(call).to.be;
+    const args = call.args[1];
+    expect(args).to.include.members(['--update-labels', kvToString(expectedLabels)]);
+  });
+
+  it('overwrites default labels', async function () {
+    this.stubs.getInput.withArgs('labels').returns('commit-sha=custom-value');
+
+    process.env.GITHUB_SHA = 'abcdef123456';
+
+    const expectedLabels = {
+      'managed-by': 'github-actions',
+      'commit-sha': 'custom-value',
+    };
+
+    await run();
+    const call = this.stubs.getExecOutput.getCall(0);
+    expect(call).to.be;
+    const args = call.args[1];
+    expect(args).to.include.members(['--update-labels', kvToString(expectedLabels)]);
+  });
+
+  it('sets source if given', async function () {
+    this.stubs.getInput.withArgs('source').returns('example-app');
+    this.stubs.getInput.withArgs('image').returns('');
+    await run();
+    const call = this.stubs.getExecOutput.getCall(0);
+    expect(call).to.be;
+    const args = call.args[1];
+    expect(args).to.include.members(['--source', 'example-app']);
+  });
+
+  it('sets metadata if given', async function () {
+    this.stubs.getInput.withArgs('metadata').returns('yaml');
+    this.stubs.getInput.withArgs('image').returns('');
+    this.stubs.getInput.withArgs('service').returns('');
+    await run();
+    const call = this.stubs.getExecOutput.getCall(0);
+    expect(call).to.be;
+    const args = call.args[1];
+    expect(args).to.include.members(['services', 'replace', 'yaml']);
+  });
+
+  it('sets timeout if given', async function () {
+    this.stubs.getInput.withArgs('timeout').returns('55m12s');
+    await run();
+    const call = this.stubs.getExecOutput.getCall(0);
+    expect(call).to.be;
+    const args = call.args[1];
+    expect(args).to.include.members(['--timeout', '55m12s']);
+  });
+
+  it('sets tag if given', async function () {
+    this.stubs.getInput.withArgs('tag').returns('test');
+    await run();
+    const call = this.stubs.getExecOutput.getCall(0);
+    expect(call).to.be;
+    const args = call.args[1];
+    expect(args).to.include.members(['--tag', 'test']);
+  });
+
+  it('sets tag traffic if given', async function () {
+    this.stubs.getInput.withArgs('tag').returns('test');
+    this.stubs.getInput.withArgs('service').returns('service-name');
+    await run();
+    const call = this.stubs.getExecOutput.getCall(0);
+    expect(call).to.be;
+    const args = call.args[1];
+    expect(args).to.include.members(['--tag', 'test']);
+  });
+
+  it('fails if tag traffic and revision traffic are provided', async function () {
+    this.stubs.getInput.withArgs('revision_traffic').returns('TEST=100');
+    this.stubs.getInput.withArgs('tag_traffic').returns('TEST=100');
+    expectError(run, 'only one of `revision_traffic` or `tag_traffic` inputs can be set');
+  });
+
+  it('fails if name is not provided with tag traffic', async function () {
+    this.stubs.getInput.withArgs('tag_traffic').returns('TEST=100');
+    this.stubs.getInput.withArgs('service').returns('');
+    expectError(run, 'no service name set');
+  });
+
+  it('fails if name is not provided with revision traffic', async function () {
+    this.stubs.getInput.withArgs('revision_traffic').returns('TEST=100');
+    this.stubs.getInput.withArgs('service').returns('');
+    expectError(run, 'no service name set');
+  });
+
+  it('uses default components without gcloud_component flag', async function () {
+    await run();
+    expect(this.stubs.installComponent.callCount).to.eq(0);
+  });
+
+  it('throws error with invalid gcloud component flag', async function () {
+    this.stubs.getInput.withArgs('gcloud_component').returns('wrong_value');
+    await expectError(run, 'invalid input received for gcloud_component: wrong_value');
+  });
+
+  it('installs alpha component with alpha flag', async function () {
+    this.stubs.getInput.withArgs('gcloud_component').returns('alpha');
+    await run();
+    expect(this.stubs.installComponent.withArgs('alpha').callCount).to.eq(1);
+  });
+
+  it('installs beta component with beta flag', async function () {
+    this.stubs.getInput.withArgs('gcloud_component').returns('beta');
+    await run();
+    expect(this.stubs.installComponent.withArgs('beta').callCount).to.eq(1);
+  });
+});
+
+describe('#kvToString', () => {
+  const cases = [
+    {
+      name: `empty`,
+      input: {},
+      exp: ``,
+    },
+    {
+      name: `single item`,
+      input: { FOO: 'bar' },
+      exp: `FOO=bar`,
+    },
+    {
+      name: `multiple items`,
+      input: { FOO: 'bar', ZIP: 'zap' },
+      exp: `FOO=bar,ZIP=zap`,
+    },
+  ];
+
+  cases.forEach((tc) => {
+    it(tc.name, () => {
+      const result = kvToString(tc.input as Record<string, string>);
+      expect(result).to.eql(tc.exp);
     });
   });
 });
+
+async function expectError(fn: () => Promise<void>, want: string) {
+  try {
+    await fn();
+    throw new Error(`expected error`);
+  } catch (err) {
+    const msg = errorMessage(err);
+    expect(msg).to.include(want);
+  }
+}

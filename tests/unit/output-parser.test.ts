@@ -205,17 +205,17 @@ describe('#output-parser', () => {
       {
         name: 'handles empty stdout',
         stdout: '',
-        error: 'failed to parse update traffic response: invalid input received, stdout: ',
+        expected: {},
       },
       {
         name: 'handles empty array from stdout',
         stdout: '[]',
-        error: 'failed to parse update traffic response: invalid input received, stdout: []',
+        expected: {},
       },
       {
         name: 'handles empty object from stdout',
         stdout: '{}',
-        error: 'failed to parse update traffic response: invalid input received, stdout: {}',
+        expected: {},
       },
       {
         name: 'handles invalid text from stdout',
@@ -477,20 +477,17 @@ describe('#output-parser', () => {
       {
         name: 'handles empty stdout',
         stdout: ``,
-        error:
-          'failed to parse deploy response: invalid input received, stdout: undefined, inputs: undefined',
+        expected: {},
       },
       {
         name: 'handles empty array from stdout',
         stdout: `[]`,
-        error:
-          'failed to parse deploy response: invalid input received, stdout: [], inputs: undefined',
+        expected: {},
       },
       {
         name: 'handles empty object from stdout',
         stdout: `{}`,
-        error:
-          'failed to parse deploy response: invalid input received, stdout: {}, inputs: undefined',
+        expected: {},
       },
       {
         name: 'handles invalid text from stdout',

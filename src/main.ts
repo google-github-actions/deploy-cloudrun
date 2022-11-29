@@ -14,18 +14,37 @@
  * limitations under the License.
  */
 
-import * as core from '@actions/core';
+import path from 'path';
+
+import {
+  addPath,
+  exportVariable,
+  getInput,
+  info as logInfo,
+  setFailed,
+  setOutput,
+  warning as logWarning,
+} from '@actions/core';
 import { getExecOutput } from '@actions/exec';
 import * as toolCache from '@actions/tool-cache';
 import {
   errorMessage,
+  isPinnedToHead,
   KVPair,
   parseFlags,
   parseKVString,
+  pinnedToHeadWarning,
   presence,
 } from '@google-github-actions/actions-utils';
-import * as setupGcloud from '@google-github-actions/setup-cloud-sdk';
-import path from 'path';
+import {
+  authenticateGcloudSDK,
+  getLatestGcloudSDKVersion,
+  getToolCommand,
+  installComponent as installGcloudComponent,
+  installGcloudSDK,
+  isInstalled as isGcloudInstalled,
+} from '@google-github-actions/setup-cloud-sdk';
+
 import { parseDeployResponse, parseUpdateTrafficResponse } from './output-parser';
 
 export const GCLOUD_METRICS_ENV_VAR = 'CLOUDSDK_METRICS_ENVIRONMENT';
@@ -51,40 +70,34 @@ enum ResponseTypes {
  * primary entry point. It is documented inline.
  */
 export async function run(): Promise<void> {
-  core.exportVariable(GCLOUD_METRICS_ENV_VAR, GCLOUD_METRICS_LABEL);
-
   try {
-    // Get inputs
-    // Core inputs
-    const image = core.getInput('image'); // Image ie gcr.io/...
-    const name = core.getInput('service'); // Service name
-    const metadata = core.getInput('metadata'); // YAML file
-    const credentials = core.getInput('credentials'); // Service account key
-    let projectId = core.getInput('project_id');
-    let gcloudVersion = core.getInput('gcloud_version');
-    const gcloudComponent = presence(core.getInput('gcloud_component')); // Cloud SDK component version
-    // Flags
-    const envVars = parseKVString(core.getInput('env_vars')); // String of env vars KEY=VALUE,...
-    const secrets = parseKVString(core.getInput('secrets')); // String of secrets KEY=VALUE,...
-    const region = core.getInput('region') || 'us-central1';
-    const source = core.getInput('source'); // Source directory
-    const suffix = core.getInput('suffix');
-    const tag = core.getInput('tag');
-    const timeout = core.getInput('timeout');
-    const noTraffic = core.getBooleanInput('no_traffic');
-    const revTraffic = core.getInput('revision_traffic');
-    const tagTraffic = core.getInput('tag_traffic');
-    const labels = Object.assign({}, defaultLabels(), parseKVString(core.getInput('labels')));
-    const flags = core.getInput('flags');
+    // Register metrics
+    exportVariable(GCLOUD_METRICS_ENV_VAR, GCLOUD_METRICS_LABEL);
 
-    // Add warning if using credentials
-    if (credentials) {
-      core.warning(
-        '"credentials" input has been deprecated. ' +
-          'Please switch to using google-github-actions/auth which supports both Workload Identity Federation and JSON Key authentication. ' +
-          'For more details, see https://github.com/google-github-actions/deploy-cloudrun#credentials',
-      );
+    // Warn if pinned to HEAD
+    if (isPinnedToHead()) {
+      logWarning(pinnedToHeadWarning('v0'));
     }
+
+    // Get action inputs
+    const image = getInput('image'); // Image ie gcr.io/...
+    const service = getInput('service'); // Service name
+    const metadata = getInput('metadata'); // YAML file
+    const projectId = getInput('project_id');
+    const gcloudVersion = await computeGcloudVersion(getInput('gcloud_version'));
+    const gcloudComponent = presence(getInput('gcloud_component')); // Cloud SDK component version
+    const envVars = parseKVString(getInput('env_vars')); // String of env vars KEY=VALUE,...
+    const secrets = parseKVString(getInput('secrets')); // String of secrets KEY=VALUE,...
+    const region = getInput('region') || 'us-central1';
+    const source = getInput('source'); // Source directory
+    const suffix = getInput('suffix');
+    const tag = getInput('tag');
+    const timeout = getInput('timeout');
+    const noTraffic = (getInput('no_traffic') || '').toLowerCase() === 'true';
+    const revTraffic = getInput('revision_traffic');
+    const tagTraffic = getInput('tag_traffic');
+    const labels = Object.assign({}, defaultLabels(), parseKVString(getInput('labels')));
+    const flags = getInput('flags');
 
     let responseType = ResponseTypes.DEPLOY; // Default response type for output parsing
     let cmd;
@@ -93,7 +106,7 @@ export async function run(): Promise<void> {
     if (revTraffic && tagTraffic) {
       throw new Error('Only one of `revision_traffic` or `tag_traffic` inputs can be set.');
     }
-    if ((revTraffic || tagTraffic) && !name) {
+    if ((revTraffic || tagTraffic) && !service) {
       throw new Error('No service name set.');
     }
     if (source && image) {
@@ -115,7 +128,7 @@ export async function run(): Promise<void> {
         'run',
         'services',
         'update-traffic',
-        name,
+        service,
         '--platform',
         'managed',
         '--region',
@@ -125,20 +138,20 @@ export async function run(): Promise<void> {
       if (tagTraffic) cmd.push('--to-tags', tagTraffic);
 
       if (image || envVars?.length || secrets?.length || timeout || labels?.length) {
-        core.warning(
+        logWarning(
           `Updating traffic, ignoring inputs "image", "env_vars", "secrets", "timeout", and "labels"`,
         );
       }
     } else if (metadata) {
       cmd = ['run', 'services', 'replace', metadata, '--platform', 'managed', '--region', region];
 
-      if (image || name || envVars?.length || secrets?.length || timeout || labels?.length) {
-        core.warning(
+      if (image || service || envVars?.length || secrets?.length || timeout || labels?.length) {
+        logWarning(
           `Using metadata YAML, ignoring inputs "image", "name", "env_vars", "secrets", "timeout", and "labels"`,
         );
       }
     } else {
-      cmd = ['run', 'deploy', name, '--quiet', '--platform', 'managed', '--region', region];
+      cmd = ['run', 'deploy', service, '--quiet', '--platform', 'managed', '--region', region];
 
       if (image) {
         // Deploy service with image specified
@@ -173,49 +186,38 @@ export async function run(): Promise<void> {
     }
 
     // Install gcloud if not already installed.
-    if (!gcloudVersion || gcloudVersion == 'latest') {
-      gcloudVersion = await setupGcloud.getLatestGcloudSDKVersion();
-    }
-    if (!setupGcloud.isInstalled(gcloudVersion)) {
-      await setupGcloud.installGcloudSDK(gcloudVersion);
+    if (!isGcloudInstalled(gcloudVersion)) {
+      await installGcloudSDK(gcloudVersion);
     } else {
       const toolPath = toolCache.find('gcloud', gcloudVersion);
-      core.addPath(path.join(toolPath, 'bin'));
+      addPath(path.join(toolPath, 'bin'));
     }
 
-    // Either credentials or GOOGLE_GHA_CREDS_PATH env var required
-    if (credentials || process.env.GOOGLE_GHA_CREDS_PATH) {
-      await setupGcloud.authenticateGcloudSDK(credentials);
-    }
-    const authenticated = await setupGcloud.isAuthenticated();
-    if (!authenticated) {
-      throw new Error('Error authenticating the Cloud SDK.');
+    // Authenticate - this comes from google-github-actions/auth.
+    const credFile = process.env.GOOGLE_GHA_CREDS_PATH;
+    if (credFile) {
+      await authenticateGcloudSDK(credFile);
+      logInfo('Successfully authenticated');
+    } else {
+      logWarning('No authentication found, authenticate with `google-github-actions/auth`.');
     }
 
     // set PROJECT ID
-    if (!projectId) {
-      if (credentials) {
-        const key = setupGcloud.parseServiceAccountKey(credentials);
-        projectId = key.project_id;
-      } else if (process.env.GCLOUD_PROJECT) {
-        projectId = process.env.GCLOUD_PROJECT;
-      }
-    }
     if (projectId) cmd.push('--project', projectId);
 
     // Install gcloud component if needed and prepend the command
     if (gcloudComponent) {
-      await setupGcloud.installComponent(gcloudComponent);
+      await installGcloudComponent(gcloudComponent);
       cmd.unshift(gcloudComponent);
     }
 
     // Set output format to json
     cmd.push('--format', 'json');
 
-    const toolCommand = setupGcloud.getToolCommand();
+    const toolCommand = getToolCommand();
     const options = { silent: true, ignoreReturnCode: true };
     const commandString = `${toolCommand} ${cmd.join(' ')}`;
-    core.info(`Running: ${commandString}`);
+    logInfo(`Running: ${commandString}`);
 
     // Run gcloud cmd.
     const output = await getExecOutput(toolCommand, cmd, options);
@@ -234,7 +236,7 @@ export async function run(): Promise<void> {
     setActionOutputs(outputs);
   } catch (err) {
     const msg = errorMessage(err);
-    core.setFailed(`google-github-actions/deploy-cloudrun failed with: ${msg}`);
+    setFailed(`google-github-actions/deploy-cloudrun failed with: ${msg}`);
   }
 }
 
@@ -253,7 +255,7 @@ export function kvToString(kv: Record<string, string>, separator = ','): string 
 // Map output response to GitHub Action outputs
 export function setActionOutputs(outputs: DeployCloudRunOutputs): void {
   Object.keys(outputs).forEach((key: string) => {
-    core.setOutput(key, outputs[key as keyof DeployCloudRunOutputs]);
+    setOutput(key, outputs[key as keyof DeployCloudRunOutputs]);
   });
 }
 
@@ -280,6 +282,21 @@ function defaultLabels(): KVPair {
   return labels;
 }
 
+/**
+ * computeGcloudVersion computes the appropriate gcloud version for the given
+ * string.
+ */
+async function computeGcloudVersion(str: string): Promise<string> {
+  str = (str || '').trim();
+  if (str === '' || str === 'latest') {
+    return await getLatestGcloudSDKVersion();
+  }
+  return str;
+}
+
+/**
+ * execute the main function when this module is required directly.
+ */
 if (require.main === module) {
   run();
 }

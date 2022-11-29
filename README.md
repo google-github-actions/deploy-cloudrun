@@ -7,18 +7,13 @@ available as a GitHub Actions output for use in future steps.
 
 ## Prerequisites
 
--   For authenticating to Google Cloud, you must create a Workload Identity
-    Provider or export credentials. See [Credentials](#credentials) for more
+-   This action requires Google Cloud credentials that are authorized to access
+    the secrets being requested. See [Authorization](#authorization) for more
     information.
 
--   For deploying from source, you must run the `actions/checkout@v3` step
-    _before_ this action.
-
--   You must [enable the Cloud Run API](http://console.cloud.google.com/apis/library/run.googleapis.com).
-
 -   This action runs using Node 16. If you are using self-hosted GitHub Actions
-    runners, you must use runner version [2.285.0](https://github.com/actions/virtual-environments)
-    or newer.
+    runners, you must use runner version
+    [2.285.0](https://github.com/actions/virtual-environments) or newer.
 
 
 ## Usage
@@ -33,8 +28,9 @@ jobs:
       id-token: 'write'
 
     steps:
-    - id: 'auth'
-      uses: 'google-github-actions/auth@v0'
+    - uses: 'actions/checkout@v3'
+
+    - uses: 'google-github-actions/auth@v1'
       with:
         workload_identity_provider: 'projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider'
         service_account: 'my-service-account@my-project.iam.gserviceaccount.com'
@@ -161,7 +157,7 @@ jobs:
 
     ```yaml
     with:
-      tag_traffix: 'my-tag=10' # percentage
+      tag_traffic: 'my-tag=10' # percentage
     ```
 
 -   `project_id`: (Optional) ID of the Google Cloud project in which to deploy
@@ -224,27 +220,30 @@ automatically private services, while deploying a revision of a public
 
 - `url`: The URL of your Cloud Run service.
 
-## Credentials
 
-### Via google-github-actions/auth
+## Authorization
 
-Use [google-github-actions/auth](https://github.com/google-github-actions/auth) to authenticate the action. This Action supports both the recommended [Workload Identity Federation][wif] based authentication and the traditional [Service Account Key JSON][sa] based auth.
+There are a few ways to authenticate this action. The caller must have
+permissions to access the secrets being requested.
 
-See [usage](https://github.com/google-github-actions/auth#usage) for more details.
+You will need to authenticate to Google Cloud as a service account with the
+following roles:
 
-A service account will be needed
-with the following roles:
-
-- Cloud Run Admin (`roles/run.admin`):
-  - Can create, update, and delete services.
-  - Can get and set IAM policies.
+-   Cloud Run Admin (`roles/run.admin`):
+    -   Can create, update, and delete services.
+    -   Can get and set IAM policies.
 
 This service account needs to be a member of the `Compute Engine default service account`,
 `(PROJECT_NUMBER-compute@developer.gserviceaccount.com)`, with role
 `Service Account User`. To grant a user permissions for a service account, use
 one of the methods found in [Configuring Ownership and access to a service account](https://cloud.google.com/iam/docs/granting-roles-to-service-accounts#granting_access_to_a_user_for_a_service_account).
 
-#### Authenticating via Workload Identity Federation
+
+### Via google-github-actions/auth
+
+Use [google-github-actions/auth](https://github.com/google-github-actions/auth)
+to authenticate the action. You can use [Workload Identity Federation][wif] or
+traditional [Service Account Key JSON][sa] authentication.
 
 ```yaml
 jobs:
@@ -254,33 +253,15 @@ jobs:
       id-token: 'write'
 
     steps:
-    - uses: actions/checkout@v3
-    - id: 'auth'
-      uses: 'google-github-actions/auth@v0'
+
+    # ...
+
+    - uses: 'google-github-actions/auth@v1'
       with:
         workload_identity_provider: 'projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider'
         service_account: 'my-service-account@my-project.iam.gserviceaccount.com'
 
-    - name: 'Deploy to Cloud Run'
-      uses: 'google-github-actions/deploy-cloudrun@v0'
-      with:
-        image: 'gcr.io/cloudrun/hello'
-        service: 'hello-cloud-run'
-```
-
-#### Authenticating via Service Account Key JSON
-
-```yaml
-jobs:
-  job_id:
-    steps:
-    - id: 'auth'
-      uses: 'google-github-actions/auth@v0'
-      with:
-        credentials_json: '${{ secrets.GCP_SA_KEY }}'
-
-    - name: 'Deploy to Cloud Run'
-      uses: 'google-github-actions/deploy-cloudrun@v0'
+    - uses: 'google-github-actions/deploy-cloudrun@v0'
       with:
         image: 'gcr.io/cloudrun/hello'
         service: 'hello-cloud-run'
@@ -297,62 +278,22 @@ only works using a custom runner hosted on GCP.**
 jobs:
   job_id:
     steps:
-    - name: 'Deploy to Cloud Run'
-      uses: 'google-github-actions/deploy-cloudrun@v0'
+    # ...
+
+    - uses: 'google-github-actions/deploy-cloudrun@v0'
       with:
         image: 'gcr.io/cloudrun/hello'
         service: 'hello-cloud-run'
 ```
+
+The action will automatically detect and use the Application Default
+Credentials.
 
 ## Example Workflows
 
 * [Deploy from source](https://github.com/google-github-actions/example-workflows/blob/main/workflows/deploy-cloudrun/cloudrun-source.yml)
 
 * [Build and deploy a container](https://github.com/google-github-actions/example-workflows/blob/main/workflows/deploy-cloudrun/cloudrun-docker.yml)
-
-## Migrating from `setup-gcloud`
-
-Example using `setup-gcloud`:
-
-```YAML
-jobs:
-  job_id:
-    steps:
-    - name: 'Setup Cloud SDK'
-      uses: 'google-github-actions/setup-gcloud@v0'
-      with:
-        project_id: '${{ env.PROJECT_ID }}'
-        service_account_key: '${{ secrets.GCP_SA_KEY }}'
-
-    - name: 'Deploy to Cloud Run'
-      run: |-
-        gcloud run deploy $SERVICE \
-          --region $REGION \
-          --image gcr.io/$PROJECT_ID/$SERVICE \
-          --platform managed \
-          --set-env-vars NAME="Hello World"
-```
-
-Migrated to `deploy-cloudrun`:
-
-```YAML
-jobs:
-  job_id:
-    steps:
-    - id: 'auth'
-      uses: 'google-github-actions/auth@v0'
-      with:
-        credentials_json: '${{ secrets.GCP_SA_KEY }}'
-
-    - name: 'Deploy to Cloud Run'
-      uses: 'google-github-actions/deploy-cloudrun@v0'
-      with:
-        service: '${{ env.SERVICE }}'
-        image: 'gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE }}'
-        region: '${{ env.REGION }}'
-        env_vars: 'NAME="Hello World"'
-```
-Note: The action is for the "managed" platform and will not set access privileges such as [allowing unauthenticated requests](#Allow-unauthenticated-requests).
 
 ## Versioning
 

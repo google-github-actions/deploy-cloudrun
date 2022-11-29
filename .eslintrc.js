@@ -24,7 +24,5 @@ module.exports = {
     'plugin:@typescript-eslint/recommended',
     'plugin:prettier/recommended',
   ],
-  rules: {
-    '@typescript-eslint/no-non-null-assertion': 'off',
-  },
+  ignorePatterns: ['**/dist/*'],
 };
