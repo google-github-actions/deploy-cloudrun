@@ -96,7 +96,7 @@ export async function run(): Promise<void> {
     const noTraffic = (getInput('no_traffic') || '').toLowerCase() === 'true';
     const revTraffic = getInput('revision_traffic');
     const tagTraffic = getInput('tag_traffic');
-    const labels = Object.assign({}, defaultLabels(), parseKVString(getInput('labels')));
+    const labels = parseKVString(getInput('labels'));
     const flags = getInput('flags');
 
     let responseType = ResponseTypes.DEPLOY; // Default response type for output parsing
@@ -124,34 +124,51 @@ export async function run(): Promise<void> {
       responseType = ResponseTypes.UPDATE_TRAFFIC;
 
       // Update traffic
-      cmd = [
-        'run',
-        'services',
-        'update-traffic',
-        service,
-        '--platform',
-        'managed',
-        '--region',
-        region,
-      ];
+      cmd = ['run', 'services', 'update-traffic', service];
       if (revTraffic) cmd.push('--to-revisions', revTraffic);
       if (tagTraffic) cmd.push('--to-tags', tagTraffic);
 
-      if (image || envVars?.length || secrets?.length || timeout || labels?.length) {
-        logWarning(
-          `Updating traffic, ignoring inputs "image", "env_vars", "secrets", "timeout", and "labels"`,
-        );
+      const providedButIgnored: Record<string, boolean> = {
+        image: image !== '',
+        metadata: metadata !== '',
+        source: source !== '',
+        env_vars: Object.keys(envVars).length > 0,
+        no_traffic: noTraffic,
+        secrets: Object.keys(secrets).length > 0,
+        suffix: suffix !== '',
+        tag: tag !== '',
+        labels: Object.keys(labels).length > 0,
+        timeout: timeout !== '',
+      };
+      for (const key in providedButIgnored) {
+        if (providedButIgnored[key]) {
+          logWarning(`Updating traffic, ignoring "${key}" input`);
+        }
       }
     } else if (metadata) {
-      cmd = ['run', 'services', 'replace', metadata, '--platform', 'managed', '--region', region];
+      cmd = ['run', 'services', 'replace', metadata];
 
-      if (image || service || envVars?.length || secrets?.length || timeout || labels?.length) {
-        logWarning(
-          `Using metadata YAML, ignoring inputs "image", "name", "env_vars", "secrets", "timeout", and "labels"`,
-        );
+      const providedButIgnored: Record<string, boolean> = {
+        image: image !== '',
+        service: service !== '',
+        source: source !== '',
+        env_vars: Object.keys(envVars).length > 0,
+        no_traffic: noTraffic,
+        secrets: Object.keys(secrets).length > 0,
+        suffix: suffix !== '',
+        tag: tag !== '',
+        revision_traffic: revTraffic !== '',
+        tag_traffic: revTraffic !== '',
+        labels: Object.keys(labels).length > 0,
+        timeout: timeout !== '',
+      };
+      for (const key in providedButIgnored) {
+        if (providedButIgnored[key]) {
+          logWarning(`Using metadata YAML, ignoring "${key}" input`);
+        }
       }
     } else {
-      cmd = ['run', 'deploy', service, '--quiet', '--platform', 'managed', '--region', region];
+      cmd = ['run', 'deploy', service, '--quiet'];
 
       if (image) {
         // Deploy service with image specified
@@ -173,11 +190,18 @@ export async function run(): Promise<void> {
       }
       if (suffix) cmd.push('--revision-suffix', suffix);
       if (noTraffic) cmd.push('--no-traffic');
-      if (labels && Object.keys(labels).length > 0) {
-        cmd.push('--update-labels', kvToString(labels));
-      }
       if (timeout) cmd.push('--timeout', timeout);
+
+      // Compile the labels
+      const compiledLabels = Object.assign({}, defaultLabels(), labels);
+      cmd.push('--update-labels', kvToString(compiledLabels));
     }
+
+    // Push common flags
+    cmd.push('--platform', 'managed');
+    cmd.push('--format', 'json');
+    if (region) cmd.push('--region', region);
+    if (projectId) cmd.push('--project', projectId);
 
     // Add optional flags
     if (flags) {
@@ -193,6 +217,12 @@ export async function run(): Promise<void> {
       addPath(path.join(toolPath, 'bin'));
     }
 
+    // Install gcloud component if needed and prepend the command
+    if (gcloudComponent) {
+      await installGcloudComponent(gcloudComponent);
+      cmd.unshift(gcloudComponent);
+    }
+
     // Authenticate - this comes from google-github-actions/auth.
     const credFile = process.env.GOOGLE_GHA_CREDS_PATH;
     if (credFile) {
@@ -201,18 +231,6 @@ export async function run(): Promise<void> {
     } else {
       logWarning('No authentication found, authenticate with `google-github-actions/auth`.');
     }
-
-    // set PROJECT ID
-    if (projectId) cmd.push('--project', projectId);
-
-    // Install gcloud component if needed and prepend the command
-    if (gcloudComponent) {
-      await installGcloudComponent(gcloudComponent);
-      cmd.unshift(gcloudComponent);
-    }
-
-    // Set output format to json
-    cmd.push('--format', 'json');
 
     const toolCommand = getToolCommand();
     const options = { silent: true, ignoreReturnCode: true };
