@@ -33,6 +33,7 @@ import {
   KVPair,
   parseFlags,
   parseKVString,
+  parseKVStringAndFile,
   pinnedToHeadWarning,
   presence,
 } from '@google-github-actions/actions-utils';
@@ -86,7 +87,8 @@ export async function run(): Promise<void> {
     const projectId = getInput('project_id');
     const gcloudVersion = await computeGcloudVersion(getInput('gcloud_version'));
     const gcloudComponent = presence(getInput('gcloud_component')); // Cloud SDK component version
-    const envVars = parseKVString(getInput('env_vars')); // String of env vars KEY=VALUE,...
+    const envVars = getInput('env_vars'); // String of env vars KEY=VALUE,...
+    const envVarsFile = getInput('env_vars_file'); // File that is a string of env vars KEY=VALUE,...
     const secrets = parseKVString(getInput('secrets')); // String of secrets KEY=VALUE,...
     const region = getInput('region') || 'us-central1';
     const source = getInput('source'); // Source directory
@@ -132,7 +134,7 @@ export async function run(): Promise<void> {
         image: image !== '',
         metadata: metadata !== '',
         source: source !== '',
-        env_vars: Object.keys(envVars).length > 0,
+        env_vars: envVars !== '',
         no_traffic: noTraffic,
         secrets: Object.keys(secrets).length > 0,
         suffix: suffix !== '',
@@ -152,7 +154,7 @@ export async function run(): Promise<void> {
         image: image !== '',
         service: service !== '',
         source: source !== '',
-        env_vars: Object.keys(envVars).length > 0,
+        env_vars: envVars !== '',
         no_traffic: noTraffic,
         secrets: Object.keys(secrets).length > 0,
         suffix: suffix !== '',
@@ -179,8 +181,9 @@ export async function run(): Promise<void> {
       }
 
       // Set optional flags from inputs
-      if (envVars && Object.keys(envVars).length > 0) {
-        cmd.push('--update-env-vars', kvToString(envVars));
+      const compiledEnvVars = parseKVStringAndFile(envVars, envVarsFile);
+      if (compiledEnvVars && Object.keys(compiledEnvVars).length > 0) {
+        cmd.push('--update-env-vars', kvToString(compiledEnvVars));
       }
       if (secrets && Object.keys(secrets).length > 0) {
         cmd.push('--update-secrets', kvToString(secrets));

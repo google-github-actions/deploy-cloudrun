@@ -17,7 +17,6 @@
 import 'mocha';
 import { expect } from 'chai';
 
-import _ from 'lodash';
 import { getExecOutput } from '@actions/exec';
 import { run_v1 } from 'googleapis';
 import yaml from 'js-yaml';
@@ -45,6 +44,7 @@ describe('E2E tests', function () {
 
   let service: run_v1.Schema$Service;
   let toolCommand: string;
+
   before(async function () {
     toolCommand = 'gcloud';
     if (SERVICE && PROJECT_ID) {
@@ -64,7 +64,7 @@ describe('E2E tests', function () {
         'us-central1',
       ];
 
-      const options = { silent: true };
+      const options = { silent: true, ignoreReturnCode: true };
       const commandString = `${toolCommand} ${cmd.join(' ')}`;
       const output = await getExecOutput(toolCommand, cmd, options);
       if (output.exitCode !== 0) {
@@ -81,67 +81,69 @@ describe('E2E tests', function () {
   it('has the correct env vars', function () {
     if (ENV && service) {
       const expected = parseEnvVars(ENV);
-      const env = _.get(service, 'spec.template.spec.containers[0].env')!.filter(
-        (entry) => entry && entry.value,
-      );
-      expect(env).to.deep.eq(expected);
+      const env = service?.spec?.template?.spec?.containers
+        ?.at(0)
+        ?.env?.filter((entry) => entry && entry.value);
+      expect(env).to.have.deep.members(expected);
     }
   });
 
   it('has the correct secret vars', function () {
     if (SECRET_ENV && service) {
       const expected = parseEnvVars(SECRET_ENV);
-      const env = _.get(service, 'spec.template.spec.containers[0].env')!
-        .filter((entry) => entry && entry.valueFrom)
+      const env = service?.spec?.template?.spec?.containers
+        ?.at(0)
+        ?.env?.filter((entry) => entry && entry.valueFrom)
         .map((entry) => {
-          const ref = entry.valueFrom!.secretKeyRef!;
-          return { name: entry.name, value: `${ref.name}:${ref.key}` };
+          const ref = entry.valueFrom?.secretKeyRef;
+          return { name: entry.name, value: `${ref?.name}:${ref?.key}` };
         });
-      expect(env).to.deep.eq(expected);
+      expect(env).to.have.deep.members(expected);
     }
   });
 
   it('has the correct secret volumes', function () {
     if (SECRET_VOLUMES && service) {
       const expected = parseEnvVars(SECRET_VOLUMES);
-      const spec: run_v1.Schema$RevisionSpec = _.get(service, 'spec.template.spec')!;
-      const volumes = spec.volumes;
-      const volumeMounts = spec.containers![0]?.volumeMounts;
+
+      const templateSpec = service?.spec?.template?.spec;
+      const volumes = templateSpec?.volumes;
       expect(volumes).to.have.lengthOf(expected.length);
-      volumeMounts?.forEach((volumeMount: run_v1.Schema$VolumeMount) => {
-        const secretVolume = volumes?.find((volume: run_v1.Schema$Volume) =>
-          _.isEqual(volumeMount.name, volume.name),
-        );
-        const actualSecretPath = volumeMount.mountPath?.concat(
-          '/',
-          secretVolume?.secret?.items![0].path ?? '',
-        );
-        const found = expected.find((expectedSecretPath) =>
-          _.isEqual(expectedSecretPath.name, actualSecretPath),
-        );
-        expect(found).to.not.equal(undefined);
+
+      const volumeMounts = templateSpec?.containers?.at(0)?.volumeMounts;
+      const actual = volumeMounts?.map((volumeMount) => {
+        const secretVolume = volumes?.find((volume) => volumeMount.name === volume.name)?.secret;
+        const secretName = secretVolume?.secretName;
+        const secretData = secretVolume?.items?.at(0);
+
+        const secretPath = `${volumeMount.mountPath}/${secretData?.path}`;
+        const secretRef = `${secretName}:${secretData?.key}`;
+
+        return { name: secretPath, value: secretRef };
       });
+
+      expect(actual).to.have.deep.members(expected);
     }
   });
 
   it('has the correct params', function () {
     if (PARAMS && service) {
       const expected = JSON.parse(PARAMS);
-      const actual = _.get(service, 'spec.template.spec')!;
+      const actual = service?.spec?.template?.spec;
 
       if (expected.containerConncurrency) {
-        expect(actual.containerConcurrency).to.equal(expected.containerConncurrency);
+        expect(actual?.containerConcurrency).to.eq(expected.containerConncurrency);
       }
       if (expected.timeoutSeconds) {
-        expect(actual.timeoutSeconds).to.equal(expected.timeoutSeconds);
+        expect(actual?.timeoutSeconds).to.eq(expected.timeoutSeconds);
       }
 
-      const actualResources = actual.containers![0]?.resources;
+      const limits = actual?.containers?.at(0)?.resources?.limits;
       if (expected.cpu) {
-        expect(actualResources!.limits!.cpu).to.equal(expected.cpu.toString());
+        expect(limits?.cpu).to.eq(expected.cpu.toString());
       }
       if (expected.memory) {
-        expect(actualResources!.limits!.memory).to.equal(expected.memory);
+        expect(limits?.memory).to.eq(expected.memory);
       }
     }
   });
@@ -149,7 +151,7 @@ describe('E2E tests', function () {
   it('has the correct annotations', function () {
     if (ANNOTATIONS && service) {
       const expected = JSON.parse(ANNOTATIONS);
-      const actual = _.get(service, 'spec.template.metadata.annotations')!;
+      const actual = service?.spec?.template?.metadata?.annotations;
       expect(actual).to.deep.include(expected);
     }
   });
@@ -157,7 +159,7 @@ describe('E2E tests', function () {
   it('has the correct labels', function () {
     if (LABELS && service) {
       const expected = JSON.parse(LABELS);
-      const actual = _.get(service, 'spec.template.metadata.labels')!;
+      const actual = service?.spec?.template?.metadata?.labels;
       expect(actual).to.deep.eq(expected);
     }
   });
@@ -185,7 +187,7 @@ describe('E2E tests', function () {
           'us-central1',
         ];
 
-        const options = { silent: true };
+        const options = { silent: true, ignoreReturnCode: true };
         const commandString = `${toolCommand} ${cmd.join(' ')}`;
 
         const output = await getExecOutput(toolCommand, cmd, options);
@@ -197,38 +199,31 @@ describe('E2E tests', function () {
         revisions = JSON.parse(output.stdout);
       }
 
-      expect(revisions.length).to.equal(parseInt(REVISION_COUNT));
+      expect(revisions.length).to.eq(parseInt(REVISION_COUNT));
     }
   });
 
   it('has the correct revision name', function () {
     if (REVISION && service) {
-      const actual = _.get(service, 'spec.template.metadata.name');
+      const actual = service?.spec?.template?.metadata?.name;
       expect(REVISION).to.eq(actual);
     }
   });
 
   it('has the correct tag', function () {
     if (TAG && service) {
-      const traffic = _.get(service, 'spec.traffic')!;
-      const actual = traffic.find((rev: run_v1.Schema$TrafficTarget) => {
-        return rev['tag'] == TAG;
-      })!;
-      expect(TAG).to.eq(actual['tag']);
+      const actual = service?.spec?.traffic?.map((revision) => revision.tag);
+      expect(actual).to.include(TAG);
     }
   });
 
   it('has the correct traffic', function () {
     if (TAG && TRAFFIC && service) {
-      const traffic = _.get(service, 'spec.traffic')!;
-      const tagged = traffic.find((rev: run_v1.Schema$TrafficTarget) => {
-        return rev['tag'] == TAG;
-      })!;
-      const actual = traffic.find((rev: run_v1.Schema$TrafficTarget) => {
-        return rev['revisionName'] == tagged['revisionName'];
-      })!;
-      const percent = actual['percent']!;
-      expect(parseInt(TRAFFIC)).to.equal(percent);
+      const tagged = service?.spec?.traffic?.find((revision) => {
+        return revision.tag == TAG;
+      });
+      const percent = tagged?.percent;
+      expect(TRAFFIC).to.eq(percent);
     }
   });
 

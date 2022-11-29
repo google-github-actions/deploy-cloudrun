@@ -40,6 +40,17 @@ inputs:
     description: |-
       List of key-value pairs to set as environment variables in the format:
       KEY1=VALUE1,KEY2=VALUE2. Existing environment variables will be retained.
+      If both "env_vars" and "env_vars_file" are specified, the keys in
+      "env_vars" will take precendence over the keys in "env_vars_files".
+    required: false
+
+  env_vars_file:
+    description: |-
+      Path to a file on disk, relative to the workspace, that defines
+      environment variables. The file can be newline-separated KEY=VALUE pairs,
+      JSON, or YAML format. If both "env_vars" and "env_vars_file" are
+      specified, the keys in "env_vars" will take precendence over the keys in
+      "env_vars_files".
     required: false
 
   secrets:
