@@ -64,6 +64,9 @@ jobs:
         secrets: |-
           MY_SECRET=secret_value:latest
           MY_SECOND_SECRET=new_value:latest
+        labels: |-
+          label1=value1
+          label2=value2
         flags: "--cpu=2 --concurrency=20"
 
     - run: 'npm run e2e-tests'
@@ -73,6 +76,7 @@ jobs:
         ENV: 'FOO=bar,ZIP=zap'
         SECRET_ENV: MY_SECRET=secret_value:latest,MY_SECOND_SECRET=new_value:latest
         PARAMS: '{"cpu":2, "containerConcurrency":20}'
+        LABELS: '{"label1":"value1", "label2":"value2", "commit-sha":"${{ github.sha }}", "managed-by":"github-actions"}'
 
     - id: 'deploy-cloudrun-again'
       name: 'Deploy again'
@@ -94,6 +98,7 @@ jobs:
         SECRET_ENV: MY_SECRET=secret_value:latest,MY_SECOND_SECRET=new_value:latest
         SECRET_VOLUMES: /api/secrets/my-secret=secret_value:latest
         PARAMS: '{"cpu":2, "containerConcurrency":20}'
+        LABELS: '{"label1":"value1", "label2":"value2", "commit-sha":"${{ github.sha }}", "managed-by":"github-actions"}'
         REVISION_COUNT: 2
 
   metadata:
