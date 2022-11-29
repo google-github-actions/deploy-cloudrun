@@ -5,6 +5,10 @@ on:
     - cron: '0 */4 * * *'
   workflow_dispatch:
 
+permissions:
+  contents: 'read'
+  id-token: 'write'
+
 jobs:
   cleanup:
     runs-on: 'ubuntu-latest'
