@@ -61,19 +61,20 @@ jobs:
         env_vars: |-
           FOO=bar
           ZIP=zap
+        env_vars_file: './tests/fixtures/env_vars.txt'
         secrets: |-
           MY_SECRET=secret_value:latest
           MY_SECOND_SECRET=new_value:latest
         labels: |-
           label1=value1
           label2=value2
-        flags: "--cpu=2 --concurrency=20"
+        flags: '--cpu=2 --concurrency=20'
 
     - run: 'npm run e2e-tests'
       env:
         PROJECT_ID: ${{ secrets.DEPLOY_CLOUDRUN_PROJECT_ID }}
         SERVICE: '${{ env.SERVICE_NAME }}'
-        ENV: 'FOO=bar,ZIP=zap'
+        ENV: 'FOO=bar,ZIP=zap,TEXT_FOO=bar,TEXT_ZIP=zap'
         SECRET_ENV: MY_SECRET=secret_value:latest,MY_SECOND_SECRET=new_value:latest
         PARAMS: '{"cpu":2, "containerConcurrency":20}'
         LABELS: '{"label1":"value1", "label2":"value2", "commit-sha":"${{ github.sha }}", "managed-by":"github-actions"}'
@@ -94,7 +95,7 @@ jobs:
       env:
         PROJECT_ID: ${{ secrets.DEPLOY_CLOUDRUN_PROJECT_ID }}
         SERVICE: '${{ env.SERVICE_NAME }}'
-        ENV: 'FOO=bar,ZIP=zap,ABC=123,DEF=456'
+        ENV: 'FOO=bar,ZIP=zap,TEXT_FOO=bar,TEXT_ZIP=zap,ABC=123,DEF=456'
         SECRET_ENV: MY_SECRET=secret_value:latest,MY_SECOND_SECRET=new_value:latest
         SECRET_VOLUMES: /api/secrets/my-secret=secret_value:latest
         PARAMS: '{"cpu":2, "containerConcurrency":20}'

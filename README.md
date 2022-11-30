@@ -80,13 +80,42 @@ jobs:
     default value is no suffix.
 
 -   `env_vars`: (Optional) List of key=value pairs to set as environment
-    variables. All existing environment variables will be retained.
+    variables. All existing environment variables will be retained. If both
+    `env_vars` and `env_vars_file` are specified, the keys in env_vars will take
+    precendence over the keys in env_vars_files.
 
     ```yaml
     with:
       env_vars: |
         FOO=bar
         ZIP=zap
+    ```
+
+-   `env_vars_file`: (Optional) Path to a file on disk, relative to the
+    workspace, that defines environment variables. The file can be
+    newline-separated KEY=VALUE pairs, JSON, or YAML format. If both `env_vars`
+    and `env_vars_file` are specified, the keys in env_vars will take
+    precendence over the keys in env_vars_files.
+
+    ```text
+    FOO=bar
+    ZIP=zap
+    ```
+
+    or
+
+    ```json
+    {
+      "FOO": "bar",
+      "ZIP": "zap"
+    }
+    ```
+
+    or
+
+    ```yaml
+    FOO: 'bar'
+    ZIP: 'zap'
     ```
 
 -   `secrets`: (Optional) List of key=value pairs to use as secrets. These can

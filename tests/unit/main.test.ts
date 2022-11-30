@@ -33,6 +33,7 @@ const fakeInputs: { [key: string]: string } = {
   metadata: '',
   project_id: 'my-test-project',
   env_vars: '',
+  env_vars_file: '',
   labels: '',
   source: '',
   suffix: '',

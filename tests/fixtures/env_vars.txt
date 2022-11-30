@@ -1,0 +1,2 @@
+TEXT_FOO=bar
+TEXT_ZIP=zap
