@@ -36,7 +36,7 @@ jobs:
         service_account: 'my-service-account@my-project.iam.gserviceaccount.com'
 
     - id: 'deploy'
-      uses: 'google-github-actions/deploy-cloudrun@v0'
+      uses: 'google-github-actions/deploy-cloudrun@v1'
       with:
         service: 'hello-cloud-run'
         image: 'gcr.io/cloudrun/hello'
@@ -290,7 +290,7 @@ jobs:
         workload_identity_provider: 'projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider'
         service_account: 'my-service-account@my-project.iam.gserviceaccount.com'
 
-    - uses: 'google-github-actions/deploy-cloudrun@v0'
+    - uses: 'google-github-actions/deploy-cloudrun@v1'
       with:
         image: 'gcr.io/cloudrun/hello'
         service: 'hello-cloud-run'
@@ -309,7 +309,7 @@ jobs:
     steps:
     # ...
 
-    - uses: 'google-github-actions/deploy-cloudrun@v0'
+    - uses: 'google-github-actions/deploy-cloudrun@v1'
       with:
         image: 'gcr.io/cloudrun/hello'
         service: 'hello-cloud-run'
@@ -329,7 +329,7 @@ Credentials.
 We recommend pinning to the latest available major version:
 
 ```yaml
-- uses: 'google-github-actions/deploy-cloudrun@v0'
+- uses: 'google-github-actions/deploy-cloudrun@v1'
 ```
 
 While this action attempts to follow semantic versioning, but we're ultimately
@@ -337,7 +337,7 @@ human and sometimes make mistakes. To prevent accidental breaking changes, you
 can also pin to a specific version:
 
 ```yaml
-- uses: 'google-github-actions/deploy-cloudrun@v0.1.1'
+- uses: 'google-github-actions/deploy-cloudrun@v1.0.0'
 ```
 
 However, you will not get automatic security updates or new features without
