@@ -170,6 +170,12 @@ jobs:
     flags](https://cloud.google.com/sdk/gcloud/reference/run/deploy#FLAGS) for
     more information.
 
+    Please note, the GitHub Action does not parse or validate the flags. You are
+    responsible for making sure the flags are available on the gcloud version
+    and subcommand. When using `tag_traffic` or `revisiion_traffic`, the command
+    is `gcloud run services update-traffic`. For all other values, the command
+    is `gcloud run deploy`.
+
 -   `no_traffic`: (Optional) If true, the newly deployed revision will not
     receive traffic. The default value is false.
 
