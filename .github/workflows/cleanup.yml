@@ -19,7 +19,7 @@ jobs:
     - uses: 'google-github-actions/auth@main'
       with:
         workload_identity_provider: '${{ secrets.WIF_PROVIDER_NAME }}'
-        service_account: '${{ secrets.DEPLOY_CLOUDRUN_SA_EMAIL }}'
+        service_account: '${{ secrets.SERVICE_ACCOUNT_EMAIL }}'
 
     - uses: 'google-github-actions/setup-gcloud@main'
 
@@ -27,10 +27,10 @@ jobs:
       run: |-
         BUFFER="$(TZ=GMT+4 date +%Y-%m-%d)"
 
-        gcloud config set core/project "${{ secrets.DEPLOY_CLOUDRUN_PROJECT_ID }}"
+        gcloud config set core/project "${{ secrets.PROJECT_ID }}"
         gcloud config set run/region "us-central1"
 
-        (IFS=$'\n'; for NAME in $(gcloud run services list --format="value(name)" --filter="metadata.creationTimestamp > '${BUFFER}'"); do
+        (IFS=$'\n'; for NAME in $(gcloud run services list --format="value(name)" --filter="metadata.creationTimestamp.date('%Y-%m-%d', Z) < '${BUFFER}'"); do
           echo "Deleting ${NAME}..."
           gcloud run services delete ${NAME} --quiet --async
         done)
