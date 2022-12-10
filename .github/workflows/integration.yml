@@ -49,7 +49,7 @@ jobs:
     - uses: 'google-github-actions/auth@main'
       with:
         workload_identity_provider: '${{ secrets.WIF_PROVIDER_NAME }}'
-        service_account: '${{ secrets.DEPLOY_CLOUDRUN_SA_EMAIL }}'
+        service_account: '${{ secrets.SERVICE_ACCOUNT_EMAIL }}'
 
     - id: 'deploy-cloudrun'
       name: 'Deploy'
@@ -63,8 +63,8 @@ jobs:
           ZIP=zap
         env_vars_file: './tests/fixtures/env_vars.txt'
         secrets: |-
-          MY_SECRET=secret_value:latest
-          MY_SECOND_SECRET=new_value:latest
+          MY_SECRET=${{ secrets.SECRET_NAME }}:latest
+          MY_SECOND_SECRET=${{ secrets.SECRET_NAME }}:1
         labels: |-
           label1=value1
           label2=value2
@@ -72,10 +72,10 @@ jobs:
 
     - run: 'npm run e2e-tests'
       env:
-        PROJECT_ID: ${{ secrets.DEPLOY_CLOUDRUN_PROJECT_ID }}
+        PROJECT_ID: ${{ secrets.PROJECT_ID }}
         SERVICE: '${{ env.SERVICE_NAME }}'
         ENV: 'FOO=bar,ZIP=zap,TEXT_FOO=bar,TEXT_ZIP=zap'
-        SECRET_ENV: MY_SECRET=secret_value:latest,MY_SECOND_SECRET=new_value:latest
+        SECRET_ENV: MY_SECRET=${{ secrets.SECRET_NAME }}:latest,MY_SECOND_SECRET=${{ secrets.SECRET_NAME }}:1
         PARAMS: '{"cpu":2, "containerConcurrency":20}'
         LABELS: '{"label1":"value1", "label2":"value2", "commit-sha":"${{ github.sha }}", "managed-by":"github-actions"}'
 
@@ -89,15 +89,15 @@ jobs:
         env_vars: |-
           ABC=123
           DEF=456
-        secrets: /api/secrets/my-secret=secret_value:latest
+        secrets: /api/secrets/my-secret=${{ secrets.SECRET_NAME }}:latest
 
     - run: 'npm run e2e-tests'
       env:
-        PROJECT_ID: ${{ secrets.DEPLOY_CLOUDRUN_PROJECT_ID }}
+        PROJECT_ID: ${{ secrets.PROJECT_ID }}
         SERVICE: '${{ env.SERVICE_NAME }}'
         ENV: 'FOO=bar,ZIP=zap,TEXT_FOO=bar,TEXT_ZIP=zap,ABC=123,DEF=456'
-        SECRET_ENV: MY_SECRET=secret_value:latest,MY_SECOND_SECRET=new_value:latest
-        SECRET_VOLUMES: /api/secrets/my-secret=secret_value:latest
+        SECRET_ENV: MY_SECRET=${{ secrets.SECRET_NAME }}:latest,MY_SECOND_SECRET=${{ secrets.SECRET_NAME }}:1
+        SECRET_VOLUMES: /api/secrets/my-secret=${{ secrets.SECRET_NAME }}:latest
         PARAMS: '{"cpu":2, "containerConcurrency":20}'
         LABELS: '{"label1":"value1", "label2":"value2", "commit-sha":"${{ github.sha }}", "managed-by":"github-actions"}'
         REVISION_COUNT: 2
@@ -126,7 +126,7 @@ jobs:
     - uses: 'google-github-actions/auth@main'
       with:
         workload_identity_provider: '${{ secrets.WIF_PROVIDER_NAME }}'
-        service_account: '${{ secrets.DEPLOY_CLOUDRUN_SA_EMAIL }}'
+        service_account: '${{ secrets.SERVICE_ACCOUNT_EMAIL }}'
 
     - id: 'deploy-cloudrun'
       name: 'Deploy'
@@ -136,7 +136,7 @@ jobs:
 
     - run: 'npm run e2e-tests'
       env:
-        PROJECT_ID: '${{ secrets.DEPLOY_CLOUDRUN_PROJECT_ID }}'
+        PROJECT_ID: '${{ secrets.PROJECT_ID }}'
         SERVICE: '${{ env.SERVICE_NAME }}'
         PARAMS: '{"cpu":2, "memory":"1Gi", "containerConcurrency":20}'
         ANNOTATIONS: '{"run.googleapis.com/cloudsql-instances":"test-project:us-central1:my-test-instance"}'
@@ -151,7 +151,7 @@ jobs:
 
     - run: 'npm run e2e-tests' # Check that config isn't overwritten
       env:
-        PROJECT_ID: '${{ secrets.DEPLOY_CLOUDRUN_PROJECT_ID }}'
+        PROJECT_ID: '${{ secrets.PROJECT_ID }}'
         SERVICE: '${{ env.SERVICE_NAME }}'
         PARAMS: '{"cpu":2, "memory":"1Gi", "containerConcurrency":20}'
         ANNOTATIONS: '{"run.googleapis.com/cloudsql-instances":"test-project:us-central1:my-test-instance"}'
