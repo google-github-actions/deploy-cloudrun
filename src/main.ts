@@ -18,7 +18,6 @@ import path from 'path';
 
 import {
   addPath,
-  exportVariable,
   getInput,
   info as logInfo,
   setFailed,
@@ -36,6 +35,7 @@ import {
   parseKVStringAndFile,
   pinnedToHeadWarning,
   presence,
+  stubEnv,
 } from '@google-github-actions/actions-utils';
 import {
   authenticateGcloudSDK,
@@ -48,8 +48,10 @@ import {
 
 import { parseDeployResponse, parseUpdateTrafficResponse } from './output-parser';
 
-export const GCLOUD_METRICS_ENV_VAR = 'CLOUDSDK_METRICS_ENVIRONMENT';
-export const GCLOUD_METRICS_LABEL = 'github-actions-deploy-cloudrun';
+// Do not listen to the linter - this can NOT be rewritten as an ES6 import
+// statement.
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { version: appVersion } = require('../package.json');
 
 /**
  * DeployCloudRunOutputs are the common GitHub action outputs created by this action
@@ -71,15 +73,18 @@ enum ResponseTypes {
  * primary entry point. It is documented inline.
  */
 export async function run(): Promise<void> {
+  // Register metrics
+  const restoreEnv = stubEnv({
+    CLOUDSDK_METRICS_ENVIRONMENT: 'github-actions-deploy-cloudrun',
+    CLOUDSDK_METRICS_ENVIRONMENT_VERSION: appVersion,
+  });
+
+  // Warn if pinned to HEAD
+  if (isPinnedToHead()) {
+    logWarning(pinnedToHeadWarning('v1'));
+  }
+
   try {
-    // Register metrics
-    exportVariable(GCLOUD_METRICS_ENV_VAR, GCLOUD_METRICS_LABEL);
-
-    // Warn if pinned to HEAD
-    if (isPinnedToHead()) {
-      logWarning(pinnedToHeadWarning('v0'));
-    }
-
     // Get action inputs
     const image = getInput('image'); // Image ie gcr.io/...
     const service = getInput('service'); // Service name
@@ -258,6 +263,8 @@ export async function run(): Promise<void> {
   } catch (err) {
     const msg = errorMessage(err);
     setFailed(`google-github-actions/deploy-cloudrun failed with: ${msg}`);
+  } finally {
+    restoreEnv();
   }
 }
 
