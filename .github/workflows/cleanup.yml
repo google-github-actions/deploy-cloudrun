@@ -2,7 +2,7 @@ name: 'Cleanup'
 
 on:
   schedule:
-    - cron: '0 */4 * * *'
+    - cron: '0 */6 * * *'
   workflow_dispatch:
 
 permissions:
@@ -25,12 +25,14 @@ jobs:
 
     - name: Delete services
       run: |-
-        BUFFER="$(TZ=GMT+4 date +%Y-%m-%d)"
-
         gcloud config set core/project "${{ secrets.PROJECT_ID }}"
         gcloud config set run/region "us-central1"
 
-        (IFS=$'\n'; for NAME in $(gcloud run services list --format="value(name)" --filter="metadata.creationTimestamp.date('%Y-%m-%d', Z) < '${BUFFER}'"); do
+        # List and delete all services that were deployed 30 minutes ago or
+        # earlier. The date math here is a little weird, but we're looking for
+        # deployments "earlier than" 30 minutes ago, so it's less than since
+        # time increases.
+        (IFS=$'\n'; for NAME in $(gcloud run services list --format="value(name)" --filter="metadata.creationTimestamp < '-pt30m'"); do
           echo "Deleting ${NAME}..."
           gcloud run services delete ${NAME} --quiet --async
         done)
