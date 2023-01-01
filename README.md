@@ -47,8 +47,16 @@ jobs:
 
 ## Inputs
 
--   `service`: (Required, unless providing `metadata`) ID of the service or
+-   `service`: (Required, unless providing `metadata` or `job`) ID of the service or
     fully-qualified identifier of the service.
+
+-   `job`: (Required, unless providing `metadata` or `service`) ID of the job or
+    fully-qualified identifier of the job. If `job` and `service` are specified
+    then the `service` will be updated and the `job` will be ignored. Note that
+    the `job` must be created first. This will only update an existing `job`, it
+    will not deploy/create a new job. Note that as of Dec 31, 2022, Cloud Run for
+    `jobs` is still in Beta and thus requires that you set `gcloud_component` to
+    `beta` or `alpha`.
 
 -   `image`: (Required, unless providing `metadata` or `source`) Fully-qualified
     name of the container image to deploy. For example:
