@@ -48,7 +48,7 @@
     "eslint": "^8.29.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.2.1",
-    "googleapis": "^109.0.1",
+    "googleapis": "^112.0.0",
     "mocha": "^10.2.0",
     "prettier": "^2.8.1",
     "sinon": "^15.0.1",
