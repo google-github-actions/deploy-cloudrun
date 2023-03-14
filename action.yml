@@ -67,6 +67,13 @@ inputs:
       KEY1=VALUE1,KEY2=VALUE2. Existing labels will be retained.
     required: false
 
+  skip_default_labels:
+    description: |-
+      Skip applying the special annotation labels that indicate the deployment
+      came from GitHub Actions.
+    required: false
+    default: false
+
   metadata:
     description: |-
       YAML service description for the Cloud Run service.

@@ -141,17 +141,22 @@ jobs:
         my-label=my-value
     ```
 
-    The GitHub Action will automatically apply the following labels which Cloud
-    Run uses to enhance the user experience:
+    Labels have strict naming and casing requirements. See [Requirements for
+    labels](https://cloud.google.com/resource-manager/docs/creating-managing-labels#requirements)
+    for more information.
+
+-   `skip_default_labels`: (Optional) Skip applying the special annotation
+    labels that indicate the deployment came from GitHub Actions. The GitHub
+    Action will automatically apply the following labels which Cloud Run uses to
+    enhance the user experience:
 
     ```text
     managed-by: github-actions
     commit-sha: <sha>
     ```
 
-    Labels have strict naming and casing requirements. See [Requirements for
-    labels](https://cloud.google.com/resource-manager/docs/creating-managing-labels#requirements)
-    for more information.
+    Setting this to `true` will skip adding these special labels. The default
+    value is `false`.
 
 -   `tag`: (Optional) Traffic tag to assign to the newly-created revision.
 

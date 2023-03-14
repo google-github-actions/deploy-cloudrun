@@ -30,6 +30,7 @@ import {
   errorMessage,
   isPinnedToHead,
   KVPair,
+  parseBoolean,
   parseFlags,
   parseKVString,
   parseKVStringAndFile,
@@ -104,6 +105,7 @@ export async function run(): Promise<void> {
     const revTraffic = getInput('revision_traffic');
     const tagTraffic = getInput('tag_traffic');
     const labels = parseKVString(getInput('labels'));
+    const skipDefaultLabels = parseBoolean(getInput('skip_default_labels'));
     const flags = getInput('flags');
 
     let responseType = ResponseTypes.DEPLOY; // Default response type for output parsing
@@ -201,8 +203,11 @@ export async function run(): Promise<void> {
       if (timeout) cmd.push('--timeout', timeout);
 
       // Compile the labels
-      const compiledLabels = Object.assign({}, defaultLabels(), labels);
-      cmd.push('--update-labels', kvToString(compiledLabels));
+      const defLabels = skipDefaultLabels ? {} : defaultLabels();
+      const compiledLabels = Object.assign({}, defLabels, labels);
+      if (compiledLabels && Object.keys(compiledLabels).length > 0) {
+        cmd.push('--update-labels', kvToString(compiledLabels));
+      }
     }
 
     // Push common flags
