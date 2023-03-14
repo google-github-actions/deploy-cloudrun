@@ -35,6 +35,7 @@ const fakeInputs: { [key: string]: string } = {
   env_vars: '',
   env_vars_file: '',
   labels: '',
+  skip_default_labels: 'false',
   source: '',
   suffix: '',
   tag: '',
@@ -116,6 +117,22 @@ describe('#run', function () {
       'commit-sha': 'abcdef123456',
       'foo': 'bar',
       'zip': 'zap',
+    };
+
+    await run();
+    const call = this.stubs.getExecOutput.getCall(0);
+    expect(call).to.be;
+    const args = call.args[1];
+    expect(args).to.include.members(['--update-labels', kvToString(expectedLabels)]);
+  });
+
+  it('skips default labels', async function () {
+    this.stubs.getInput.withArgs('skip_default_labels').returns('true');
+    this.stubs.getInput.withArgs('labels').returns('foo=bar,zip=zap');
+
+    const expectedLabels = {
+      foo: 'bar',
+      zip: 'zap',
     };
 
     await run();
