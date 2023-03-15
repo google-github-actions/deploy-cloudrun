@@ -1,6 +1,6 @@
 {
   "name": "deploy-cloudrun",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Github Action: Deploy to Google Cloud Run",
   "main": "dist/index.js",
   "scripts": {
