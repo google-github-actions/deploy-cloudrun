@@ -18,14 +18,14 @@ jobs:
 
     - uses: 'google-github-actions/auth@main'
       with:
-        workload_identity_provider: '${{ secrets.WIF_PROVIDER_NAME }}'
-        service_account: '${{ secrets.SERVICE_ACCOUNT_EMAIL }}'
+        workload_identity_provider: '${{ vars.WIF_PROVIDER_NAME }}'
+        service_account: '${{ vars.SERVICE_ACCOUNT_EMAIL }}'
 
     - uses: 'google-github-actions/setup-gcloud@main'
 
     - name: Delete services
       run: |-
-        gcloud config set core/project "${{ secrets.PROJECT_ID }}"
+        gcloud config set core/project "${{ vars.PROJECT_ID }}"
         gcloud config set run/region "us-central1"
 
         # List and delete all services that were deployed 30 minutes ago or
