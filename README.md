@@ -4,6 +4,11 @@ The `deploy-cloudrun` GitHub Action deploys to Google [Cloud Run][cloud-run]. It
 can deploy a container image or from source, and the resulting service URL is
 available as a GitHub Actions output for use in future steps.
 
+**This is not an officially supported Google product, and it is not covered by a
+Google Cloud support contract. To report bugs or request features in a Google
+Cloud product, please contact [Google Cloud
+support](https://cloud.google.com/support).**
+
 
 ## Prerequisites
 
