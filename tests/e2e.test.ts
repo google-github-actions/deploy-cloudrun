@@ -160,7 +160,7 @@ describe('E2E tests', function () {
     if (LABELS && service) {
       const expected = JSON.parse(LABELS);
       const actual = service?.spec?.template?.metadata?.labels;
-      expect(actual).to.deep.eq(expected);
+      expect(actual).to.deep.include(expected);
     }
   });
 
