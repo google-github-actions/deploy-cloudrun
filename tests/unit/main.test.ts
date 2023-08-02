@@ -38,6 +38,7 @@ const fakeInputs: { [key: string]: string } = {
   skip_default_labels: 'false',
   source: '',
   suffix: '',
+  service_account: '',
   tag: '',
   timeout: '',
   revision_traffic: '',
@@ -246,6 +247,15 @@ describe('#run', function () {
     this.stubs.getInput.withArgs('gcloud_component').returns('beta');
     await run();
     expect(this.stubs.installComponent.withArgs('beta').callCount).to.eq(1);
+  });
+
+  it('set service account if given', async function () {
+    this.stubs.getInput.withArgs('service_account').returns('test@12345.iam.gserviceaccount.com');
+    await run();
+    const call = this.stubs.getExecOutput.getCall(0);
+    expect(call).to.be;
+    const args = call.args[1];
+    expect(args).to.include.members(['--service-account', 'test@12345.iam.gserviceaccount.com']);
   });
 });
 

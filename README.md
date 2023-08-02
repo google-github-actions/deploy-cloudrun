@@ -217,6 +217,7 @@ jobs:
 -   `gcloud_component`: (Optional) Component of the `gcloud` CLI to use. Valid
     values are `alpha` and `beta`.
 
+-   `service_account`: (Optional) Sevice Account to assign Cloud Run service. 
 
 ### Custom metadata YAML
 

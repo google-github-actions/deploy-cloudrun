@@ -107,6 +107,7 @@ export async function run(): Promise<void> {
     const labels = parseKVString(getInput('labels'));
     const skipDefaultLabels = parseBoolean(getInput('skip_default_labels'));
     const flags = getInput('flags');
+    const serviceAccount = getInput('service_account');
 
     let responseType = ResponseTypes.DEPLOY; // Default response type for output parsing
     let cmd;
@@ -148,6 +149,7 @@ export async function run(): Promise<void> {
         tag: tag !== '',
         labels: Object.keys(labels).length > 0,
         timeout: timeout !== '',
+        service_account: serviceAccount !== '',
       };
       for (const key in providedButIgnored) {
         if (providedButIgnored[key]) {
@@ -170,6 +172,7 @@ export async function run(): Promise<void> {
         tag_traffic: revTraffic !== '',
         labels: Object.keys(labels).length > 0,
         timeout: timeout !== '',
+        service_account: serviceAccount !== '',
       };
       for (const key in providedButIgnored) {
         if (providedButIgnored[key]) {
@@ -208,6 +211,8 @@ export async function run(): Promise<void> {
       if (compiledLabels && Object.keys(compiledLabels).length > 0) {
         cmd.push('--update-labels', kvToString(compiledLabels));
       }
+
+      if (serviceAccount) cmd.push('--service-account', serviceAccount);
     }
 
     // Push common flags

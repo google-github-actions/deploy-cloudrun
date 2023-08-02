@@ -167,6 +167,14 @@ inputs:
       'gcloud alpha run' or 'gcloud beta run'. Valid values are `alpha` or `beta`.
     required: false
 
+  service_account:
+    description: |-
+      Service Account to assign Cloud Run service. We assosiete this Service Account 
+      to a new revision using `--service-account` args. This option can not use with
+      `no_traffic` and `tagTraffic` option.
+    required: false
+
+
 outputs:
   url:
     description: The URL of your Cloud Run service
