@@ -94,6 +94,7 @@ export async function run(): Promise<void> {
     const gcloudVersion = await computeGcloudVersion(getInput('gcloud_version'));
     const gcloudComponent = presence(getInput('gcloud_component')); // Cloud SDK component version
     const envVars = getInput('env_vars'); // String of env vars KEY=VALUE,...
+    const envVarsSeparator = getInput('env_vars_separator') || ','; // Characters to separate env_vars
     const envVarsFile = getInput('env_vars_file'); // File that is a string of env vars KEY=VALUE,...
     const secrets = parseKVString(getInput('secrets')); // String of secrets KEY=VALUE,...
     const region = getInput('region') || 'us-central1';
@@ -190,7 +191,7 @@ export async function run(): Promise<void> {
       // Set optional flags from inputs
       const compiledEnvVars = parseKVStringAndFile(envVars, envVarsFile);
       if (compiledEnvVars && Object.keys(compiledEnvVars).length > 0) {
-        cmd.push('--update-env-vars', kvToString(compiledEnvVars));
+        cmd.push('--update-env-vars', kvToString(compiledEnvVars, envVarsSeparator));
       }
       if (secrets && Object.keys(secrets).length > 0) {
         cmd.push('--update-secrets', kvToString(secrets));

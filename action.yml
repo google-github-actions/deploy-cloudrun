@@ -44,6 +44,12 @@ inputs:
       "env_vars" will take precendence over the keys in "env_vars_files".
     required: false
 
+  env_vars_separator:
+    description: |-
+      String used to separate the env_vars for scaping comma characters.
+      See documentation: https://cloud.google.com/run/docs/configuring/services/environment-variables#escaping.
+    required: false
+
   env_vars_file:
     description: |-
       Path to a file on disk, relative to the workspace, that defines
