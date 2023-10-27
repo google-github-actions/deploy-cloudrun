@@ -34,15 +34,15 @@ jobs:
     name: 'from_${{ matrix.name }}'
 
     steps:
-    - uses: 'actions/checkout@v3'
+    - uses: 'actions/checkout@v4'
 
     - name: 'Compute service name'
       run: |-
         echo "SERVICE_NAME=${GITHUB_JOB}-${{ matrix.name }}-${GITHUB_SHA::7}-${GITHUB_RUN_NUMBER}" >> ${GITHUB_ENV}
 
-    - uses: 'actions/setup-node@v3'
+    - uses: 'actions/setup-node@v4'
       with:
-        node-version: '16.x'
+        node-version: '20.x'
 
     - run: 'npm ci && npm run build'
 
@@ -108,7 +108,7 @@ jobs:
     runs-on: 'ubuntu-latest'
 
     steps:
-    - uses: 'actions/checkout@v3'
+    - uses: 'actions/checkout@v4'
 
     - name: 'Compute service name'
       run: |-
@@ -118,9 +118,9 @@ jobs:
       run: |-
         sed -i "s/run-full-yaml/${{ env.SERVICE_NAME }}/" ./tests/unit/service.yaml
 
-    - uses: 'actions/setup-node@v3'
+    - uses: 'actions/setup-node@v4'
       with:
-        node-version: '16.x'
+        node-version: '20.x'
 
     - run: 'npm ci && npm run build'
 

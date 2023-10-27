@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Use the official lightweight Node.js 16 image.
+# Use the official lightweight Node.js 20 image.
 # https://hub.docker.com/_/node
-FROM node:16-slim
+FROM node:20-slim
 
 # Create and change to the app directory.
 WORKDIR /usr/src/app
