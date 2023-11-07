@@ -89,6 +89,7 @@ export async function run(): Promise<void> {
     // Get action inputs
     const image = getInput('image'); // Image ie gcr.io/...
     const service = getInput('service'); // Service name
+    const job = getInput('job'); // Job name
     const metadata = getInput('metadata'); // YAML file
     const projectId = getInput('project_id');
     const gcloudVersion = await computeGcloudVersion(getInput('gcloud_version'));
@@ -126,6 +127,7 @@ export async function run(): Promise<void> {
     if (gcloudComponent && gcloudComponent !== 'alpha' && gcloudComponent !== 'beta') {
       throw new Error(`invalid input received for gcloud_component: ${gcloudComponent}`);
     }
+    const useJob = job && !service;
 
     // Find base command
     if (revTraffic || tagTraffic) {
@@ -176,6 +178,26 @@ export async function run(): Promise<void> {
           logWarning(`Using metadata YAML, ignoring "${key}" input`);
         }
       }
+    } else if (useJob) {
+      cmd = ['run', 'jobs', 'update', job, '--quiet'];
+
+      if (image) {
+        // Deploy job with image specified
+        cmd.push('--image', image);
+      }
+
+      // Set optional flags from inputs
+      const compiledEnvVars = parseKVStringAndFile(envVars, envVarsFile);
+      if (compiledEnvVars && Object.keys(compiledEnvVars).length > 0) {
+        cmd.push('--update-env-vars', kvToString(compiledEnvVars));
+      }
+      if (secrets && Object.keys(secrets).length > 0) {
+        cmd.push('--update-secrets', kvToString(secrets));
+      }
+
+      // Compile the labels
+      const compiledLabels = Object.assign({}, defaultLabels(), labels);
+      cmd.push('--update-labels', kvToString(compiledLabels));
     } else {
       cmd = ['run', 'deploy', service, '--quiet'];
 
@@ -211,7 +233,9 @@ export async function run(): Promise<void> {
     }
 
     // Push common flags
-    cmd.push('--platform', 'managed');
+    if (!useJob) {
+      cmd.push('--platform', 'managed');
+    }
     cmd.push('--format', 'json');
     if (region) cmd.push('--region', region);
     if (projectId) cmd.push('--project', projectId);
