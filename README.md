@@ -56,6 +56,12 @@ jobs:
 -   `service`: (Required, unless providing `metadata`) ID of the service or
     fully-qualified identifier of the service.
 
+-   `job`: (Required, unless providing `metadata` or `service`) ID of the job or
+    fully-qualified identifier of the job. If `job` and `service` are specified
+    then the `service` will be updated and the `job` will be ignored. Note that
+    the `job` must be created first. This will only update an existing `job`, it
+    will not deploy/create a new job.
+
 -   `image`: (Required, unless providing `metadata` or `source`) Fully-qualified
     name of the container image to deploy. For example:
 

@@ -29,7 +29,19 @@ import { run, kvToString } from '../../src/main';
 const fakeInputs: { [key: string]: string } = {
   image: 'gcr.io/cloudrun/hello',
   service: 'test',
+  job: '',
+  metadata: '',
   project_id: 'test',
+  env_vars: '',
+  env_vars_file: '',
+  labels: '',
+  skip_default_labels: 'false',
+  source: '',
+  suffix: '',
+  tag: '',
+  timeout: '',
+  revision_traffic: '',
+  tag_traffic: '',
 };
 
 const defaultMocks = (
@@ -97,12 +109,12 @@ test('#run', { concurrency: true }, async (suite) => {
 
   await suite.test('sets the project ID', async (t) => {
     const mocks = defaultMocks(t.mock, {
-      project_id: 'my-test-project',
+      project_id: 'test',
     });
     await run();
 
     const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
-    assertMembers(args, ['--project', 'my-test-project']);
+    assertMembers(args, ['--project', 'test']);
   });
 
   await suite.test('installs the gcloud SDK if it is not already installed', async (t) => {
@@ -320,6 +332,50 @@ test('#run', { concurrency: true }, async (suite) => {
       },
       { message: /no service name set/ },
     );
+  });
+
+  it('updates a job if job is specified and service is not', async function () {
+    this.stubs.getInput.withArgs('service').returns(undefined);
+    this.stubs.getInput.withArgs('job').returns('job-name');
+    await run();
+    const call = this.stubs.getExecOutput.getCall(0);
+    expect(call).to.be;
+    const args = call.args[1];
+    expect(args).to.include.members([
+      'run',
+      'jobs',
+      'update',
+      'job-name',
+      '--image',
+      'gcr.io/cloudrun/hello',
+    ]);
+  });
+
+  it('updates a job if job is specified and service is an empty string', async function () {
+    this.stubs.getInput.withArgs('service').returns('');
+    this.stubs.getInput.withArgs('job').returns('job-name');
+    await run();
+    const call = this.stubs.getExecOutput.getCall(0);
+    expect(call).to.be;
+    const args = call.args[1];
+    expect(args).to.include.members([
+      'run',
+      'jobs',
+      'update',
+      'job-name',
+      '--image',
+      'gcr.io/cloudrun/hello',
+    ]);
+  });
+
+  it('ignore job if job and service are both specified', async function () {
+    this.stubs.getInput.withArgs('service').returns('service-name');
+    this.stubs.getInput.withArgs('job').returns('job-name');
+    await run();
+    const call = this.stubs.getExecOutput.getCall(0);
+    expect(call).to.be;
+    const args = call.args[1];
+    expect(args).to.not.include.members(['jobs', 'job-name', '--platform']);
   });
 });
 

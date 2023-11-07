@@ -30,6 +30,12 @@ inputs:
       Required if not using a service YAML.
     required: false
 
+  job:
+    description: |-
+      ID of the job or fully qualified identifier for the job.
+      Required if not using a service YAML.
+    required: false
+
   region:
     description: |-
       Region in which the resource can be found.
