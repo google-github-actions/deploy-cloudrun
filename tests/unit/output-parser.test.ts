@@ -220,8 +220,7 @@ describe('#output-parser', () => {
       {
         name: 'handles invalid text from stdout',
         stdout: 'Some text to fail',
-        error:
-          'failed to parse update traffic response: unexpected token S in JSON at position 0, stdout: Some text to fail',
+        error: `failed to parse update traffic response: unexpected token 'S', "Some text to fail" is not valid JSON, stdout: Some text to fail`,
       },
     ];
 
@@ -492,7 +491,7 @@ describe('#output-parser', () => {
       {
         name: 'handles invalid text from stdout',
         stdout: `Some text to fail`,
-        error: `failed to parse deploy response: unexpected token S in JSON at position 0, stdout: Some text to fail, inputs: undefined`,
+        error: `failed to parse deploy response: unexpected token 'S', "Some text to fail" is not valid JSON, stdout: Some text to fail, inputs: undefined`,
       },
     ];
 
