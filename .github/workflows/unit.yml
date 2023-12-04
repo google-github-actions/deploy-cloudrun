@@ -3,10 +3,13 @@ name: 'unit'
 on:
   push:
     branches:
-    - 'main'
+      - 'main'
+      - 'release/**/*'
   pull_request:
     branches:
-    - 'main'
+      - 'main'
+      - 'release/**/*'
+  workflow_dispatch:
 
 concurrency:
   group: '${{ github.workflow }}-${{ github.head_ref || github.ref }}'
