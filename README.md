@@ -36,13 +36,13 @@ jobs:
     steps:
     - uses: 'actions/checkout@v4'
 
-    - uses: 'google-github-actions/auth@v1'
+    - uses: 'google-github-actions/auth@v2'
       with:
         workload_identity_provider: 'projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider'
         service_account: 'my-service-account@my-project.iam.gserviceaccount.com'
 
     - id: 'deploy'
-      uses: 'google-github-actions/deploy-cloudrun@v1'
+      uses: 'google-github-actions/deploy-cloudrun@v2'
       with:
         service: 'hello-cloud-run'
         image: 'gcr.io/cloudrun/hello'
@@ -302,12 +302,12 @@ jobs:
 
     # ...
 
-    - uses: 'google-github-actions/auth@v1'
+    - uses: 'google-github-actions/auth@v2'
       with:
         workload_identity_provider: 'projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider'
         service_account: 'my-service-account@my-project.iam.gserviceaccount.com'
 
-    - uses: 'google-github-actions/deploy-cloudrun@v1'
+    - uses: 'google-github-actions/deploy-cloudrun@v2'
       with:
         image: 'gcr.io/cloudrun/hello'
         service: 'hello-cloud-run'
@@ -326,7 +326,7 @@ jobs:
     steps:
     # ...
 
-    - uses: 'google-github-actions/deploy-cloudrun@v1'
+    - uses: 'google-github-actions/deploy-cloudrun@v2'
       with:
         image: 'gcr.io/cloudrun/hello'
         service: 'hello-cloud-run'
@@ -340,27 +340,6 @@ Credentials.
 * [Deploy from source](https://github.com/google-github-actions/example-workflows/blob/main/workflows/deploy-cloudrun/cloudrun-source.yml)
 
 * [Build and deploy a container](https://github.com/google-github-actions/example-workflows/blob/main/workflows/deploy-cloudrun/cloudrun-docker.yml)
-
-## Versioning
-
-We recommend pinning to the latest available major version:
-
-```yaml
-- uses: 'google-github-actions/deploy-cloudrun@v1'
-```
-
-While this action attempts to follow semantic versioning, but we're ultimately
-human and sometimes make mistakes. To prevent accidental breaking changes, you
-can also pin to a specific version:
-
-```yaml
-- uses: 'google-github-actions/deploy-cloudrun@v1.0.0'
-```
-
-However, you will not get automatic security updates or new features without
-explicitly updating your version number. Note that we only publish `MAJOR` and
-`MAJOR.MINOR.PATCH` versions. There is **not** a floating alias for
-`MAJOR.MINOR`.
 
 
 [cloud-run]: https://cloud.google.com/run

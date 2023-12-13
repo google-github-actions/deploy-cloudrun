@@ -48,7 +48,7 @@ jobs:
 
     - run: 'npm ci && npm run build'
 
-    - uses: 'google-github-actions/auth@main'
+    - uses: 'google-github-actions/auth@v2'
       with:
         workload_identity_provider: '${{ vars.WIF_PROVIDER_NAME }}'
         service_account: '${{ vars.SERVICE_ACCOUNT_EMAIL }}'
@@ -126,7 +126,7 @@ jobs:
 
     - run: 'npm ci && npm run build'
 
-    - uses: 'google-github-actions/auth@main'
+    - uses: 'google-github-actions/auth@v2'
       with:
         workload_identity_provider: '${{ vars.WIF_PROVIDER_NAME }}'
         service_account: '${{ vars.SERVICE_ACCOUNT_EMAIL }}'
