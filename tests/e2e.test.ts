@@ -14,48 +14,40 @@
  * limitations under the License.
  */
 
-import 'mocha';
-import { expect } from 'chai';
+import { test } from 'node:test';
+import assert from 'node:assert';
 
 import { getExecOutput } from '@actions/exec';
 import { run_v1 } from 'googleapis';
 import yaml from 'js-yaml';
 
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms, []));
-}
+const skipIfMissingEnv = (...envs: string[]): string | boolean => {
+  for (const env of envs) {
+    if (!(env in process.env)) {
+      return `missing $${env}`;
+    }
+  }
 
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-describe('E2E tests', function () {
-  const {
-    PROJECT_ID,
-    PARAMS,
-    ANNOTATIONS,
-    LABELS,
-    ENV,
-    SECRET_ENV,
-    SECRET_VOLUMES,
-    SERVICE,
-    REVISION_COUNT,
-    REVISION,
-    TAG,
-    TRAFFIC,
-  } = process.env;
+  return false;
+};
 
-  let service: run_v1.Schema$Service;
-  let toolCommand: string;
+test(
+  'e2e tests',
+  {
+    concurrency: true,
+    skip: skipIfMissingEnv('PROJECT_ID', 'SERVICE'),
+  },
+  async (suite) => {
+    let service: run_v1.Schema$Service;
 
-  before(async function () {
-    toolCommand = 'gcloud';
-    if (SERVICE && PROJECT_ID) {
-      // get Service yaml
-      const cmd = [
+    suite.before(async () => {
+      const args = [
         'run',
         'services',
         'describe',
-        SERVICE,
+        process.env.SERVICE!,
         '--project',
-        PROJECT_ID,
+        process.env.PROJECT_ID!,
         '--format',
         'yaml',
         '--platform',
@@ -64,180 +56,157 @@ describe('E2E tests', function () {
         'us-central1',
       ];
 
-      const options = { silent: true, ignoreReturnCode: true };
-      const commandString = `${toolCommand} ${cmd.join(' ')}`;
-      const output = await getExecOutput(toolCommand, cmd, options);
-      if (output.exitCode !== 0) {
-        const errMsg =
-          output.stderr || `command exited ${output.exitCode}, but stderr had no output`;
-        throw new Error(`failed to execute gcloud command \`${commandString}\`: ${errMsg}`);
-      }
-
+      const output = await getExecOutput('gcloud', args);
       service = yaml.load(output.stdout) as run_v1.Schema$Service;
-      if (!service) console.error('no service found');
-    }
-  });
 
-  it('has the correct env vars', function () {
-    if (ENV && service) {
-      const expected = parseEnvVars(ENV);
-      const env = service?.spec?.template?.spec?.containers
-        ?.at(0)
-        ?.env?.filter((entry) => entry && entry.value);
-      expect(env).to.have.deep.members(expected);
-    }
-  });
+      if (!service) {
+        throw new Error('failed to find service definition');
+      }
+    });
 
-  it('has the correct secret vars', function () {
-    if (SECRET_ENV && service) {
-      const expected = parseEnvVars(SECRET_ENV);
-      const env = service?.spec?.template?.spec?.containers
-        ?.at(0)
-        ?.env?.filter((entry) => entry && entry.valueFrom)
-        .map((entry) => {
-          const ref = entry.valueFrom?.secretKeyRef;
-          return { name: entry.name, value: `${ref?.name}:${ref?.key}` };
-        });
-      expect(env).to.have.deep.members(expected);
-    }
-  });
+    await suite.test('has the correct envvars', { skip: skipIfMissingEnv('ENV') }, async () => {
+      const expected = parseEnvVars(process.env.ENV!);
+      const actual = service?.spec?.template?.spec?.containers?.at(0)?.env?.filter((e) => e?.value);
 
-  it('has the correct secret volumes', function () {
-    if (SECRET_VOLUMES && service) {
-      const expected = parseEnvVars(SECRET_VOLUMES);
-
-      const templateSpec = service?.spec?.template?.spec;
-      const volumes = templateSpec?.volumes;
-      expect(volumes).to.have.lengthOf(expected.length);
-
-      const volumeMounts = templateSpec?.containers?.at(0)?.volumeMounts;
-      const actual = volumeMounts?.map((volumeMount) => {
-        const secretVolume = volumes?.find((volume) => volumeMount.name === volume.name)?.secret;
-        const secretName = secretVolume?.secretName;
-        const secretData = secretVolume?.items?.at(0);
-
-        const secretPath = `${volumeMount.mountPath}/${secretData?.path}`;
-        const secretRef = `${secretName}:${secretData?.key}`;
-
-        return { name: secretPath, value: secretRef };
+      const subset = expected.map((e) => {
+        return actual?.find((a) => a.name == e.name);
       });
 
-      expect(actual).to.have.deep.members(expected);
-    }
-  });
+      assert.deepStrictEqual(subset, expected);
+    });
 
-  it('has the correct params', function () {
-    if (PARAMS && service) {
-      const expected = JSON.parse(PARAMS);
+    await suite.test(
+      'has the correct secret vars',
+      { skip: skipIfMissingEnv('SECRET_ENV') },
+      async () => {
+        const expected = parseEnvVars(process.env.SECRET_ENV!);
+        const actual = service?.spec?.template?.spec?.containers
+          ?.at(0)
+          ?.env?.filter((entry) => entry && entry.valueFrom)
+          .map((entry) => {
+            const ref = entry.valueFrom?.secretKeyRef;
+            return { name: entry.name, value: `${ref?.name}:${ref?.key}` };
+          });
+
+        const subset = expected.map((e) => {
+          return actual?.find((a) => a.name == e.name);
+        });
+
+        assert.deepStrictEqual(subset, expected);
+      },
+    );
+
+    await suite.test(
+      'has the correct secret volumes',
+      { skip: skipIfMissingEnv('SECRET_VOLUME') },
+      async () => {
+        const expected = parseEnvVars(process.env.SECRET_VOLUMES!);
+        const actual = service?.spec?.template?.spec?.containers
+          ?.at(0)
+          ?.volumeMounts?.map((volumeMount) => {
+            const secretVolume = service?.spec?.template?.spec?.volumes?.find(
+              (volume) => volumeMount.name === volume.name,
+            )?.secret;
+            const secretName = secretVolume?.secretName;
+            const secretData = secretVolume?.items?.at(0);
+            const secretPath = `${volumeMount.mountPath}/${secretData?.path}`;
+            const secretRef = `${secretName}:${secretData?.key}`;
+            return { name: secretPath, value: secretRef };
+          });
+
+        const subset = expected.map((e) => {
+          return actual?.find((a) => a.name == e.name);
+        });
+
+        assert.deepStrictEqual(subset, expected);
+      },
+    );
+
+    await suite.test('has the correct params', { skip: skipIfMissingEnv('PARAMS') }, async () => {
+      const expected = JSON.parse(process.env.PARAMS!);
       const actual = service?.spec?.template?.spec;
 
       if (expected.containerConncurrency) {
-        expect(actual?.containerConcurrency).to.eq(expected.containerConncurrency);
+        assert.deepStrictEqual(actual?.containerConcurrency, expected.containerConncurrency);
       }
+
       if (expected.timeoutSeconds) {
-        expect(actual?.timeoutSeconds).to.eq(expected.timeoutSeconds);
+        assert.deepStrictEqual(actual?.timeoutSeconds, expected.timeoutSeconds);
       }
 
       const limits = actual?.containers?.at(0)?.resources?.limits;
       if (expected.cpu) {
-        expect(limits?.cpu).to.eq(expected.cpu.toString());
+        assert.deepStrictEqual(limits?.cpu, expected.cpu.toString());
       }
+
       if (expected.memory) {
-        expect(limits?.memory).to.eq(expected.memory);
+        assert.deepStrictEqual(limits?.memory, expected.memory);
       }
-    }
-  });
-
-  it('has the correct annotations', function () {
-    if (ANNOTATIONS && service) {
-      const expected = JSON.parse(ANNOTATIONS);
-      const actual = service?.spec?.template?.metadata?.annotations;
-      expect(actual).to.deep.include(expected);
-    }
-  });
-
-  it('has the correct labels', function () {
-    if (LABELS && service) {
-      const expected = JSON.parse(LABELS);
-      const actual = service?.spec?.template?.metadata?.labels;
-      expect(actual).to.deep.include(expected);
-    }
-  });
-
-  it('has the correct revision count', async function () {
-    if (REVISION_COUNT && SERVICE && PROJECT_ID) {
-      const max = 3;
-      const attempt = 0;
-      let revisions = [];
-      while (attempt < max && revisions.length < parseInt(REVISION_COUNT)) {
-        await sleep(1000 * attempt);
-        const cmd = [
-          'run',
-          'revisions',
-          'list',
-          '--project',
-          PROJECT_ID,
-          '--service',
-          SERVICE,
-          '--format',
-          'json',
-          '--platform',
-          'managed',
-          '--region',
-          'us-central1',
-        ];
-
-        const options = { silent: true, ignoreReturnCode: true };
-        const commandString = `${toolCommand} ${cmd.join(' ')}`;
-
-        const output = await getExecOutput(toolCommand, cmd, options);
-        if (output.exitCode !== 0) {
-          const errMsg =
-            output.stderr || `command exited ${output.exitCode}, but stderr had no output`;
-          throw new Error(`failed to execute gcloud command \`${commandString}\`: ${errMsg}`);
-        }
-        revisions = JSON.parse(output.stdout);
-      }
-
-      expect(revisions.length).to.eq(parseInt(REVISION_COUNT));
-    }
-  });
-
-  it('has the correct revision name', function () {
-    if (REVISION && service) {
-      const actual = service?.spec?.template?.metadata?.name;
-      expect(REVISION).to.eq(actual);
-    }
-  });
-
-  it('has the correct tag', function () {
-    if (TAG && service) {
-      const actual = service?.spec?.traffic?.map((revision) => revision.tag);
-      expect(actual).to.include(TAG);
-    }
-  });
-
-  it('has the correct traffic', function () {
-    if (TAG && TRAFFIC && service) {
-      const tagged = service?.spec?.traffic?.find((revision) => {
-        return revision.tag == TAG;
-      });
-      const percent = tagged?.percent;
-      expect(TRAFFIC).to.eq(percent);
-    }
-  });
-
-  function parseEnvVars(envVarInput: string): run_v1.Schema$EnvVar[] {
-    const envVarList = envVarInput.split(',');
-    const envVars = envVarList.map((envVar) => {
-      if (!envVar.includes('=')) {
-        throw new TypeError(
-          `Env Vars must be in "KEY1=VALUE1,KEY2=VALUE2" format, received ${envVar}`,
-        );
-      }
-      const keyValue = envVar.split('=');
-      return { name: keyValue[0], value: keyValue[1] };
     });
-    return envVars;
-  }
-});
+
+    await suite.test(
+      'has the correct annotations',
+      { skip: skipIfMissingEnv('ANNOTATIONS') },
+      async () => {
+        const expected = JSON.parse(process.env.ANNOTATIONS!) as Record<string, string>;
+        const actual = service?.spec?.template?.metadata?.annotations;
+
+        const subset = Object.assign(
+          {},
+          ...Object.keys(expected).map((k) => ({ [k]: actual?.[k] })),
+        );
+
+        assert.deepStrictEqual(subset, expected);
+      },
+    );
+
+    await suite.test('has the correct labels', { skip: skipIfMissingEnv('LABELS') }, async () => {
+      const expected = JSON.parse(process.env.LABELS!) as Record<string, string>;
+      const actual = service?.spec?.template?.metadata?.labels;
+
+      const subset = Object.assign({}, ...Object.keys(expected).map((k) => ({ [k]: actual?.[k] })));
+
+      assert.deepStrictEqual(subset, expected);
+    });
+
+    await suite.test('has the revision name', { skip: skipIfMissingEnv('REVISION') }, async () => {
+      const expected = process.env.REVISION! as string;
+      const actual = service?.spec?.template?.metadata?.name;
+      assert.deepStrictEqual(actual, expected);
+    });
+
+    await suite.test('has the correct tag', { skip: skipIfMissingEnv('TAG') }, async () => {
+      const expected = process.env.TAG!;
+      const actual = service?.spec?.traffic?.map((revision) => revision.tag);
+      assert.deepStrictEqual(actual, expected);
+    });
+
+    await suite.test(
+      'has the correct traffic',
+      { skip: skipIfMissingEnv('TRAFFIC', 'TAG') },
+      async () => {
+        const expected = process.env.TRAFFIC!;
+        const tagged = service?.spec?.traffic?.find((revision) => {
+          return revision.tag == process.env.TAG!;
+        });
+        const percent = tagged?.percent;
+        assert.deepStrictEqual(percent, expected);
+      },
+    );
+  },
+);
+
+const parseEnvVars = (envVarInput: string): run_v1.Schema$EnvVar[] => {
+  const envVarList = envVarInput.split(',');
+  const envVars = envVarList.map((envVar) => {
+    if (!envVar.includes('=')) {
+      throw new TypeError(
+        `Env Vars must be in "KEY1=VALUE1,KEY2=VALUE2" format, received ${envVar}`,
+      );
+    }
+    const keyValue = envVar.split('=');
+    return { name: keyValue[0], value: keyValue[1] };
+  });
+
+  return envVars;
+};

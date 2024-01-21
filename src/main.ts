@@ -54,6 +54,10 @@ import { parseDeployResponse, parseUpdateTrafficResponse } from './output-parser
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { version: appVersion } = require('../package.json');
 
+// isDebug returns true if runner debugging or step debugging is enabled.
+const isDebug =
+  parseBoolean(process.env.ACTIONS_RUNNER_DEBUG) || parseBoolean(process.env.ACTIONS_STEP_DEBUG);
+
 /**
  * DeployCloudRunOutputs are the common GitHub action outputs created by this action
  */
@@ -246,7 +250,7 @@ export async function run(): Promise<void> {
     }
 
     const toolCommand = getToolCommand();
-    const options = { silent: true, ignoreReturnCode: true };
+    const options = { silent: !isDebug, ignoreReturnCode: true };
     const commandString = `${toolCommand} ${cmd.join(' ')}`;
     logInfo(`Running: ${commandString}`);
 

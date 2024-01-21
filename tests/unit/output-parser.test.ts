@@ -14,26 +14,16 @@
  * limitations under the License.
  */
 
-import 'mocha';
-import { expect } from 'chai';
-import {
-  parseUpdateTrafficResponse,
-  parseDeployResponse,
-  ParseInputs,
-} from '../../src/output-parser';
-import { DeployCloudRunOutputs } from '../../src/main';
+import { test } from 'node:test';
+import assert from 'node:assert';
 
-describe('#output-parser', () => {
-  describe('#parseUpdateTrafficResponse', () => {
-    const cases: {
-      name: string;
-      stdout: string | undefined;
-      error?: string;
-      expected?: DeployCloudRunOutputs;
-    }[] = [
-      {
-        name: 'parses update traffic outputs',
-        stdout: `
+import { parseUpdateTrafficResponse, parseDeployResponse } from '../../src/output-parser';
+
+test('#parseUpdateTrafficResponse', { concurrency: true }, async (suite) => {
+  const cases = [
+    {
+      name: 'parses update traffic outputs',
+      stdout: `
             [
               {
                 "displayPercent": "100%",
@@ -52,11 +42,11 @@ describe('#output-parser', () => {
               }
             ]
           `,
-        expected: { url: 'https://test-basic-yaml-4goqgbaxqq-uc.a.run.app' },
-      },
-      {
-        name: 'parses update traffic with single tag',
-        stdout: `
+      expected: { url: 'https://test-basic-yaml-4goqgbaxqq-uc.a.run.app' },
+    },
+    {
+      name: 'parses update traffic with single tag',
+      stdout: `
             [
               {
                 "displayPercent": "0%",
@@ -99,11 +89,11 @@ describe('#output-parser', () => {
               }
             ]
           `,
-        expected: { url: 'https://my-tag-1---test-basic-yaml-4goqgbaxqq-uc.a.run.app' },
-      },
-      {
-        name: 'parses update traffic with multiple tags',
-        stdout: `
+      expected: { url: 'https://my-tag-1---test-basic-yaml-4goqgbaxqq-uc.a.run.app' },
+    },
+    {
+      name: 'parses update traffic with multiple tags',
+      stdout: `
           [
             {
               "displayPercent": "20%",
@@ -200,54 +190,52 @@ describe('#output-parser', () => {
             }
           ]
         `,
-        expected: { url: 'https://my-tag-1---test-basic-yaml-4goqgbaxqq-uc.a.run.app' },
-      },
-      {
-        name: 'handles empty stdout',
-        stdout: '',
-        expected: {},
-      },
-      {
-        name: 'handles empty array from stdout',
-        stdout: '[]',
-        expected: {},
-      },
-      {
-        name: 'handles empty object from stdout',
-        stdout: '{}',
-        expected: {},
-      },
-      {
-        name: 'handles invalid text from stdout',
-        stdout: 'Some text to fail',
-        error: `failed to parse update traffic response: unexpected token 'S', "Some text to fail" is not valid JSON, stdout: Some text to fail`,
-      },
-    ];
+      expected: { url: 'https://my-tag-1---test-basic-yaml-4goqgbaxqq-uc.a.run.app' },
+    },
+    {
+      name: 'handles empty stdout',
+      stdout: '',
+      expected: {},
+    },
+    {
+      name: 'handles empty array from stdout',
+      stdout: '[]',
+      expected: {},
+    },
+    {
+      name: 'handles empty object from stdout',
+      stdout: '{}',
+      expected: {},
+    },
+    {
+      name: 'handles invalid text from stdout',
+      stdout: 'Some text to fail',
+      error: `failed to parse update traffic response: unexpected token 'S', "Some text to fail" is not valid JSON, stdout: Some text to fail`,
+    },
+  ];
 
-    cases.forEach((tc) => {
-      it(tc.name, () => {
-        if (tc.error) {
-          expect(() => {
+  for await (const tc of cases) {
+    await suite.test(tc.name, async () => {
+      if (tc.error) {
+        assert.throws(
+          () => {
             parseUpdateTrafficResponse(tc.stdout);
-          }).to.throw(tc.error);
-        } else {
-          expect(parseUpdateTrafficResponse(tc.stdout)).to.eql(tc.expected);
-        }
-      });
+          },
+          { message: tc.error },
+        );
+      } else {
+        const actual = parseUpdateTrafficResponse(tc.stdout);
+        assert.deepStrictEqual(actual, tc.expected);
+      }
     });
-  });
+  }
+});
 
-  describe('#parseDeployResponse', () => {
-    const cases: {
-      name: string;
-      stdout?: string | undefined;
-      parseInputs?: ParseInputs | undefined;
-      error?: string;
-      expected?: DeployCloudRunOutputs;
-    }[] = [
-      {
-        name: 'parses deploy outputs',
-        stdout: `
+test('#parseDeployResponse', { concurrency: true }, async (suite) => {
+  const cases = [
+    {
+      name: 'parses deploy outputs',
+      stdout: `
             {
               "apiVersion": "serving.knative.dev/v1",
               "kind": "Service",
@@ -348,12 +336,12 @@ describe('#output-parser', () => {
               }
             }
           `,
-        expected: { url: 'https://action-test-cy7cdwrvha-uc.a.run.app' },
-      },
-      {
-        name: 'parses deploy outputs with tag input',
-        parseInputs: { tag: 'test' },
-        stdout: `
+      expected: { url: 'https://action-test-cy7cdwrvha-uc.a.run.app' },
+    },
+    {
+      name: 'parses deploy outputs with tag input',
+      parseInputs: { tag: 'test' },
+      stdout: `
             {
               "apiVersion": "serving.knative.dev/v1",
               "kind": "Service",
@@ -471,40 +459,43 @@ describe('#output-parser', () => {
               }
             }
           `,
-        expected: { url: 'https://test---hello-4goqgbaxqq-uc.a.run.app' },
-      },
-      {
-        name: 'handles empty stdout',
-        stdout: ``,
-        expected: {},
-      },
-      {
-        name: 'handles empty array from stdout',
-        stdout: `[]`,
-        expected: {},
-      },
-      {
-        name: 'handles empty object from stdout',
-        stdout: `{}`,
-        expected: {},
-      },
-      {
-        name: 'handles invalid text from stdout',
-        stdout: `Some text to fail`,
-        error: `failed to parse deploy response: unexpected token 'S', "Some text to fail" is not valid JSON, stdout: Some text to fail, inputs: undefined`,
-      },
-    ];
+      expected: { url: 'https://test---hello-4goqgbaxqq-uc.a.run.app' },
+    },
+    {
+      name: 'handles empty stdout',
+      stdout: ``,
+      expected: {},
+    },
+    {
+      name: 'handles empty array from stdout',
+      stdout: `[]`,
+      expected: {},
+    },
+    {
+      name: 'handles empty object from stdout',
+      stdout: `{}`,
+      expected: {},
+    },
+    {
+      name: 'handles invalid text from stdout',
+      stdout: `Some text to fail`,
+      error: `failed to parse deploy response: unexpected token 'S', "Some text to fail" is not valid JSON, stdout: Some text to fail, inputs: undefined`,
+    },
+  ];
 
-    cases.forEach((tc) => {
-      it(tc.name, () => {
-        if (tc.error) {
-          expect(() => {
+  for await (const tc of cases) {
+    await suite.test(tc.name, async () => {
+      if (tc.error) {
+        assert.throws(
+          () => {
             parseDeployResponse(tc.stdout, tc.parseInputs);
-          }).to.throw(tc.error);
-        } else {
-          expect(parseDeployResponse(tc.stdout, tc.parseInputs)).to.eql(tc.expected);
-        }
-      });
+          },
+          { message: tc.error },
+        );
+      } else {
+        const actual = parseDeployResponse(tc.stdout, tc.parseInputs);
+        assert.deepStrictEqual(actual, tc.expected);
+      }
     });
-  });
+  }
 });
