@@ -14,103 +14,168 @@
  * limitations under the License.
  */
 
-import 'mocha';
-import { expect } from 'chai';
-import * as sinon from 'sinon';
+import { mock, test } from 'node:test';
+import assert from 'node:assert';
 
 import * as core from '@actions/core';
 import * as exec from '@actions/exec';
 import * as setupGcloud from '@google-github-actions/setup-cloud-sdk';
 import { TestToolCache } from '@google-github-actions/setup-cloud-sdk';
-import { errorMessage } from '@google-github-actions/actions-utils';
 
 import { run, kvToString } from '../../src/main';
 
-// These are mock data for github actions inputs, where camel case is expected.
 const fakeInputs: { [key: string]: string } = {
   image: 'gcr.io/cloudrun/hello',
   service: 'test',
-  metadata: '',
-  project_id: 'my-test-project',
-  env_vars: '',
-  env_vars_file: '',
-  labels: '',
-  skip_default_labels: 'false',
-  source: '',
-  suffix: '',
-  tag: '',
-  timeout: '',
-  revision_traffic: '',
-  tag_traffic: '',
+  project_id: 'test',
 };
 
-function getInputMock(name: string): string {
-  return fakeInputs[name];
-}
+const defaultMocks = (
+  m: typeof mock,
+  overrideInputs?: Record<string, string>,
+): Record<string, any> => {
+  const inputs = Object.assign({}, fakeInputs, overrideInputs);
+  return {
+    setFailed: m.method(core, 'setFailed', (msg: string) => {
+      throw new Error(msg);
+    }),
+    getBooleanInput: m.method(core, 'getBooleanInput', (name: string) => {
+      return !!inputs[name];
+    }),
+    getMultilineInput: m.method(core, 'getMultilineInput', (name: string) => {
+      return inputs[name];
+    }),
+    getInput: m.method(core, 'getInput', (name: string) => {
+      return inputs[name];
+    }),
+    getExecOutput: m.method(exec, 'getExecOutput', () => {
+      return { exitCode: 0, stderr: '', stdout: '{}' };
+    }),
 
-describe('#run', function () {
-  beforeEach(async function () {
-    await TestToolCache.start();
+    authenticateGcloudSDK: m.method(setupGcloud, 'authenticateGcloudSDK', () => {}),
+    isAuthenticated: m.method(setupGcloud, 'isAuthenticated', () => {}),
+    isInstalled: m.method(setupGcloud, 'isInstalled', () => {
+      return true;
+    }),
+    installGcloudSDK: m.method(setupGcloud, 'installGcloudSDK', async () => {
+      return '1.2.3';
+    }),
+    installComponent: m.method(setupGcloud, 'installComponent', () => {}),
+    setProject: m.method(setupGcloud, 'setProject', () => {}),
+    getLatestGcloudSDKVersion: m.method(setupGcloud, 'getLatestGcloudSDKVersion', () => {
+      return '1.2.3';
+    }),
+  };
+};
 
-    this.stubs = {
-      getInput: sinon.stub(core, 'getInput').callsFake(getInputMock),
-      exportVariable: sinon.stub(core, 'exportVariable'),
-      setOutput: sinon.stub(core, 'setOutput'),
-      authenticateGcloudSDK: sinon.stub(setupGcloud, 'authenticateGcloudSDK'),
-      getLatestGcloudSDKVersion: sinon
-        .stub(setupGcloud, 'getLatestGcloudSDKVersion')
-        .resolves('1.2.3'),
-      isInstalled: sinon.stub(setupGcloud, 'isInstalled').returns(true),
-      installGcloudSDK: sinon.stub(setupGcloud, 'installGcloudSDK'),
-      installComponent: sinon.stub(setupGcloud, 'installComponent'),
-      getExecOutput: sinon
-        .stub(exec, 'getExecOutput')
-        .resolves({ exitCode: 0, stderr: '', stdout: '{}' }),
-    };
+test('#run', { concurrency: true }, async (suite) => {
+  const originalEnv = Object.assign({}, process.env);
 
-    sinon.stub(core, 'setFailed').throwsArg(0); // make setFailed throw exceptions
-    sinon.stub(core, 'addPath').callsFake(sinon.fake());
-    sinon.stub(core, 'debug').callsFake(sinon.fake());
-    sinon.stub(core, 'endGroup').callsFake(sinon.fake());
-    sinon.stub(core, 'info').callsFake(sinon.fake());
-    sinon.stub(core, 'startGroup').callsFake(sinon.fake());
-    sinon.stub(core, 'warning').callsFake(sinon.fake());
+  suite.before(() => {
+    suite.mock.method(core, 'debug', () => {});
+    suite.mock.method(core, 'info', () => {});
+    suite.mock.method(core, 'warning', () => {});
+    suite.mock.method(core, 'setOutput', () => {});
+    suite.mock.method(core, 'setSecret', () => {});
+    suite.mock.method(core, 'group', () => {});
+    suite.mock.method(core, 'startGroup', () => {});
+    suite.mock.method(core, 'endGroup', () => {});
+    suite.mock.method(core, 'addPath', () => {});
+    suite.mock.method(core, 'exportVariable', () => {});
   });
 
-  afterEach(async function () {
-    Object.keys(this.stubs).forEach((k) => this.stubs[k].restore());
-    sinon.restore();
-    delete process.env.GITHUB_SHA;
+  suite.beforeEach(async () => {
+    await TestToolCache.start();
+  });
 
+  suite.afterEach(async () => {
+    process.env = originalEnv;
     await TestToolCache.stop();
   });
 
-  it('sets the project ID if provided', async function () {
-    this.stubs.getInput.withArgs('project_id').returns('my-test-project');
+  await suite.test('sets the project ID', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      project_id: 'my-test-project',
+    });
     await run();
 
-    const call = this.stubs.getExecOutput.getCall(0);
-    expect(call).to.be;
-    const args = call.args[1];
-    expect(args).to.include.members(['--project', 'my-test-project']);
+    const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
+    expectSubArray(args, ['--project', 'my-test-project']);
   });
 
-  it('installs the gcloud SDK if it is not already installed', async function () {
-    this.stubs.isInstalled.returns(false);
+  await suite.test('installs the gcloud SDK if it is not already installed', async (t) => {
+    const mocks = defaultMocks(t.mock);
+    t.mock.method(setupGcloud, 'isInstalled', () => {
+      return false;
+    });
+
     await run();
-    expect(this.stubs.installGcloudSDK.callCount).to.eq(1);
+
+    assert.deepStrictEqual(mocks.installGcloudSDK.mock.callCount(), 1);
   });
 
-  it('uses the cached gcloud SDK if it was already installed', async function () {
-    this.stubs.isInstalled.returns(true);
+  await suite.test('uses the cached gcloud SDK if it was already installed', async (t) => {
+    const mocks = defaultMocks(t.mock);
+    t.mock.method(setupGcloud, 'isInstalled', () => {
+      return true;
+    });
+
     await run();
-    expect(this.stubs.installGcloudSDK.callCount).to.eq(0);
+
+    assert.deepStrictEqual(mocks.installGcloudSDK.mock.callCount(), 0);
   });
 
-  it('sets labels', async function () {
-    this.stubs.getInput.withArgs('labels').returns('foo=bar,zip=zap');
+  await suite.test('uses default components without gcloud_component flag', async (t) => {
+    const mocks = defaultMocks(t.mock);
+
+    await run();
+
+    assert.deepStrictEqual(mocks.installComponent.mock.callCount(), 0);
+  });
+
+  await suite.test('throws error with invalid gcloud component flag', async (t) => {
+    defaultMocks(t.mock, {
+      gcloud_component: 'wrong_value',
+    });
+
+    assert.rejects(
+      async () => {
+        await run();
+      },
+      { message: /invalid input received for gcloud_component: wrong_value/ },
+    );
+  });
+
+  await suite.test('installs alpha component with alpha flag', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      gcloud_component: 'alpha',
+    });
+
+    await run();
+
+    const args = mocks.installComponent.mock.calls?.at(0).arguments?.at(0);
+    assert.deepStrictEqual(args, 'alpha');
+  });
+
+  await suite.test('installs alpha component with beta flag', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      gcloud_component: 'beta',
+    });
+
+    await run();
+
+    const args = mocks.installComponent.mock.calls?.at(0).arguments?.at(0);
+    assert.deepStrictEqual(args, 'beta');
+  });
+
+  await suite.test('sets labels', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      labels: 'foo=bar,zip=zap',
+    });
 
     process.env.GITHUB_SHA = 'abcdef123456';
+
+    await run();
 
     const expectedLabels = {
       'managed-by': 'github-actions',
@@ -118,170 +183,184 @@ describe('#run', function () {
       'foo': 'bar',
       'zip': 'zap',
     };
-
-    await run();
-    const call = this.stubs.getExecOutput.getCall(0);
-    expect(call).to.be;
-    const args = call.args[1];
-    expect(args).to.include.members(['--update-labels', kvToString(expectedLabels)]);
+    const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
+    expectSubArray(args, ['--update-labels', kvToString(expectedLabels)]);
   });
 
-  it('skips default labels', async function () {
-    this.stubs.getInput.withArgs('skip_default_labels').returns('true');
-    this.stubs.getInput.withArgs('labels').returns('foo=bar,zip=zap');
+  await suite.test('skips default labels', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      skip_default_labels: 'true',
+      labels: 'foo=bar,zip=zap',
+    });
+
+    await run();
 
     const expectedLabels = {
       foo: 'bar',
       zip: 'zap',
     };
-
-    await run();
-    const call = this.stubs.getExecOutput.getCall(0);
-    expect(call).to.be;
-    const args = call.args[1];
-    expect(args).to.include.members(['--update-labels', kvToString(expectedLabels)]);
+    const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
+    expectSubArray(args, ['--update-labels', kvToString(expectedLabels)]);
   });
 
-  it('overwrites default labels', async function () {
-    this.stubs.getInput.withArgs('labels').returns('commit-sha=custom-value');
-
+  await suite.test('overwrites default labels', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      labels: 'commit-sha=custom-value',
+    });
     process.env.GITHUB_SHA = 'abcdef123456';
+
+    await run();
 
     const expectedLabels = {
       'managed-by': 'github-actions',
       'commit-sha': 'custom-value',
     };
+    const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
+    expectSubArray(args, ['--update-labels', kvToString(expectedLabels)]);
+  });
+
+  await suite.test('sets source if given', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      source: 'example-app',
+      image: '',
+    });
 
     await run();
-    const call = this.stubs.getExecOutput.getCall(0);
-    expect(call).to.be;
-    const args = call.args[1];
-    expect(args).to.include.members(['--update-labels', kvToString(expectedLabels)]);
+
+    const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
+    expectSubArray(args, ['--source', 'example-app']);
   });
 
-  it('sets source if given', async function () {
-    this.stubs.getInput.withArgs('source').returns('example-app');
-    this.stubs.getInput.withArgs('image').returns('');
+  await suite.test('sets metadata if given', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      metadata: 'yaml',
+      image: '',
+      service: '',
+    });
+
     await run();
-    const call = this.stubs.getExecOutput.getCall(0);
-    expect(call).to.be;
-    const args = call.args[1];
-    expect(args).to.include.members(['--source', 'example-app']);
+
+    const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
+    expectSubArray(args, ['services', 'replace', 'yaml']);
   });
 
-  it('sets metadata if given', async function () {
-    this.stubs.getInput.withArgs('metadata').returns('yaml');
-    this.stubs.getInput.withArgs('image').returns('');
-    this.stubs.getInput.withArgs('service').returns('');
+  await suite.test('sets timeout if given', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      timeout: '55m12s',
+    });
+
     await run();
-    const call = this.stubs.getExecOutput.getCall(0);
-    expect(call).to.be;
-    const args = call.args[1];
-    expect(args).to.include.members(['services', 'replace', 'yaml']);
+
+    const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
+    expectSubArray(args, ['--timeout', '55m12s']);
   });
 
-  it('sets timeout if given', async function () {
-    this.stubs.getInput.withArgs('timeout').returns('55m12s');
+  await suite.test('sets tag if given', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      tag: 'test',
+    });
+
     await run();
-    const call = this.stubs.getExecOutput.getCall(0);
-    expect(call).to.be;
-    const args = call.args[1];
-    expect(args).to.include.members(['--timeout', '55m12s']);
+
+    const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
+    expectSubArray(args, ['--tag', 'test']);
   });
 
-  it('sets tag if given', async function () {
-    this.stubs.getInput.withArgs('tag').returns('test');
+  await suite.test('sets tag traffic if given', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      tag: 'test',
+      service: 'service-name',
+    });
+
     await run();
-    const call = this.stubs.getExecOutput.getCall(0);
-    expect(call).to.be;
-    const args = call.args[1];
-    expect(args).to.include.members(['--tag', 'test']);
+
+    const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
+    expectSubArray(args, ['--tag', 'test']);
   });
 
-  it('sets tag traffic if given', async function () {
-    this.stubs.getInput.withArgs('tag').returns('test');
-    this.stubs.getInput.withArgs('service').returns('service-name');
-    await run();
-    const call = this.stubs.getExecOutput.getCall(0);
-    expect(call).to.be;
-    const args = call.args[1];
-    expect(args).to.include.members(['--tag', 'test']);
+  await suite.test('fails if tag traffic and revision traffic are provided', async (t) => {
+    defaultMocks(t.mock, {
+      revision_traffic: 'TEST=100',
+      tag_traffic: 'TEST=100',
+    });
+
+    assert.rejects(
+      async () => {
+        await run();
+      },
+      { message: /only one of `revision_traffic` or `tag_traffic` inputs can be set/ },
+    );
   });
 
-  it('fails if tag traffic and revision traffic are provided', async function () {
-    this.stubs.getInput.withArgs('revision_traffic').returns('TEST=100');
-    this.stubs.getInput.withArgs('tag_traffic').returns('TEST=100');
-    expectError(run, 'only one of `revision_traffic` or `tag_traffic` inputs can be set');
+  await suite.test('fails if name is not provided with tag traffic', async (t) => {
+    defaultMocks(t.mock, {
+      service: '',
+      tag_traffic: 'TEST=100',
+    });
+
+    assert.rejects(
+      async () => {
+        await run();
+      },
+      { message: /no service name set/ },
+    );
   });
 
-  it('fails if name is not provided with tag traffic', async function () {
-    this.stubs.getInput.withArgs('tag_traffic').returns('TEST=100');
-    this.stubs.getInput.withArgs('service').returns('');
-    expectError(run, 'no service name set');
-  });
+  await suite.test('fails if name is not provided with revision traffic', async (t) => {
+    defaultMocks(t.mock, {
+      service: '',
+      revision_traffic: 'TEST=100',
+    });
 
-  it('fails if name is not provided with revision traffic', async function () {
-    this.stubs.getInput.withArgs('revision_traffic').returns('TEST=100');
-    this.stubs.getInput.withArgs('service').returns('');
-    expectError(run, 'no service name set');
-  });
-
-  it('uses default components without gcloud_component flag', async function () {
-    await run();
-    expect(this.stubs.installComponent.callCount).to.eq(0);
-  });
-
-  it('throws error with invalid gcloud component flag', async function () {
-    this.stubs.getInput.withArgs('gcloud_component').returns('wrong_value');
-    await expectError(run, 'invalid input received for gcloud_component: wrong_value');
-  });
-
-  it('installs alpha component with alpha flag', async function () {
-    this.stubs.getInput.withArgs('gcloud_component').returns('alpha');
-    await run();
-    expect(this.stubs.installComponent.withArgs('alpha').callCount).to.eq(1);
-  });
-
-  it('installs beta component with beta flag', async function () {
-    this.stubs.getInput.withArgs('gcloud_component').returns('beta');
-    await run();
-    expect(this.stubs.installComponent.withArgs('beta').callCount).to.eq(1);
+    assert.rejects(
+      async () => {
+        await run();
+      },
+      { message: /no service name set/ },
+    );
   });
 });
 
-describe('#kvToString', () => {
+test('#kvToString', { concurrency: true }, async (suite) => {
   const cases = [
     {
       name: `empty`,
       input: {},
-      exp: ``,
+      expected: ``,
     },
     {
       name: `single item`,
       input: { FOO: 'bar' },
-      exp: `FOO=bar`,
+      expected: `FOO=bar`,
     },
     {
       name: `multiple items`,
       input: { FOO: 'bar', ZIP: 'zap' },
-      exp: `FOO=bar,ZIP=zap`,
+      expected: `FOO=bar,ZIP=zap`,
     },
   ];
 
-  cases.forEach((tc) => {
-    it(tc.name, () => {
+  for await (const tc of cases) {
+    await suite.test(tc.name, async () => {
       const result = kvToString(tc.input as Record<string, string>);
-      expect(result).to.eql(tc.exp);
+      assert.deepStrictEqual(result, tc.expected);
     });
-  });
+  }
 });
 
-async function expectError(fn: () => Promise<void>, want: string) {
-  try {
-    await fn();
-    throw new Error(`expected error`);
-  } catch (err) {
-    const msg = errorMessage(err);
-    expect(msg).to.include(want);
+const expectSubArray = (m: string[], exp: string[]) => {
+  const found = exp.every(
+    (
+      (i) => (v) =>
+        (i = m.indexOf(v, i) + 1)
+    )(0),
+  );
+  if (!found) {
+    throw new assert.AssertionError({
+      message: 'mismatch',
+      actual: m,
+      expected: exp,
+      operator: 'subArray',
+    });
   }
-}
+};
