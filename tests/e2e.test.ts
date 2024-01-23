@@ -21,15 +21,7 @@ import { getExecOutput } from '@actions/exec';
 import { run_v1 } from 'googleapis';
 import yaml from 'js-yaml';
 
-const skipIfMissingEnv = (...envs: string[]): string | boolean => {
-  for (const env of envs) {
-    if (!(env in process.env)) {
-      return `missing $${env}`;
-    }
-  }
-
-  return false;
-};
+import { skipIfMissingEnv } from '@google-github-actions/actions-utils';
 
 test(
   'e2e tests',

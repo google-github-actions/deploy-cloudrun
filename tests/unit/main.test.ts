@@ -22,6 +22,8 @@ import * as exec from '@actions/exec';
 import * as setupGcloud from '@google-github-actions/setup-cloud-sdk';
 import { TestToolCache } from '@google-github-actions/setup-cloud-sdk';
 
+import { assertMembers } from '@google-github-actions/actions-utils';
+
 import { run, kvToString } from '../../src/main';
 
 const fakeInputs: { [key: string]: string } = {
@@ -100,7 +102,7 @@ test('#run', { concurrency: true }, async (suite) => {
     await run();
 
     const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
-    expectSubArray(args, ['--project', 'my-test-project']);
+    assertMembers(args, ['--project', 'my-test-project']);
   });
 
   await suite.test('installs the gcloud SDK if it is not already installed', async (t) => {
@@ -138,7 +140,7 @@ test('#run', { concurrency: true }, async (suite) => {
       gcloud_component: 'wrong_value',
     });
 
-    assert.rejects(
+    await assert.rejects(
       async () => {
         await run();
       },
@@ -184,7 +186,7 @@ test('#run', { concurrency: true }, async (suite) => {
       'zip': 'zap',
     };
     const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
-    expectSubArray(args, ['--update-labels', kvToString(expectedLabels)]);
+    assertMembers(args, ['--update-labels', kvToString(expectedLabels)]);
   });
 
   await suite.test('skips default labels', async (t) => {
@@ -200,7 +202,7 @@ test('#run', { concurrency: true }, async (suite) => {
       zip: 'zap',
     };
     const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
-    expectSubArray(args, ['--update-labels', kvToString(expectedLabels)]);
+    assertMembers(args, ['--update-labels', kvToString(expectedLabels)]);
   });
 
   await suite.test('overwrites default labels', async (t) => {
@@ -216,7 +218,7 @@ test('#run', { concurrency: true }, async (suite) => {
       'commit-sha': 'custom-value',
     };
     const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
-    expectSubArray(args, ['--update-labels', kvToString(expectedLabels)]);
+    assertMembers(args, ['--update-labels', kvToString(expectedLabels)]);
   });
 
   await suite.test('sets source if given', async (t) => {
@@ -228,7 +230,7 @@ test('#run', { concurrency: true }, async (suite) => {
     await run();
 
     const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
-    expectSubArray(args, ['--source', 'example-app']);
+    assertMembers(args, ['--source', 'example-app']);
   });
 
   await suite.test('sets metadata if given', async (t) => {
@@ -241,7 +243,7 @@ test('#run', { concurrency: true }, async (suite) => {
     await run();
 
     const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
-    expectSubArray(args, ['services', 'replace', 'yaml']);
+    assertMembers(args, ['services', 'replace', 'yaml']);
   });
 
   await suite.test('sets timeout if given', async (t) => {
@@ -252,7 +254,7 @@ test('#run', { concurrency: true }, async (suite) => {
     await run();
 
     const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
-    expectSubArray(args, ['--timeout', '55m12s']);
+    assertMembers(args, ['--timeout', '55m12s']);
   });
 
   await suite.test('sets tag if given', async (t) => {
@@ -263,7 +265,7 @@ test('#run', { concurrency: true }, async (suite) => {
     await run();
 
     const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
-    expectSubArray(args, ['--tag', 'test']);
+    assertMembers(args, ['--tag', 'test']);
   });
 
   await suite.test('sets tag traffic if given', async (t) => {
@@ -275,7 +277,7 @@ test('#run', { concurrency: true }, async (suite) => {
     await run();
 
     const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
-    expectSubArray(args, ['--tag', 'test']);
+    assertMembers(args, ['--tag', 'test']);
   });
 
   await suite.test('fails if tag traffic and revision traffic are provided', async (t) => {
@@ -284,7 +286,7 @@ test('#run', { concurrency: true }, async (suite) => {
       tag_traffic: 'TEST=100',
     });
 
-    assert.rejects(
+    await assert.rejects(
       async () => {
         await run();
       },
@@ -298,7 +300,7 @@ test('#run', { concurrency: true }, async (suite) => {
       tag_traffic: 'TEST=100',
     });
 
-    assert.rejects(
+    await assert.rejects(
       async () => {
         await run();
       },
@@ -312,7 +314,7 @@ test('#run', { concurrency: true }, async (suite) => {
       revision_traffic: 'TEST=100',
     });
 
-    assert.rejects(
+    await assert.rejects(
       async () => {
         await run();
       },
@@ -347,20 +349,3 @@ test('#kvToString', { concurrency: true }, async (suite) => {
     });
   }
 });
-
-const expectSubArray = (m: string[], exp: string[]) => {
-  const found = exp.every(
-    (
-      (i) => (v) =>
-        (i = m.indexOf(v, i) + 1)
-    )(0),
-  );
-  if (!found) {
-    throw new assert.AssertionError({
-      message: 'mismatch',
-      actual: m,
-      expected: exp,
-      operator: 'subArray',
-    });
-  }
-};
