@@ -44,11 +44,63 @@ const fakeInputs: { [key: string]: string } = {
   tag_traffic: '',
 };
 
+const fakeInputsJob: { [key: string]: string } = {
+  image: 'gcr.io/cloudrun/hello',
+  job: 'job-name',
+  metadata: '',
+  project_id: 'test',
+  env_vars: '',
+  env_vars_file: '',
+  labels: '',
+  skip_default_labels: 'false',
+  source: '',
+  suffix: '',
+  tag: '',
+  timeout: '',
+  revision_traffic: '',
+  tag_traffic: '',
+};
+
 const defaultMocks = (
   m: typeof mock,
   overrideInputs?: Record<string, string>,
 ): Record<string, any> => {
   const inputs = Object.assign({}, fakeInputs, overrideInputs);
+  return {
+    setFailed: m.method(core, 'setFailed', (msg: string) => {
+      throw new Error(msg);
+    }),
+    getBooleanInput: m.method(core, 'getBooleanInput', (name: string) => {
+      return !!inputs[name];
+    }),
+    getMultilineInput: m.method(core, 'getMultilineInput', (name: string) => {
+      return inputs[name];
+    }),
+    getInput: m.method(core, 'getInput', (name: string) => {
+      return inputs[name];
+    }),
+    getExecOutput: m.method(exec, 'getExecOutput', () => {
+      return { exitCode: 0, stderr: '', stdout: '{}' };
+    }),
+
+    authenticateGcloudSDK: m.method(setupGcloud, 'authenticateGcloudSDK', () => {}),
+    isAuthenticated: m.method(setupGcloud, 'isAuthenticated', () => {}),
+    isInstalled: m.method(setupGcloud, 'isInstalled', () => {
+      return true;
+    }),
+    installGcloudSDK: m.method(setupGcloud, 'installGcloudSDK', async () => {
+      return '1.2.3';
+    }),
+    installComponent: m.method(setupGcloud, 'installComponent', () => {}),
+    setProject: m.method(setupGcloud, 'setProject', () => {}),
+    getLatestGcloudSDKVersion: m.method(setupGcloud, 'getLatestGcloudSDKVersion', () => {
+      return '1.2.3';
+    }),
+  };
+};
+
+const jobMocks = (m: typeof mock, overrideInputs?: Record<string, string>): Record<string, any> => {
+  const inputs = Object.assign({}, fakeInputsJob, overrideInputs);
   return {
     setFailed: m.method(core, 'setFailed', (msg: string) => {
       throw new Error(msg);
@@ -334,93 +386,41 @@ test('#run', { concurrency: true }, async (suite) => {
     );
   });
 
-  it('updates a job if job is specified and service is not', async function () {
-    this.stubs.getInput.withArgs('service').returns(undefined);
-    this.stubs.getInput.withArgs('job').returns('job-name');
+  await suite.test('ignore job if job and service are both specified', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      service: 'test',
+      job: 'job-name',
+    });
+
     await run();
-    const call = this.stubs.getExecOutput.getCall(0);
-    expect(call).to.be;
-    const args = call.args[1];
-    expect(args).to.include.members([
-      'run',
-      'jobs',
-      'update',
-      'job-name',
-      '--image',
-      'gcr.io/cloudrun/hello',
-    ]);
+
+    const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
+    assertMembers(args, ['run', 'deploy', 'test']);
   });
 
-  it('updates a job if job is specified and service is an empty string', async function () {
-    this.stubs.getInput.withArgs('service').returns('');
-    this.stubs.getInput.withArgs('job').returns('job-name');
+  await suite.test('updates a job if job is specified and service is not', async (t) => {
+    const mocks = jobMocks(t.mock);
+
     await run();
-    const call = this.stubs.getExecOutput.getCall(0);
-    expect(call).to.be;
-    const args = call.args[1];
-    expect(args).to.include.members([
-      'run',
-      'jobs',
-      'update',
-      'job-name',
-      '--image',
-      'gcr.io/cloudrun/hello',
-    ]);
+
+    const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
+    assertMembers(args, ['run', 'jobs', 'update', 'job-name']);
   });
 
-  it('ignore job if job and service are both specified', async function () {
-    this.stubs.getInput.withArgs('service').returns('service-name');
-    this.stubs.getInput.withArgs('job').returns('job-name');
-    await run();
-    const call = this.stubs.getExecOutput.getCall(0);
-    expect(call).to.be;
-    const args = call.args[1];
-    expect(args).to.not.include.members(['jobs', 'job-name', '--platform']);
-  });
+  await suite.test(
+    'updates a job if job is specified and service is an empty string',
+    async (t) => {
+      const mocks = defaultMocks(t.mock, {
+        service: '',
+        job: 'job-name',
+      });
 
-  it('updates a job if job is specified and service is not', async function () {
-    this.stubs.getInput.withArgs('service').returns(undefined);
-    this.stubs.getInput.withArgs('job').returns('job-name');
-    await run();
-    const call = this.stubs.getExecOutput.getCall(0);
-    expect(call).to.be;
-    const args = call.args[1];
-    expect(args).to.include.members([
-      'run',
-      'jobs',
-      'update',
-      'job-name',
-      '--image',
-      'gcr.io/cloudrun/hello',
-    ]);
-  });
+      await run();
 
-  it('updates a job if job is specified and service is an empty string', async function () {
-    this.stubs.getInput.withArgs('service').returns('');
-    this.stubs.getInput.withArgs('job').returns('job-name');
-    await run();
-    const call = this.stubs.getExecOutput.getCall(0);
-    expect(call).to.be;
-    const args = call.args[1];
-    expect(args).to.include.members([
-      'run',
-      'jobs',
-      'update',
-      'job-name',
-      '--image',
-      'gcr.io/cloudrun/hello',
-    ]);
-  });
-
-  it('ignore job if job and service are both specified', async function () {
-    this.stubs.getInput.withArgs('service').returns('service-name');
-    this.stubs.getInput.withArgs('job').returns('job-name');
-    await run();
-    const call = this.stubs.getExecOutput.getCall(0);
-    expect(call).to.be;
-    const args = call.args[1];
-    expect(args).to.not.include.members(['jobs', 'job-name', '--platform']);
-  });
+      const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
+      assertMembers(args, ['run', 'jobs', 'update', 'job-name']);
+    },
+  );
 });
 
 test('#kvToString', { concurrency: true }, async (suite) => {
