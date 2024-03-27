@@ -377,6 +377,50 @@ test('#run', { concurrency: true }, async (suite) => {
     const args = call.args[1];
     expect(args).to.not.include.members(['jobs', 'job-name', '--platform']);
   });
+
+  it('updates a job if job is specified and service is not', async function () {
+    this.stubs.getInput.withArgs('service').returns(undefined);
+    this.stubs.getInput.withArgs('job').returns('job-name');
+    await run();
+    const call = this.stubs.getExecOutput.getCall(0);
+    expect(call).to.be;
+    const args = call.args[1];
+    expect(args).to.include.members([
+      'run',
+      'jobs',
+      'update',
+      'job-name',
+      '--image',
+      'gcr.io/cloudrun/hello',
+    ]);
+  });
+
+  it('updates a job if job is specified and service is an empty string', async function () {
+    this.stubs.getInput.withArgs('service').returns('');
+    this.stubs.getInput.withArgs('job').returns('job-name');
+    await run();
+    const call = this.stubs.getExecOutput.getCall(0);
+    expect(call).to.be;
+    const args = call.args[1];
+    expect(args).to.include.members([
+      'run',
+      'jobs',
+      'update',
+      'job-name',
+      '--image',
+      'gcr.io/cloudrun/hello',
+    ]);
+  });
+
+  it('ignore job if job and service are both specified', async function () {
+    this.stubs.getInput.withArgs('service').returns('service-name');
+    this.stubs.getInput.withArgs('job').returns('job-name');
+    await run();
+    const call = this.stubs.getExecOutput.getCall(0);
+    expect(call).to.be;
+    const args = call.args[1];
+    expect(args).to.not.include.members(['jobs', 'job-name', '--platform']);
+  });
 });
 
 test('#kvToString', { concurrency: true }, async (suite) => {
