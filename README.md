@@ -246,7 +246,7 @@ allocation](https://cloud.google.com/run/docs/configuring/cpu), [max
 instances](https://cloud.google.com/run/docs/configuring/max-instances), and
 [more](https://cloud.google.com/sdk/gcloud/reference/run/deploy#OPTIONAL-FLAGS).
 
-**⚠️ When using a custom metadata YAML file, all other inputs are ignored!**
+**⚠️ When using a custom metadata YAML file, all other inputs except for `project_id` are ignored!**
 
 -   `metadata`: (Optional) The path to a Cloud Run service metadata file.
 

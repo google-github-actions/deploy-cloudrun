@@ -139,6 +139,7 @@ export async function run(): Promise<void> {
 
       // Update traffic
       cmd = ['run', 'services', 'update-traffic', service];
+      if (region) cmd.push('--region', region);
       if (revTraffic) cmd.push('--to-revisions', revTraffic);
       if (tagTraffic) cmd.push('--to-tags', tagTraffic);
 
@@ -166,6 +167,7 @@ export async function run(): Promise<void> {
         image: image !== '',
         service: service !== '',
         source: source !== '',
+        region: region !== '',
         env_vars: envVars !== '',
         no_traffic: noTraffic,
         secrets: Object.keys(secrets).length > 0,
@@ -183,6 +185,8 @@ export async function run(): Promise<void> {
       }
     } else {
       cmd = ['run', 'deploy', service, '--quiet'];
+
+      if (region) cmd.push('--region', region);
 
       if (image) {
         // Deploy service with image specified
@@ -218,7 +222,6 @@ export async function run(): Promise<void> {
     // Push common flags
     cmd.push('--platform', 'managed');
     cmd.push('--format', 'json');
-    if (region) cmd.push('--region', region);
     if (projectId) cmd.push('--project', projectId);
 
     // Add optional flags
