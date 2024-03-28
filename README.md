@@ -215,6 +215,13 @@ jobs:
       revision_traffic: 'my-revision=10' # percentage
     ```
 
+    To update traffic to the latest revision, use the special tag "LATEST":
+
+    ```yaml
+    with:
+      revision_traffic: 'LATEST=100'
+    ```
+
 -   `tag_traffic`: (Optional, mutually-exclusive with `revision_traffic`)
     Comma-separated list of tag traffic assignments.
 
