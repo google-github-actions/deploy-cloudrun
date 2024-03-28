@@ -24,7 +24,7 @@ import { TestToolCache } from '@google-github-actions/setup-cloud-sdk';
 
 import { assertMembers } from '@google-github-actions/actions-utils';
 
-import { run, kvToString } from '../../src/main';
+import { run } from '../../src/main';
 
 const fakeInputs: { [key: string]: string } = {
   image: 'gcr.io/cloudrun/hello',
@@ -186,7 +186,8 @@ test('#run', { concurrency: true }, async (suite) => {
       'zip': 'zap',
     };
     const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
-    assertMembers(args, ['--update-labels', kvToString(expectedLabels)]);
+    const labels = splitKV(args.at(args.indexOf('--update-labels') + 1));
+    assert.deepStrictEqual(labels, expectedLabels);
   });
 
   await suite.test('skips default labels', async (t) => {
@@ -202,7 +203,8 @@ test('#run', { concurrency: true }, async (suite) => {
       zip: 'zap',
     };
     const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
-    assertMembers(args, ['--update-labels', kvToString(expectedLabels)]);
+    const labels = splitKV(args.at(args.indexOf('--update-labels') + 1));
+    assert.deepStrictEqual(labels, expectedLabels);
   });
 
   await suite.test('overwrites default labels', async (t) => {
@@ -218,7 +220,8 @@ test('#run', { concurrency: true }, async (suite) => {
       'commit-sha': 'custom-value',
     };
     const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
-    assertMembers(args, ['--update-labels', kvToString(expectedLabels)]);
+    const labels = splitKV(args.at(args.indexOf('--update-labels') + 1));
+    assert.deepStrictEqual(labels, expectedLabels);
   });
 
   await suite.test('sets source if given', async (t) => {
@@ -323,29 +326,12 @@ test('#run', { concurrency: true }, async (suite) => {
   });
 });
 
-test('#kvToString', { concurrency: true }, async (suite) => {
-  const cases = [
-    {
-      name: `empty`,
-      input: {},
-      expected: ``,
-    },
-    {
-      name: `single item`,
-      input: { FOO: 'bar' },
-      expected: `FOO=bar`,
-    },
-    {
-      name: `multiple items`,
-      input: { FOO: 'bar', ZIP: 'zap' },
-      expected: `FOO=bar,ZIP=zap`,
-    },
-  ];
-
-  for await (const tc of cases) {
-    await suite.test(tc.name, async () => {
-      const result = kvToString(tc.input as Record<string, string>);
-      assert.deepStrictEqual(result, tc.expected);
-    });
+const splitKV = (s: string): Record<string, string> => {
+  const delim = s.match(/\^(.+)\^/i);
+  if (!delim || delim.length === 0) {
+    throw new Error(`Invalid delimiter: ${s}`);
   }
-});
+
+  const parts = s.slice(delim[0].length).split(delim[1]);
+  return Object.fromEntries(parts.map((p) => p.split('=')));
+};

@@ -97,6 +97,16 @@ jobs:
         ZIP=zap
     ```
 
+    Entries are separated by commas (`,`) and newline characters. Keys and
+    values are separated by `=`. To use `,`, `=`, or newline characters, escape
+    them with a backslash:
+
+    ```yaml
+    with:
+      env_vars: |
+        EMAILS=foo@bar.com\,zip@zap.com
+    ```
+
 -   `env_vars_file`: (Optional) Path to a file on disk, relative to the
     workspace, that defines environment variables. The file can be
     newline-separated KEY=VALUE pairs, JSON, or YAML format. If both `env_vars`
@@ -124,6 +134,9 @@ jobs:
     ZIP: 'zap'
     ```
 
+    When specified as KEY=VALUE pairs, the same escaping rules apply as
+    described in `env_vars`. You do not have to escape YAML or JSON.
+
 -   `secrets`: (Optional) List of key=value pairs to use as secrets. These can
     either be injected as environment variables or mounted as volumes. All
     existing environment secrets and volume mounts will be retained.
@@ -138,6 +151,9 @@ jobs:
         /secrets/api/key=secret-key-2:latest
     ```
 
+    The same rules apply for escaping entries as from `env_vars`, but Cloud Run
+    is more restrictive with allowed keys and names for secrets.
+
 -   `labels`: (Optional) List of key=value pairs to set as labels on the Cloud
     Run service. Existing labels will be overwritten.
 
@@ -147,7 +163,8 @@ jobs:
         my-label=my-value
     ```
 
-    Labels have strict naming and casing requirements. See [Requirements for
+    The same rules apply for escaping entries as from `env_vars`, but labels
+    have strict naming and casing requirements. See [Requirements for
     labels](https://cloud.google.com/resource-manager/docs/creating-managing-labels#requirements)
     for more information.
 
