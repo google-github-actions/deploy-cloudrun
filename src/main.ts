@@ -94,6 +94,7 @@ export async function run(): Promise<void> {
     // Get action inputs
     const image = getInput('image'); // Image ie gcr.io/...
     const service = getInput('service'); // Service name
+    const container = getInput('container'); // Container name
     const metadata = getInput('metadata'); // YAML file
     const projectId = getInput('project_id');
     const gcloudVersion = await computeGcloudVersion(getInput('gcloud_version'));
@@ -183,6 +184,11 @@ export async function run(): Promise<void> {
       }
     } else {
       cmd = ['run', 'deploy', service, '--quiet'];
+
+      if (container) {
+        // Set container name for the following flags
+        cmd.push('--container', container);
+      }
 
       if (image) {
         // Deploy service with image specified

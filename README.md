@@ -82,6 +82,9 @@ jobs:
     Learn more about [Deploying from source
     code](https://cloud.google.com/run/docs/deploying-source-code).
 
+-   `container`: (Optional) String name of the container to update. Used if you have
+    multiple containers deployed in a single Cloud Run service.
+
 -   `suffix`: (Optional) String suffix to append to the revision name. The
     default value is no suffix.
 
