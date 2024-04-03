@@ -112,7 +112,8 @@ export async function run(): Promise<void> {
     const tagTraffic = getInput('tag_traffic');
     const labels = parseKVString(getInput('labels'));
     const skipDefaultLabels = parseBoolean(getInput('skip_default_labels'));
-    const flags = getInput('flags');
+    const containerFlags = getInput('containerFlags'); // Flags specific to the container
+    const flags = getInput('flags'); // Flags that apply to the Cloud Run service in general
 
     let responseType = ResponseTypes.DEPLOY; // Default response type for output parsing
     let cmd;
@@ -185,6 +186,32 @@ export async function run(): Promise<void> {
     } else {
       cmd = ['run', 'deploy', service, '--quiet'];
 
+      if (tag) {
+        cmd.push('--tag', tag);
+      }
+      if (suffix) cmd.push('--revision-suffix', suffix);
+      if (noTraffic) cmd.push('--no-traffic');
+      if (timeout) cmd.push('--timeout', timeout);
+
+      // Push common flags
+      cmd.push('--platform', 'managed');
+      cmd.push('--format', 'json');
+      if (region) cmd.push('--region', region);
+      if (projectId) cmd.push('--project', projectId);
+
+      // Compile the labels
+      const defLabels = skipDefaultLabels ? {} : defaultLabels();
+      const compiledLabels = Object.assign({}, defLabels, labels);
+      if (compiledLabels && Object.keys(compiledLabels).length > 0) {
+        cmd.push('--update-labels', joinKVStringForGCloud(compiledLabels));
+      }
+
+      // Add optional flags
+      if (flags) {
+        const flagList = parseFlags(flags);
+        if (flagList) cmd = cmd.concat(flagList);
+      }
+
       if (container) {
         // Set container name for the following flags
         cmd.push('--container', container);
@@ -206,31 +233,12 @@ export async function run(): Promise<void> {
       if (secrets && Object.keys(secrets).length > 0) {
         cmd.push('--update-secrets', joinKVStringForGCloud(secrets));
       }
-      if (tag) {
-        cmd.push('--tag', tag);
+
+      // Add optional container specific flags
+      if (containerFlags) {
+        const containerFlagList = parseFlags(containerFlags);
+        if (containerFlagList) cmd = cmd.concat(containerFlagList);
       }
-      if (suffix) cmd.push('--revision-suffix', suffix);
-      if (noTraffic) cmd.push('--no-traffic');
-      if (timeout) cmd.push('--timeout', timeout);
-
-      // Compile the labels
-      const defLabels = skipDefaultLabels ? {} : defaultLabels();
-      const compiledLabels = Object.assign({}, defLabels, labels);
-      if (compiledLabels && Object.keys(compiledLabels).length > 0) {
-        cmd.push('--update-labels', joinKVStringForGCloud(compiledLabels));
-      }
-    }
-
-    // Push common flags
-    cmd.push('--platform', 'managed');
-    cmd.push('--format', 'json');
-    if (region) cmd.push('--region', region);
-    if (projectId) cmd.push('--project', projectId);
-
-    // Add optional flags
-    if (flags) {
-      const flagList = parseFlags(flags);
-      if (flagList) cmd = cmd.concat(flagList);
     }
 
     // Install gcloud if not already installed.

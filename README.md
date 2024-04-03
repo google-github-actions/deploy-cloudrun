@@ -189,8 +189,13 @@ jobs:
 -   `timeout`: (Optional) Maximum request execution time, specified as a
     duration like "10m5s" for ten minutes and 5 seconds.
 
--   `flags`: (Optional) Space separate list of other Cloud Run flags. This can
-    be used to access features that are not exposed via this GitHub Action.
+-   `flags`: (Optional) Space separate list of other, non container specific,
+    Cloud Run flags. This can be used to access features that are not exposed 
+    via this GitHub Action.
+
+-   `containerFlags`: (Optional) Space separate list of other Cloud Run flags 
+    that are specific to the container. This can be used to access container 
+    features that are not exposed via this GitHub Action.
 
     ```yaml
     with:
