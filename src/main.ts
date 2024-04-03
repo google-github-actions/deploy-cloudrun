@@ -134,13 +134,24 @@ export async function run(): Promise<void> {
       throw new Error(`invalid input received for gcloud_component: ${gcloudComponent}`);
     }
 
+    // Push common flags
+    cmd = ['--platform', 'managed', '--format', 'json'];
+    if (region) cmd.push('--region', region);
+    if (projectId) cmd.push('--project', projectId);
+
+    // Add optional flags
+    if (flags) {
+      const flagList = parseFlags(flags);
+      if (flagList) cmd = cmd.concat(flagList);
+    }
+
     // Find base command
     if (revTraffic || tagTraffic) {
       // Set response type for output parsing
       responseType = ResponseTypes.UPDATE_TRAFFIC;
 
       // Update traffic
-      cmd = ['run', 'services', 'update-traffic', service];
+      cmd.unshift('run', 'services', 'update-traffic', service);
       if (revTraffic) cmd.push('--to-revisions', revTraffic);
       if (tagTraffic) cmd.push('--to-tags', tagTraffic);
 
@@ -162,7 +173,7 @@ export async function run(): Promise<void> {
         }
       }
     } else if (metadata) {
-      cmd = ['run', 'services', 'replace', metadata];
+      cmd.unshift('run', 'services', 'replace', metadata);
 
       const providedButIgnored: Record<string, boolean> = {
         image: image !== '',
@@ -184,7 +195,7 @@ export async function run(): Promise<void> {
         }
       }
     } else {
-      cmd = ['run', 'deploy', service, '--quiet'];
+      cmd.unshift('run', 'deploy', service, '--quiet');
 
       if (tag) {
         cmd.push('--tag', tag);
@@ -193,23 +204,11 @@ export async function run(): Promise<void> {
       if (noTraffic) cmd.push('--no-traffic');
       if (timeout) cmd.push('--timeout', timeout);
 
-      // Push common flags
-      cmd.push('--platform', 'managed');
-      cmd.push('--format', 'json');
-      if (region) cmd.push('--region', region);
-      if (projectId) cmd.push('--project', projectId);
-
       // Compile the labels
       const defLabels = skipDefaultLabels ? {} : defaultLabels();
       const compiledLabels = Object.assign({}, defLabels, labels);
       if (compiledLabels && Object.keys(compiledLabels).length > 0) {
         cmd.push('--update-labels', joinKVStringForGCloud(compiledLabels));
-      }
-
-      // Add optional flags
-      if (flags) {
-        const flagList = parseFlags(flags);
-        if (flagList) cmd = cmd.concat(flagList);
       }
 
       if (container) {
