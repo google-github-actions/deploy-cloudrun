@@ -82,13 +82,15 @@ jobs:
     Learn more about [Deploying from source
     code](https://cloud.google.com/run/docs/deploying-source-code).
 
--   `suffix`: (Optional) String suffix to append to the revision name. The
-    default value is no suffix.
+-   `suffix`: (Optional) String suffix to append to the revision name. Revision
+    names always start with the service name automatically. For example,
+    specifying 'v1' for a service named 'helloworld', would lead to a revision
+    named 'helloworld-v1'. The default value is no suffix.
 
 -   `env_vars`: (Optional) List of key=value pairs to set as environment
     variables. All existing environment variables will be retained. If both
-    `env_vars` and `env_vars_file` are specified, the keys in env_vars will take
-    precendence over the keys in env_vars_files.
+    `env_vars` and `env_vars_file` are specified, the keys in `env_vars` will take
+    precendence over the keys in `env_vars_files`.
 
     ```yaml
     with:
@@ -143,7 +145,7 @@ jobs:
 
     ```yaml
     with:
-      secrets: |
+      secrets: |-
         # As an environment variable:
         KEY1=secret-key-1:latest
 
@@ -159,7 +161,7 @@ jobs:
 
     ```yaml
     with:
-      labels:
+      labels: |-
         my-label=my-value
     ```
 
@@ -233,8 +235,9 @@ jobs:
 -   `project_id`: (Optional) ID of the Google Cloud project in which to deploy
     the service. The default value is computed from the environment.
 
--   `region`: (Optional) Region in which to deploy the service. The default
-    value is `us-central1`.
+-   `region`: (Optional) Regions in which the Cloud Run services are deployed.
+      This can be a single region or a comma-separated list of regions. The
+    default value is `us-central1`.
 
 -   `gcloud_version`: (Optional) Version of the `gcloud` CLI to use. The default
     value is `latest`.

@@ -105,6 +105,26 @@ test('#run', { concurrency: true }, async (suite) => {
     assertMembers(args, ['--project', 'my-test-project']);
   });
 
+  await suite.test('sets a single region', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      region: 'us-central1',
+    });
+    await run();
+
+    const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
+    assertMembers(args, ['--region', 'us-central1']);
+  });
+
+  await suite.test('sets a multiple regions', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      region: 'us-central1,  us-east1',
+    });
+    await run();
+
+    const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
+    assertMembers(args, ['--region', 'us-central1,us-east1']);
+  });
+
   await suite.test('installs the gcloud SDK if it is not already installed', async (t) => {
     const mocks = defaultMocks(t.mock);
     t.mock.method(setupGcloud, 'isInstalled', () => {

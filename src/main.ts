@@ -32,6 +32,7 @@ import {
   joinKVStringForGCloud,
   KVPair,
   parseBoolean,
+  parseCSV,
   parseFlags,
   parseKVString,
   parseKVStringAndFile,
@@ -101,7 +102,7 @@ export async function run(): Promise<void> {
     const envVars = getInput('env_vars'); // String of env vars KEY=VALUE,...
     const envVarsFile = getInput('env_vars_file'); // File that is a string of env vars KEY=VALUE,...
     const secrets = parseKVString(getInput('secrets')); // String of secrets KEY=VALUE,...
-    const region = getInput('region') || 'us-central1';
+    const region = parseCSV(getInput('region') || 'us-central1');
     const source = getInput('source'); // Source directory
     const suffix = getInput('suffix');
     const tag = getInput('tag');
@@ -218,7 +219,18 @@ export async function run(): Promise<void> {
     // Push common flags
     cmd.push('--platform', 'managed');
     cmd.push('--format', 'json');
-    if (region) cmd.push('--region', region);
+    if (region) {
+      switch (region.length) {
+        case 0:
+          break;
+        case 1:
+          cmd.push('--region', region[0]);
+          break;
+        default:
+          cmd.push('--region', region.join(','));
+          break;
+      }
+    }
     if (projectId) cmd.push('--project', projectId);
 
     // Add optional flags

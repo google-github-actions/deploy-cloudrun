@@ -28,200 +28,200 @@ jobs:
       fail-fast: false
       matrix:
         include:
-        - name: 'image'
-          image: 'gcr.io/cloudrun/hello'
-        - name: 'source'
-          source: 'example-app'
+          - name: 'image'
+            image: 'gcr.io/cloudrun/hello'
+          - name: 'source'
+            source: 'example-app'
 
     name: 'from_${{ matrix.name }}'
 
     steps:
-    - uses: 'actions/checkout@v4'
+      - uses: 'actions/checkout@v4'
 
-    - name: 'Compute service name'
-      run: |-
-        echo "SERVICE_NAME=${GITHUB_JOB}-${{ matrix.name }}-${GITHUB_SHA::7}-${GITHUB_RUN_NUMBER}" >> ${GITHUB_ENV}
+      - name: 'Compute service name'
+        run: |-
+          echo "SERVICE_NAME=${GITHUB_JOB}-${{ matrix.name }}-${GITHUB_SHA::7}-${GITHUB_RUN_NUMBER}" >> ${GITHUB_ENV}
 
-    - uses: 'actions/setup-node@v4'
-      with:
-        node-version: '20.x'
+      - uses: 'actions/setup-node@v4'
+        with:
+          node-version: '20.x'
 
-    - run: 'npm ci && npm run build'
+      - run: 'npm ci && npm run build'
 
-    - uses: 'google-github-actions/auth@v2'
-      with:
-        workload_identity_provider: '${{ vars.WIF_PROVIDER_NAME }}'
-        service_account: '${{ vars.SERVICE_ACCOUNT_EMAIL }}'
+      - uses: 'google-github-actions/auth@v2'
+        with:
+          workload_identity_provider: '${{ vars.WIF_PROVIDER_NAME }}'
+          service_account: '${{ vars.SERVICE_ACCOUNT_EMAIL }}'
 
-    - id: 'deploy-cloudrun'
-      name: 'Deploy'
-      uses: './'
-      with:
-        image: '${{ matrix.image }}'
-        source: '${{ matrix.source }}'
-        service: '${{ env.SERVICE_NAME }}'
-        env_vars: |-
-          FOO=bar
-          ZIP=zap\,with|separators\,and&stuff
-        env_vars_file: './tests/fixtures/env_vars.txt'
-        secrets: |-
-          MY_SECRET=${{ vars.SECRET_NAME }}:latest
-          MY_SECOND_SECRET=${{ vars.SECRET_NAME }}:1
-        labels: |-
-          label1=value1
-          label2=value2
-        skip_default_labels: true
-        flags: '--cpu=2 --concurrency=20'
+      - id: 'deploy-cloudrun'
+        name: 'Deploy'
+        uses: './'
+        with:
+          image: '${{ matrix.image }}'
+          source: '${{ matrix.source }}'
+          service: '${{ env.SERVICE_NAME }}'
+          env_vars: |-
+            FOO=bar
+            ZIP=zap\,with|separators\,and&stuff
+          env_vars_file: './tests/fixtures/env_vars.txt'
+          secrets: |-
+            MY_SECRET=${{ vars.SECRET_NAME }}:latest
+            MY_SECOND_SECRET=${{ vars.SECRET_NAME }}:1
+          labels: |-
+            label1=value1
+            label2=value2
+          skip_default_labels: true
+          flags: '--cpu=2 --concurrency=20'
 
-    - name: 'Run initial deploy tests'
-      run: 'npm run e2e-tests'
-      env:
-        PROJECT_ID: ${{ vars.PROJECT_ID }}
-        SERVICE: '${{ env.SERVICE_NAME }}'
-        ENV: |-
-          {
-            "FOO": "bar",
-            "ZIP": "zap,with|separators,and&stuff",
-            "TEXT_FOO": "bar",
-            "TEXT_ZIP": "zap,with|separators,and&stuff"
-          }
-        SECRET_ENV: |-
-          {
-            "MY_SECRET": "${{ vars.SECRET_NAME }}:latest",
-            "MY_SECOND_SECRET": "${{ vars.SECRET_NAME }}:1"
-          }
-        PARAMS: |-
-          {
-            "cpu": "2",
-            "containerConcurrency": "20"
-          }
-        LABELS: |-
-          {
-            "label1": "value1",
-            "label2": "value2"
-          }
+      - name: 'Run initial deploy tests'
+        run: 'npm run e2e-tests'
+        env:
+          PROJECT_ID: ${{ vars.PROJECT_ID }}
+          SERVICE: '${{ env.SERVICE_NAME }}'
+          ENV: |-
+            {
+              "FOO": "bar",
+              "ZIP": "zap,with|separators,and&stuff",
+              "TEXT_FOO": "bar",
+              "TEXT_ZIP": "zap,with|separators,and&stuff"
+            }
+          SECRET_ENV: |-
+            {
+              "MY_SECRET": "${{ vars.SECRET_NAME }}:latest",
+              "MY_SECOND_SECRET": "${{ vars.SECRET_NAME }}:1"
+            }
+          PARAMS: |-
+            {
+              "cpu": "2",
+              "containerConcurrency": "20"
+            }
+          LABELS: |-
+            {
+              "label1": "value1",
+              "label2": "value2"
+            }
 
-    - id: 'deploy-cloudrun-again'
-      name: 'Deploy again'
-      uses: './'
-      with:
-        image: '${{ matrix.image }}'
-        source: '${{ matrix.source }}'
-        service: '${{ env.SERVICE_NAME }}'
-        env_vars: |-
-          ABC=123
-          DEF=456
-        secrets: /api/secrets/my-secret=${{ vars.SECRET_NAME }}:latest
+      - id: 'deploy-cloudrun-again'
+        name: 'Deploy again'
+        uses: './'
+        with:
+          image: '${{ matrix.image }}'
+          source: '${{ matrix.source }}'
+          service: '${{ env.SERVICE_NAME }}'
+          env_vars: |-
+            ABC=123
+            DEF=456
+          secrets: /api/secrets/my-secret=${{ vars.SECRET_NAME }}:latest
 
-    - name: 'Run re-deploy tests'
-      run: 'npm run e2e-tests'
-      env:
-        PROJECT_ID: ${{ vars.PROJECT_ID }}
-        SERVICE: '${{ env.SERVICE_NAME }}'
-        ENV: |-
-          {
-            "FOO": "bar",
-            "ZIP": "zap,with|separators,and&stuff",
-            "TEXT_FOO": "bar",
-            "TEXT_ZIP": "zap,with|separators,and&stuff",
-            "ABC": "123",
-            "DEF": "456"
-          }
-        SECRET_ENV: |-
-          {
-            "MY_SECRET": "${{ vars.SECRET_NAME }}:latest",
-            "MY_SECOND_SECRET": "${{ vars.SECRET_NAME }}:1"
-          }
-        SECRET_VOLUMES: |-
-          {
-            "/api/secrets/my-secret": "${{ vars.SECRET_NAME }}:latest"
-          }
-        PARAMS: |-
-          {
-            "cpu": "2",
-            "containerConcurrency": "20"
-          }
-        LABELS: |-
-          {
-            "label1": "value1",
-            "label2": "value2",
-            "commit-sha": "${{ github.sha }}",
-            "managed-by": "github-actions"
-          }
-        REVISION_COUNT: 2
+      - name: 'Run re-deploy tests'
+        run: 'npm run e2e-tests'
+        env:
+          PROJECT_ID: ${{ vars.PROJECT_ID }}
+          SERVICE: '${{ env.SERVICE_NAME }}'
+          ENV: |-
+            {
+              "FOO": "bar",
+              "ZIP": "zap,with|separators,and&stuff",
+              "TEXT_FOO": "bar",
+              "TEXT_ZIP": "zap,with|separators,and&stuff",
+              "ABC": "123",
+              "DEF": "456"
+            }
+          SECRET_ENV: |-
+            {
+              "MY_SECRET": "${{ vars.SECRET_NAME }}:latest",
+              "MY_SECOND_SECRET": "${{ vars.SECRET_NAME }}:1"
+            }
+          SECRET_VOLUMES: |-
+            {
+              "/api/secrets/my-secret": "${{ vars.SECRET_NAME }}:latest"
+            }
+          PARAMS: |-
+            {
+              "cpu": "2",
+              "containerConcurrency": "20"
+            }
+          LABELS: |-
+            {
+              "label1": "value1",
+              "label2": "value2",
+              "commit-sha": "${{ github.sha }}",
+              "managed-by": "github-actions"
+            }
+          REVISION_COUNT: 2
 
   metadata:
     if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name && github.actor != 'dependabot[bot]' }}
     runs-on: 'ubuntu-latest'
 
     steps:
-    - uses: 'actions/checkout@v4'
+      - uses: 'actions/checkout@v4'
 
-    - name: 'Compute service name'
-      run: |-
-        echo "SERVICE_NAME=${GITHUB_JOB}-metadata-${GITHUB_SHA::7}-${GITHUB_RUN_NUMBER}" >> ${GITHUB_ENV}
+      - name: 'Compute service name'
+        run: |-
+          echo "SERVICE_NAME=${GITHUB_JOB}-metadata-${GITHUB_SHA::7}-${GITHUB_RUN_NUMBER}" >> ${GITHUB_ENV}
 
-    - name: 'Set service name in metadata YAML'
-      run: |-
-        sed -i "s/run-full-yaml/${{ env.SERVICE_NAME }}/" ./tests/unit/service.yaml
+      - name: 'Set service name in metadata YAML'
+        run: |-
+          sed -i "s/run-full-yaml/${{ env.SERVICE_NAME }}/" ./tests/unit/service.yaml
 
-    - uses: 'actions/setup-node@v4'
-      with:
-        node-version: '20.x'
+      - uses: 'actions/setup-node@v4'
+        with:
+          node-version: '20.x'
 
-    - run: 'npm ci && npm run build'
+      - run: 'npm ci && npm run build'
 
-    - uses: 'google-github-actions/auth@v2'
-      with:
-        workload_identity_provider: '${{ vars.WIF_PROVIDER_NAME }}'
-        service_account: '${{ vars.SERVICE_ACCOUNT_EMAIL }}'
+      - uses: 'google-github-actions/auth@v2'
+        with:
+          workload_identity_provider: '${{ vars.WIF_PROVIDER_NAME }}'
+          service_account: '${{ vars.SERVICE_ACCOUNT_EMAIL }}'
 
-    - id: 'deploy-cloudrun'
-      name: 'Deploy'
-      uses: './'
-      with:
-        metadata: './tests/unit/service.yaml'
+      - id: 'deploy-cloudrun'
+        name: 'Deploy'
+        uses: './'
+        with:
+          metadata: './tests/unit/service.yaml'
 
-    - name: 'Run initial deploy tests'
-      run: 'npm run e2e-tests'
-      env:
-        PROJECT_ID: '${{ vars.PROJECT_ID }}'
-        SERVICE: '${{ env.SERVICE_NAME }}'
-        PARAMS: |-
-          {
-            "cpu": "2",
-            "memory": "1Gi",
-            "containerConcurrency": "20"
-          }
-        ANNOTATIONS: |-
-          {
-            "run.googleapis.com/cloudsql-instances": "test-project:us-central1:my-test-instance"
-          }
-        LABELS: |-
-          {
-            "test_label": "test_value"
-          }
+      - name: 'Run initial deploy tests'
+        run: 'npm run e2e-tests'
+        env:
+          PROJECT_ID: '${{ vars.PROJECT_ID }}'
+          SERVICE: '${{ env.SERVICE_NAME }}'
+          PARAMS: |-
+            {
+              "cpu": "2",
+              "memory": "1Gi",
+              "containerConcurrency": "20"
+            }
+          ANNOTATIONS: |-
+            {
+              "run.googleapis.com/cloudsql-instances": "test-project:us-central1:my-test-instance"
+            }
+          LABELS: |-
+            {
+              "test_label": "test_value"
+            }
 
-    - id: 'deploy-cloudrun-again'
-      name: 'Deploy again'
-      uses: './'
-      with:
-        image: 'gcr.io/cloudrun/hello'
-        service: '${{ env.SERVICE_NAME }}'
+      - id: 'deploy-cloudrun-again'
+        name: 'Deploy again'
+        uses: './'
+        with:
+          image: 'gcr.io/cloudrun/hello'
+          service: '${{ env.SERVICE_NAME }}'
 
-    - name: 'Run re-deploy tests'
-      run: 'npm run e2e-tests' # Check that config isn't overwritten
-      env:
-        PROJECT_ID: '${{ vars.PROJECT_ID }}'
-        SERVICE: '${{ env.SERVICE_NAME }}'
-        PARAMS: |-
-          {
-            "cpu": "2",
-            "memory": "1Gi",
-            "containerConcurrency": "20"
-          }
-        ANNOTATIONS: |-
-          {
-            "run.googleapis.com/cloudsql-instances": "test-project:us-central1:my-test-instance"
-          }
-        REVISION_COUNT: 2
+      - name: 'Run re-deploy tests'
+        run: 'npm run e2e-tests' # Check that config isn't overwritten
+        env:
+          PROJECT_ID: '${{ vars.PROJECT_ID }}'
+          SERVICE: '${{ env.SERVICE_NAME }}'
+          PARAMS: |-
+            {
+              "cpu": "2",
+              "memory": "1Gi",
+              "containerConcurrency": "20"
+            }
+          ANNOTATIONS: |-
+            {
+              "run.googleapis.com/cloudsql-instances": "test-project:us-central1:my-test-instance"
+            }
+          REVISION_COUNT: 2
