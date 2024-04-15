@@ -53,8 +53,13 @@ jobs:
 
 ## Inputs
 
--   `service`: (Required, unless providing `metadata`) ID of the service or
-    fully-qualified identifier of the service.
+-   `service`: (Required, unless providing `metadata` or `job`) ID of the
+    service or fully-qualified identifier of the service. Only one of `service`
+    or `job` may be specified.
+
+-   `job`: (Required, unless providing `metadata` or `service`) ID of the job or
+    fully-qualified identifier of the job. Only one of `service` or `job` may be
+    specified.
 
 -   `image`: (Required, unless providing `metadata` or `source`) Fully-qualified
     name of the container image to deploy. For example:
@@ -69,9 +74,9 @@ jobs:
     us-docker.pkg.dev/my-project/my-container/image:1.2.3
     ```
 
--   `source`: (Required, unless providing `metadata` or `image`) Path to source
-    to deploy. If specified, this will deploy the Cloud Run service from the
-    code specified at the given source directory.
+-   `source`: (Required, unless providing `metadata`, `image`, or `job`) Path to
+    source to deploy. If specified, this will deploy the Cloud Run service from
+    the code specified at the given source directory.
 
     This requires the [Artifact Registry API][artifact-api] to be enabled.
     Furthermore, the deploying service account must have the `Cloud Build

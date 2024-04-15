@@ -225,3 +225,104 @@ jobs:
               "run.googleapis.com/cloudsql-instances": "test-project:us-central1:my-test-instance"
             }
           REVISION_COUNT: 2
+
+  jobs:
+    if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name && github.actor != 'dependabot[bot]' }}
+    runs-on: 'ubuntu-latest'
+
+    steps:
+      - uses: 'actions/checkout@v4'
+
+      - name: 'Compute job name'
+        run: |-
+          echo "JOB_NAME=${GITHUB_JOB}-job-${GITHUB_SHA::7}-${GITHUB_RUN_NUMBER}" >> ${GITHUB_ENV}
+
+      - uses: 'actions/setup-node@v4'
+        with:
+          node-version: '20.x'
+
+      - run: 'npm ci && npm run build'
+
+      - uses: 'google-github-actions/auth@v2'
+        with:
+          workload_identity_provider: '${{ vars.WIF_PROVIDER_NAME }}'
+          service_account: '${{ vars.SERVICE_ACCOUNT_EMAIL }}'
+
+      - id: 'deploy-cloudrun'
+        name: 'Deploy'
+        uses: './'
+        with:
+          image: 'gcr.io/cloudrun/hello'
+          job: '${{ env.JOB_NAME }}'
+          env_vars: |-
+            FOO=bar
+            ZIP=zap\,with|separators\,and&stuff
+          env_vars_file: './tests/fixtures/env_vars.txt'
+          secrets: |-
+            MY_SECRET=${{ vars.SECRET_NAME }}:latest
+            MY_SECOND_SECRET=${{ vars.SECRET_NAME }}:1
+          labels: |-
+            label1=value1
+            label2=value2
+          skip_default_labels: true
+          flags: '--cpu=2'
+
+      - name: 'Run initial deploy tests'
+        run: 'npm run e2e-tests'
+        env:
+          PROJECT_ID: ${{ vars.PROJECT_ID }}
+          JOB: '${{ env.JOB_NAME }}'
+          ENV: |-
+            {
+              "FOO": "bar",
+              "ZIP": "zap,with|separators,and&stuff",
+              "TEXT_FOO": "bar",
+              "TEXT_ZIP": "zap,with|separators,and&stuff"
+            }
+          SECRET_ENV: |-
+            {
+              "MY_SECRET": "${{ vars.SECRET_NAME }}:latest",
+              "MY_SECOND_SECRET": "${{ vars.SECRET_NAME }}:1"
+            }
+          LABELS: |-
+            {
+              "label1": "value1",
+              "label2": "value2"
+            }
+
+      - id: 'deploy-cloudrun-again'
+        name: 'Deploy again'
+        uses: './'
+        with:
+          image: 'gcr.io/cloudrun/hello'
+          job: '${{ env.JOB_NAME }}'
+          env_vars: |-
+            ABC=123
+            DEF=456
+          secrets: /api/secrets/my-secret=${{ vars.SECRET_NAME }}:latest
+
+      - name: 'Run re-deploy tests'
+        run: 'npm run e2e-tests'
+        env:
+          PROJECT_ID: ${{ vars.PROJECT_ID }}
+          JOB: '${{ env.JOB_NAME }}'
+          ENV: |-
+            {
+              "FOO": "bar",
+              "ZIP": "zap,with|separators,and&stuff",
+              "TEXT_FOO": "bar",
+              "TEXT_ZIP": "zap,with|separators,and&stuff",
+              "ABC": "123",
+              "DEF": "456"
+            }
+          SECRET_VOLUMES: |-
+            {
+              "/api/secrets/my-secret": "${{ vars.SECRET_NAME }}:latest"
+            }
+          LABELS: |-
+            {
+              "label1": "value1",
+              "label2": "value2",
+              "commit-sha": "${{ github.sha }}",
+              "managed-by": "github-actions"
+            }

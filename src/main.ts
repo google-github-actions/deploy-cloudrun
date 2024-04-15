@@ -95,6 +95,7 @@ export async function run(): Promise<void> {
     // Get action inputs
     const image = getInput('image'); // Image ie gcr.io/...
     const service = getInput('service'); // Service name
+    const job = getInput('job'); // Job name
     const metadata = getInput('metadata'); // YAML file
     const projectId = getInput('project_id');
     const gcloudVersion = await computeGcloudVersion(getInput('gcloud_version'));
@@ -126,6 +127,9 @@ export async function run(): Promise<void> {
     }
     if (source && image) {
       throw new Error('Only one of `source` or `image` inputs can be set.');
+    }
+    if (service && job) {
+      throw new Error('Only one of `service` or `job` inputs can be set.');
     }
 
     // Validate gcloud component input
@@ -182,14 +186,41 @@ export async function run(): Promise<void> {
           logWarning(`Using metadata YAML, ignoring "${key}" input`);
         }
       }
+    } else if (job) {
+      logWarning(
+        `Support for Cloud Run jobs in this GitHub Action is in beta and is ` +
+          `not covered by the semver backwards compatibility guarantee.`,
+      );
+
+      cmd = ['run', 'jobs', 'deploy', job, '--quiet'];
+
+      if (image) {
+        cmd.push('--image', image);
+      } else if (source) {
+        cmd.push('--source', source);
+      }
+
+      // Set optional flags from inputs
+      const compiledEnvVars = parseKVStringAndFile(envVars, envVarsFile);
+      if (compiledEnvVars && Object.keys(compiledEnvVars).length > 0) {
+        cmd.push('--update-env-vars', joinKVStringForGCloud(compiledEnvVars));
+      }
+      if (secrets && Object.keys(secrets).length > 0) {
+        cmd.push('--set-secrets', joinKVStringForGCloud(secrets));
+      }
+
+      // Compile the labels
+      const defLabels = skipDefaultLabels ? {} : defaultLabels();
+      const compiledLabels = Object.assign({}, defLabels, labels);
+      if (compiledLabels && Object.keys(compiledLabels).length > 0) {
+        cmd.push('--labels', joinKVStringForGCloud(compiledLabels));
+      }
     } else {
       cmd = ['run', 'deploy', service, '--quiet'];
 
       if (image) {
-        // Deploy service with image specified
         cmd.push('--image', image);
       } else if (source) {
-        // Deploy service from source
         cmd.push('--source', source);
       }
 
@@ -217,7 +248,6 @@ export async function run(): Promise<void> {
     }
 
     // Push common flags
-    cmd.push('--platform', 'managed');
     cmd.push('--format', 'json');
     if (region) {
       switch (region.length) {

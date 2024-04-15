@@ -19,7 +19,6 @@ import assert from 'node:assert';
 
 import { getExecOutput } from '@actions/exec';
 import { run_v1 } from 'googleapis';
-import yaml from 'js-yaml';
 
 import { skipIfMissingEnv } from '@google-github-actions/actions-utils';
 
@@ -27,38 +26,59 @@ test(
   'e2e tests',
   {
     concurrency: true,
-    skip: skipIfMissingEnv('PROJECT_ID', 'SERVICE'),
+    skip: skipIfMissingEnv('PROJECT_ID'),
   },
   async (suite) => {
     let service: run_v1.Schema$Service;
+    let job: run_v1.Schema$Job;
+    let metadata: run_v1.Schema$ObjectMeta;
+    let spec: run_v1.Schema$TaskSpec | run_v1.Schema$RevisionSpec;
 
     suite.before(async () => {
-      const args = [
-        'run',
-        'services',
-        'describe',
-        process.env.SERVICE!,
-        '--project',
-        process.env.PROJECT_ID!,
-        '--format',
-        'yaml',
-        '--platform',
-        'managed',
-        '--region',
-        'us-central1',
-      ];
-
-      const output = await getExecOutput('gcloud', args);
-      service = yaml.load(output.stdout) as run_v1.Schema$Service;
-
-      if (!service) {
-        throw new Error('failed to find service definition');
+      if (process.env.JOB) {
+        const output = await getExecOutput('gcloud', [
+          'run',
+          'jobs',
+          'describe',
+          process.env.JOB!,
+          '--project',
+          process.env.PROJECT_ID!,
+          '--format',
+          'json',
+          '--region',
+          'us-central1',
+        ]);
+        job = JSON.parse(output.stdout) as run_v1.Schema$Job;
+        if (!job) {
+          throw new Error('failed to find job definition');
+        }
+        metadata = job.spec!.template!.metadata!;
+        spec = job.spec!.template!.spec!.template!.spec!;
+      } else if (process.env.SERVICE) {
+        const output = await getExecOutput('gcloud', [
+          'run',
+          'services',
+          'describe',
+          process.env.SERVICE!,
+          '--project',
+          process.env.PROJECT_ID!,
+          '--format',
+          'json',
+          '--region',
+          'us-central1',
+        ]);
+        service = JSON.parse(output.stdout) as run_v1.Schema$Service;
+        if (!service) {
+          throw new Error('failed to find service definition');
+        }
+        metadata = service.spec!.template!.metadata!;
+        spec = service.spec!.template!.spec!;
       }
     });
 
     await suite.test('has the correct envvars', { skip: skipIfMissingEnv('ENV') }, async () => {
       const expected = parseEnvVars(process.env.ENV!);
-      const actual = service?.spec?.template?.spec?.containers?.at(0)?.env?.filter((e) => e?.value);
+      const actual = spec.containers?.at(0)?.env?.filter((e) => e?.value);
 
       const subset = expected.map((e) => {
         return actual?.find((a) => a.name == e.name);
@@ -72,7 +92,7 @@ test(
       { skip: skipIfMissingEnv('SECRET_ENV') },
       async () => {
         const expected = parseEnvVars(process.env.SECRET_ENV!);
-        const actual = service?.spec?.template?.spec?.containers
+        const actual = spec.containers
           ?.at(0)
           ?.env?.filter((entry) => entry && entry.valueFrom)
           .map((entry) => {
@@ -90,21 +110,19 @@ test(
 
     await suite.test(
       'has the correct secret volumes',
-      { skip: skipIfMissingEnv('SECRET_VOLUME') },
+      { skip: skipIfMissingEnv('SECRET_VOLUMES') },
       async () => {
         const expected = parseEnvVars(process.env.SECRET_VOLUMES!);
-        const actual = service?.spec?.template?.spec?.containers
-          ?.at(0)
-          ?.volumeMounts?.map((volumeMount) => {
-            const secretVolume = service?.spec?.template?.spec?.volumes?.find(
-              (volume) => volumeMount.name === volume.name,
-            )?.secret;
-            const secretName = secretVolume?.secretName;
-            const secretData = secretVolume?.items?.at(0);
-            const secretPath = `${volumeMount.mountPath}/${secretData?.path}`;
-            const secretRef = `${secretName}:${secretData?.key}`;
-            return { name: secretPath, value: secretRef };
-          });
+        const actual = spec.containers?.at(0)?.volumeMounts?.map((volumeMount) => {
+          const secretVolume = spec.volumes?.find(
+            (volume) => volumeMount.name === volume.name,
+          )?.secret;
+          const secretName = secretVolume?.secretName;
+          const secretData = secretVolume?.items?.at(0);
+          const secretPath = `${volumeMount.mountPath}/${secretData?.path}`;
+          const secretRef = `${secretName}:${secretData?.key}`;
+          return { name: secretPath, value: secretRef };
+        });
 
         const subset = expected.map((e) => {
           return actual?.find((a) => a.name == e.name);
@@ -116,17 +134,19 @@ test(
 
     await suite.test('has the correct params', { skip: skipIfMissingEnv('PARAMS') }, async () => {
       const expected = JSON.parse(process.env.PARAMS!);
-      const actual = service?.spec?.template?.spec;
 
       if (expected.containerConncurrency) {
-        assert.deepStrictEqual(actual?.containerConcurrency, expected.containerConncurrency);
+        assert.deepStrictEqual(
+          (spec as run_v1.Schema$RevisionSpec).containerConcurrency,
+          expected.containerConncurrency,
+        );
       }
 
       if (expected.timeoutSeconds) {
-        assert.deepStrictEqual(actual?.timeoutSeconds, expected.timeoutSeconds);
+        assert.deepStrictEqual(spec.timeoutSeconds, expected.timeoutSeconds);
       }
 
-      const limits = actual?.containers?.at(0)?.resources?.limits;
+      const limits = spec.containers?.at(0)?.resources?.limits;
       if (expected.cpu) {
         assert.deepStrictEqual(limits?.cpu, expected.cpu.toString());
       }
@@ -141,7 +161,7 @@ test(
       { skip: skipIfMissingEnv('ANNOTATIONS') },
       async () => {
         const expected = JSON.parse(process.env.ANNOTATIONS!) as Record<string, string>;
-        const actual = service?.spec?.template?.metadata?.annotations;
+        const actual = metadata.annotations;
 
         const subset = Object.assign(
           {},
@@ -154,7 +174,7 @@ test(
 
     await suite.test('has the correct labels', { skip: skipIfMissingEnv('LABELS') }, async () => {
       const expected = JSON.parse(process.env.LABELS!) as Record<string, string>;
-      const actual = service?.spec?.template?.metadata?.labels;
+      const actual = metadata.labels;
 
       const subset = Object.assign({}, ...Object.keys(expected).map((k) => ({ [k]: actual?.[k] })));
 
@@ -163,7 +183,13 @@ test(
 
     await suite.test('has the revision name', { skip: skipIfMissingEnv('REVISION') }, async () => {
       const expected = process.env.REVISION! as string;
-      const actual = service?.spec?.template?.metadata?.name;
+      const actual = service.metadata?.name;
+      assert.deepStrictEqual(actual, expected);
+    });
+
+    await suite.test('has the job name', { skip: skipIfMissingEnv('JOB') }, async () => {
+      const expected = process.env.JOB! as string;
+      const actual = job.metadata?.name;
       assert.deepStrictEqual(actual, expected);
     });
 
