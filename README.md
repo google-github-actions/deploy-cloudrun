@@ -56,14 +56,14 @@ jobs:
 -   `service`: (Required, unless providing `metadata`) ID of the service or
     fully-qualified identifier of the service.
 
--   `job`: (Required, unless providing `metadata` or `service`) ID of the job or
-    fully-qualified identifier of the job. If `job` and `service` are specified
-    then the `service` will be updated and the `job` will be ignored. Note that
-    the `job` must be created first. This will only update an existing `job`, it
-    will not deploy/create a new job.
+-   `job`: (Required, unless providing `metadata`, `service`, or `image`) ID of
+    the job or fully-qualified identifier of the job. If `job` and `service` are
+    specified then the `service` will be updated and the `job` will be ignored.
+    Note that the `job` must be created first. This will only update an existing
+    `job`, it will not deploy/create a new job.
 
--   `image`: (Required, unless providing `metadata` or `source`) Fully-qualified
-    name of the container image to deploy. For example:
+-   `image`: (Required, unless providing `metadata`, `source`, or `job`)
+    Fully-qualified name of the container image to deploy. For example:
 
     ```text
     gcr.io/cloudrun/hello:latest
@@ -75,9 +75,9 @@ jobs:
     us-docker.pkg.dev/my-project/my-container/image:1.2.3
     ```
 
--   `source`: (Required, unless providing `metadata` or `image`) Path to source
-    to deploy. If specified, this will deploy the Cloud Run service from the
-    code specified at the given source directory.
+-   `source`: (Required, unless providing `metadata`, `image`, or `job`) Path to
+    source to deploy. If specified, this will deploy the Cloud Run service from
+    the code specified at the given source directory.
 
     This requires the [Artifact Registry API][artifact-api] to be enabled.
     Furthermore, the deploying service account must have the `Cloud Build
@@ -88,19 +88,31 @@ jobs:
     Learn more about [Deploying from source
     code](https://cloud.google.com/run/docs/deploying-source-code).
 
--   `suffix`: (Optional) String suffix to append to the revision name. The
-    default value is no suffix.
+-   `suffix`: (Optional) String suffix to append to the revision name. Revision
+    names always start with the service name automatically. For example,
+    specifying 'v1' for a service named 'helloworld', would lead to a revision
+    named 'helloworld-v1'. The default value is no suffix.
 
 -   `env_vars`: (Optional) List of key=value pairs to set as environment
     variables. All existing environment variables will be retained. If both
-    `env_vars` and `env_vars_file` are specified, the keys in env_vars will take
-    precendence over the keys in env_vars_files.
+    `env_vars` and `env_vars_file` are specified, the keys in `env_vars` will take
+    precendence over the keys in `env_vars_files`.
 
     ```yaml
     with:
       env_vars: |
         FOO=bar
         ZIP=zap
+    ```
+
+    Entries are separated by commas (`,`) and newline characters. Keys and
+    values are separated by `=`. To use `,`, `=`, or newline characters, escape
+    them with a backslash:
+
+    ```yaml
+    with:
+      env_vars: |
+        EMAILS=foo@bar.com\,zip@zap.com
     ```
 
 -   `env_vars_file`: (Optional) Path to a file on disk, relative to the
@@ -130,13 +142,16 @@ jobs:
     ZIP: 'zap'
     ```
 
+    When specified as KEY=VALUE pairs, the same escaping rules apply as
+    described in `env_vars`. You do not have to escape YAML or JSON.
+
 -   `secrets`: (Optional) List of key=value pairs to use as secrets. These can
     either be injected as environment variables or mounted as volumes. All
     existing environment secrets and volume mounts will be retained.
 
     ```yaml
     with:
-      secrets: |
+      secrets: |-
         # As an environment variable:
         KEY1=secret-key-1:latest
 
@@ -144,16 +159,20 @@ jobs:
         /secrets/api/key=secret-key-2:latest
     ```
 
+    The same rules apply for escaping entries as from `env_vars`, but Cloud Run
+    is more restrictive with allowed keys and names for secrets.
+
 -   `labels`: (Optional) List of key=value pairs to set as labels on the Cloud
     Run service. Existing labels will be overwritten.
 
     ```yaml
     with:
-      labels:
+      labels: |-
         my-label=my-value
     ```
 
-    Labels have strict naming and casing requirements. See [Requirements for
+    The same rules apply for escaping entries as from `env_vars`, but labels
+    have strict naming and casing requirements. See [Requirements for
     labels](https://cloud.google.com/resource-manager/docs/creating-managing-labels#requirements)
     for more information.
 
@@ -204,6 +223,13 @@ jobs:
       revision_traffic: 'my-revision=10' # percentage
     ```
 
+    To update traffic to the latest revision, use the special tag "LATEST":
+
+    ```yaml
+    with:
+      revision_traffic: 'LATEST=100'
+    ```
+
 -   `tag_traffic`: (Optional, mutually-exclusive with `revision_traffic`)
     Comma-separated list of tag traffic assignments.
 
@@ -215,8 +241,9 @@ jobs:
 -   `project_id`: (Optional) ID of the Google Cloud project in which to deploy
     the service. The default value is computed from the environment.
 
--   `region`: (Optional) Region in which to deploy the service. The default
-    value is `us-central1`.
+-   `region`: (Optional) Regions in which the Cloud Run services are deployed.
+      This can be a single region or a comma-separated list of regions. The
+    default value is `us-central1`.
 
 -   `gcloud_version`: (Optional) Version of the `gcloud` CLI to use. The default
     value is `latest`.

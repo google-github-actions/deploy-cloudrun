@@ -29,8 +29,10 @@ import * as toolCache from '@actions/tool-cache';
 import {
   errorMessage,
   isPinnedToHead,
+  joinKVStringForGCloud,
   KVPair,
   parseBoolean,
+  parseCSV,
   parseFlags,
   parseKVString,
   parseKVStringAndFile,
@@ -101,7 +103,7 @@ export async function run(): Promise<void> {
     const envVars = getInput('env_vars'); // String of env vars KEY=VALUE,...
     const envVarsFile = getInput('env_vars_file'); // File that is a string of env vars KEY=VALUE,...
     const secrets = parseKVString(getInput('secrets')); // String of secrets KEY=VALUE,...
-    const region = getInput('region') || 'us-central1';
+    const region = parseCSV(getInput('region') || 'us-central1');
     const source = getInput('source'); // Source directory
     const suffix = getInput('suffix');
     const tag = getInput('tag');
@@ -216,10 +218,10 @@ export async function run(): Promise<void> {
       // Set optional flags from inputs
       const compiledEnvVars = parseKVStringAndFile(envVars, envVarsFile);
       if (compiledEnvVars && Object.keys(compiledEnvVars).length > 0) {
-        cmd.push('--update-env-vars', kvToString(compiledEnvVars));
+        cmd.push('--update-env-vars', joinKVStringForGCloud(compiledEnvVars));
       }
       if (secrets && Object.keys(secrets).length > 0) {
-        cmd.push('--update-secrets', kvToString(secrets));
+        cmd.push('--update-secrets', joinKVStringForGCloud(secrets));
       }
       if (tag) {
         cmd.push('--tag', tag);
@@ -232,7 +234,7 @@ export async function run(): Promise<void> {
       const defLabels = skipDefaultLabels ? {} : defaultLabels();
       const compiledLabels = Object.assign({}, defLabels, labels);
       if (compiledLabels && Object.keys(compiledLabels).length > 0) {
-        cmd.push('--update-labels', kvToString(compiledLabels));
+        cmd.push('--update-labels', joinKVStringForGCloud(compiledLabels));
       }
     }
 
@@ -241,7 +243,18 @@ export async function run(): Promise<void> {
       cmd.push('--platform', 'managed');
     }
     cmd.push('--format', 'json');
-    if (region) cmd.push('--region', region);
+    if (region) {
+      switch (region.length) {
+        case 0:
+          break;
+        case 1:
+          cmd.push('--region', region[0]);
+          break;
+        default:
+          cmd.push('--region', region.join(','));
+          break;
+      }
+    }
     if (projectId) cmd.push('--project', projectId);
 
     // Add optional flags
@@ -299,18 +312,6 @@ export async function run(): Promise<void> {
   } finally {
     restoreEnv();
   }
-}
-
-/**
- * kvToString takes the given string=string records into a single string that
- * the gcloud CLI expects.
- */
-export function kvToString(kv: Record<string, string>, separator = ','): string {
-  return Object.entries(kv)
-    .map(([k, v]) => {
-      return `${k}=${v}`;
-    })
-    .join(separator);
 }
 
 // Map output response to GitHub Action outputs

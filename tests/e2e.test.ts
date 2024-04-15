@@ -189,16 +189,9 @@ test(
 );
 
 const parseEnvVars = (envVarInput: string): run_v1.Schema$EnvVar[] => {
-  const envVarList = envVarInput.split(',');
-  const envVars = envVarList.map((envVar) => {
-    if (!envVar.includes('=')) {
-      throw new TypeError(
-        `Env Vars must be in "KEY1=VALUE1,KEY2=VALUE2" format, received ${envVar}`,
-      );
-    }
-    const keyValue = envVar.split('=');
-    return { name: keyValue[0], value: keyValue[1] };
+  const m = JSON.parse(envVarInput) as Record<string, string>;
+  const envVars = Object.entries(m).map(([key, value]) => {
+    return { name: key, value: value };
   });
-
   return envVars;
 };
