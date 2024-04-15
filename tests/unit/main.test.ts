@@ -28,37 +28,7 @@ import { run } from '../../src/main';
 
 const fakeInputs: { [key: string]: string } = {
   image: 'gcr.io/cloudrun/hello',
-  service: 'test',
-  job: '',
-  metadata: '',
   project_id: 'test',
-  env_vars: '',
-  env_vars_file: '',
-  labels: '',
-  skip_default_labels: 'false',
-  source: '',
-  suffix: '',
-  tag: '',
-  timeout: '',
-  revision_traffic: '',
-  tag_traffic: '',
-};
-
-const fakeInputsJob: { [key: string]: string } = {
-  image: 'gcr.io/cloudrun/hello',
-  job: 'job-name',
-  metadata: '',
-  project_id: 'test',
-  env_vars: '',
-  env_vars_file: '',
-  labels: '',
-  skip_default_labels: 'false',
-  source: '',
-  suffix: '',
-  tag: '',
-  timeout: '',
-  revision_traffic: '',
-  tag_traffic: '',
 };
 
 const defaultMocks = (
@@ -66,41 +36,6 @@ const defaultMocks = (
   overrideInputs?: Record<string, string>,
 ): Record<string, any> => {
   const inputs = Object.assign({}, fakeInputs, overrideInputs);
-  return {
-    setFailed: m.method(core, 'setFailed', (msg: string) => {
-      throw new Error(msg);
-    }),
-    getBooleanInput: m.method(core, 'getBooleanInput', (name: string) => {
-      return !!inputs[name];
-    }),
-    getMultilineInput: m.method(core, 'getMultilineInput', (name: string) => {
-      return inputs[name];
-    }),
-    getInput: m.method(core, 'getInput', (name: string) => {
-      return inputs[name];
-    }),
-    getExecOutput: m.method(exec, 'getExecOutput', () => {
-      return { exitCode: 0, stderr: '', stdout: '{}' };
-    }),
-
-    authenticateGcloudSDK: m.method(setupGcloud, 'authenticateGcloudSDK', () => {}),
-    isAuthenticated: m.method(setupGcloud, 'isAuthenticated', () => {}),
-    isInstalled: m.method(setupGcloud, 'isInstalled', () => {
-      return true;
-    }),
-    installGcloudSDK: m.method(setupGcloud, 'installGcloudSDK', async () => {
-      return '1.2.3';
-    }),
-    installComponent: m.method(setupGcloud, 'installComponent', () => {}),
-    setProject: m.method(setupGcloud, 'setProject', () => {}),
-    getLatestGcloudSDKVersion: m.method(setupGcloud, 'getLatestGcloudSDKVersion', () => {
-      return '1.2.3';
-    }),
-  };
-};
-
-const jobMocks = (m: typeof mock, overrideInputs?: Record<string, string>): Record<string, any> => {
-  const inputs = Object.assign({}, fakeInputsJob, overrideInputs);
   return {
     setFailed: m.method(core, 'setFailed', (msg: string) => {
       throw new Error(msg);
@@ -161,17 +96,19 @@ test('#run', { concurrency: true }, async (suite) => {
 
   await suite.test('sets the project ID', async (t) => {
     const mocks = defaultMocks(t.mock, {
-      project_id: 'test',
+      project_id: 'my-test-project',
+      service: 'my-test-service',
     });
     await run();
 
     const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
-    assertMembers(args, ['--project', 'test']);
+    assertMembers(args, ['--project', 'my-test-project']);
   });
 
   await suite.test('sets a single region', async (t) => {
     const mocks = defaultMocks(t.mock, {
       region: 'us-central1',
+      service: 'my-test-service',
     });
     await run();
 
@@ -182,6 +119,7 @@ test('#run', { concurrency: true }, async (suite) => {
   await suite.test('sets a multiple regions', async (t) => {
     const mocks = defaultMocks(t.mock, {
       region: 'us-central1,  us-east1',
+      service: 'my-test-service',
     });
     await run();
 
@@ -190,7 +128,9 @@ test('#run', { concurrency: true }, async (suite) => {
   });
 
   await suite.test('installs the gcloud SDK if it is not already installed', async (t) => {
-    const mocks = defaultMocks(t.mock);
+    const mocks = defaultMocks(t.mock, {
+      service: 'my-test-service',
+    });
     t.mock.method(setupGcloud, 'isInstalled', () => {
       return false;
     });
@@ -201,7 +141,9 @@ test('#run', { concurrency: true }, async (suite) => {
   });
 
   await suite.test('uses the cached gcloud SDK if it was already installed', async (t) => {
-    const mocks = defaultMocks(t.mock);
+    const mocks = defaultMocks(t.mock, {
+      service: 'my-test-service',
+    });
     t.mock.method(setupGcloud, 'isInstalled', () => {
       return true;
     });
@@ -212,7 +154,9 @@ test('#run', { concurrency: true }, async (suite) => {
   });
 
   await suite.test('uses default components without gcloud_component flag', async (t) => {
-    const mocks = defaultMocks(t.mock);
+    const mocks = defaultMocks(t.mock, {
+      service: 'my-test-service',
+    });
 
     await run();
 
@@ -221,6 +165,7 @@ test('#run', { concurrency: true }, async (suite) => {
 
   await suite.test('throws error with invalid gcloud component flag', async (t) => {
     defaultMocks(t.mock, {
+      service: 'my-test-service',
       gcloud_component: 'wrong_value',
     });
 
@@ -234,6 +179,7 @@ test('#run', { concurrency: true }, async (suite) => {
 
   await suite.test('installs alpha component with alpha flag', async (t) => {
     const mocks = defaultMocks(t.mock, {
+      service: 'my-test-service',
       gcloud_component: 'alpha',
     });
 
@@ -245,6 +191,7 @@ test('#run', { concurrency: true }, async (suite) => {
 
   await suite.test('installs alpha component with beta flag', async (t) => {
     const mocks = defaultMocks(t.mock, {
+      service: 'my-test-service',
       gcloud_component: 'beta',
     });
 
@@ -256,6 +203,7 @@ test('#run', { concurrency: true }, async (suite) => {
 
   await suite.test('sets labels', async (t) => {
     const mocks = defaultMocks(t.mock, {
+      service: 'my-test-service',
       labels: 'foo=bar,zip=zap',
     });
 
@@ -276,6 +224,7 @@ test('#run', { concurrency: true }, async (suite) => {
 
   await suite.test('skips default labels', async (t) => {
     const mocks = defaultMocks(t.mock, {
+      service: 'my-test-service',
       skip_default_labels: 'true',
       labels: 'foo=bar,zip=zap',
     });
@@ -293,6 +242,7 @@ test('#run', { concurrency: true }, async (suite) => {
 
   await suite.test('overwrites default labels', async (t) => {
     const mocks = defaultMocks(t.mock, {
+      service: 'my-test-service',
       labels: 'commit-sha=custom-value',
     });
     process.env.GITHUB_SHA = 'abcdef123456';
@@ -310,6 +260,7 @@ test('#run', { concurrency: true }, async (suite) => {
 
   await suite.test('sets source if given', async (t) => {
     const mocks = defaultMocks(t.mock, {
+      service: 'my-test-service',
       source: 'example-app',
       image: '',
     });
@@ -324,7 +275,6 @@ test('#run', { concurrency: true }, async (suite) => {
     const mocks = defaultMocks(t.mock, {
       metadata: 'yaml',
       image: '',
-      service: '',
     });
 
     await run();
@@ -335,6 +285,7 @@ test('#run', { concurrency: true }, async (suite) => {
 
   await suite.test('sets timeout if given', async (t) => {
     const mocks = defaultMocks(t.mock, {
+      service: 'my-test-service',
       timeout: '55m12s',
     });
 
@@ -346,6 +297,7 @@ test('#run', { concurrency: true }, async (suite) => {
 
   await suite.test('sets tag if given', async (t) => {
     const mocks = defaultMocks(t.mock, {
+      service: 'my-test-service',
       tag: 'test',
     });
 
@@ -357,8 +309,8 @@ test('#run', { concurrency: true }, async (suite) => {
 
   await suite.test('sets tag traffic if given', async (t) => {
     const mocks = defaultMocks(t.mock, {
+      service: 'my-test-service',
       tag: 'test',
-      service: 'service-name',
     });
 
     await run();
@@ -369,6 +321,7 @@ test('#run', { concurrency: true }, async (suite) => {
 
   await suite.test('fails if tag traffic and revision traffic are provided', async (t) => {
     defaultMocks(t.mock, {
+      service: 'my-test-service',
       revision_traffic: 'TEST=100',
       tag_traffic: 'TEST=100',
     });
@@ -381,7 +334,7 @@ test('#run', { concurrency: true }, async (suite) => {
     );
   });
 
-  await suite.test('fails if name is not provided with tag traffic', async (t) => {
+  await suite.test('fails if service is not provided with tag traffic', async (t) => {
     defaultMocks(t.mock, {
       service: '',
       tag_traffic: 'TEST=100',
@@ -395,7 +348,7 @@ test('#run', { concurrency: true }, async (suite) => {
     );
   });
 
-  await suite.test('fails if name is not provided with revision traffic', async (t) => {
+  await suite.test('fails if service is not provided with revision traffic', async (t) => {
     defaultMocks(t.mock, {
       service: '',
       revision_traffic: 'TEST=100',
@@ -409,41 +362,30 @@ test('#run', { concurrency: true }, async (suite) => {
     );
   });
 
-  await suite.test('ignore job if job and service are both specified', async (t) => {
+  await suite.test('fails if job and service are both specified', async (t) => {
+    defaultMocks(t.mock, {
+      service: 'my-test-service',
+      job: 'my-test-job',
+    });
+
+    await assert.rejects(
+      async () => {
+        await run();
+      },
+      { message: /only one of `service` or `job` inputs can be set/ },
+    );
+  });
+
+  await suite.test('deploys a job if job is specified', async (t) => {
     const mocks = defaultMocks(t.mock, {
-      service: 'test',
-      job: 'job-name',
+      job: 'my-test-job',
     });
 
     await run();
 
     const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
-    assertMembers(args, ['run', 'deploy', 'test']);
+    assertMembers(args, ['run', 'jobs', 'deploy', 'my-test-job']);
   });
-
-  await suite.test('updates a job if job is specified and service is not', async (t) => {
-    const mocks = jobMocks(t.mock);
-
-    await run();
-
-    const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
-    assertMembers(args, ['run', 'jobs', 'update', 'job-name']);
-  });
-
-  await suite.test(
-    'updates a job if job is specified and service is an empty string',
-    async (t) => {
-      const mocks = defaultMocks(t.mock, {
-        service: '',
-        job: 'job-name',
-      });
-
-      await run();
-
-      const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
-      assertMembers(args, ['run', 'jobs', 'update', 'job-name']);
-    },
-  );
 });
 
 const splitKV = (s: string): Record<string, string> => {

@@ -128,12 +128,14 @@ export async function run(): Promise<void> {
     if (source && image) {
       throw new Error('Only one of `source` or `image` inputs can be set.');
     }
+    if (service && job) {
+      throw new Error('Only one of `service` or `job` inputs can be set.');
+    }
 
     // Validate gcloud component input
     if (gcloudComponent && gcloudComponent !== 'alpha' && gcloudComponent !== 'beta') {
       throw new Error(`invalid input received for gcloud_component: ${gcloudComponent}`);
     }
-    const useJob = job && !service;
 
     // Find base command
     if (revTraffic || tagTraffic) {
@@ -184,34 +186,41 @@ export async function run(): Promise<void> {
           logWarning(`Using metadata YAML, ignoring "${key}" input`);
         }
       }
-    } else if (useJob) {
-      cmd = ['run', 'jobs', 'update', job, '--quiet'];
+    } else if (job) {
+      logWarning(
+        `Support for Cloud Run jobs in this GitHub Action is in beta and is ` +
+          `not covered by the semver backwards compatibility guarantee.`,
+      );
+
+      cmd = ['run', 'jobs', 'deploy', job, '--quiet'];
 
       if (image) {
-        // Deploy job with image specified
         cmd.push('--image', image);
+      } else if (source) {
+        cmd.push('--source', source);
       }
 
       // Set optional flags from inputs
       const compiledEnvVars = parseKVStringAndFile(envVars, envVarsFile);
       if (compiledEnvVars && Object.keys(compiledEnvVars).length > 0) {
-        cmd.push('--update-env-vars', kvToString(compiledEnvVars));
+        cmd.push('--update-env-vars', joinKVStringForGCloud(compiledEnvVars));
       }
       if (secrets && Object.keys(secrets).length > 0) {
-        cmd.push('--update-secrets', kvToString(secrets));
+        cmd.push('--set-secrets', joinKVStringForGCloud(secrets));
       }
 
       // Compile the labels
-      const compiledLabels = Object.assign({}, defaultLabels(), labels);
-      cmd.push('--update-labels', kvToString(compiledLabels));
+      const defLabels = skipDefaultLabels ? {} : defaultLabels();
+      const compiledLabels = Object.assign({}, defLabels, labels);
+      if (compiledLabels && Object.keys(compiledLabels).length > 0) {
+        cmd.push('--labels', joinKVStringForGCloud(compiledLabels));
+      }
     } else {
       cmd = ['run', 'deploy', service, '--quiet'];
 
       if (image) {
-        // Deploy service with image specified
         cmd.push('--image', image);
       } else if (source) {
-        // Deploy service from source
         cmd.push('--source', source);
       }
 
@@ -239,9 +248,6 @@ export async function run(): Promise<void> {
     }
 
     // Push common flags
-    if (!useJob) {
-      cmd.push('--platform', 'managed');
-    }
     cmd.push('--format', 'json');
     if (region) {
       switch (region.length) {

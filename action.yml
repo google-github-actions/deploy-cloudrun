@@ -20,14 +20,15 @@ description: |-
 inputs:
   service:
     description: |-
-      (Required, unless providing `metadata`) ID of the service or
-      fully-qualified identifier of the service.
+      (Required, unless providing `metadata` or `job`) ID of the service or
+      fully-qualified identifier of the service. Only one of `service` or `job`
+      may be specified.
     required: false
 
   image:
     description: |-
-      (Required, unless providing `metadata`, `source`, or `job`)
-      Fully-qualified name of the container image to deploy. For example:
+      (Required, unless providing `metadata` or `source`) Fully-qualified name
+      of the container image to deploy. For example:
 
           gcr.io/cloudrun/hello:latest
 
@@ -50,11 +51,8 @@ inputs:
 
   job:
     description: |-
-      (Required, unless providing `metadata`, `service`, or `image`) ID of the
-      job or fully-qualified identifier of the job. If `job` and `service` are
-      specified then the `service` will be updated and the `job` will be
-      ignored. Note that the `job` must be created first. This will only update
-      an existing `job`, it will not deploy/create a new job.
+      (Required, unless providing `metadata` or `service`) ID of the job or
+      fully-qualified identifier of the job.
     required: false
 
   suffix:
