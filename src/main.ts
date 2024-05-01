@@ -83,6 +83,7 @@ export async function run(): Promise<void> {
   process.env.CLOUDSDK_CORE_DISABLE_PROMPTS = '1';
   process.env.CLOUDSDK_METRICS_ENVIRONMENT = 'github-actions-deploy-cloudrun';
   process.env.CLOUDSDK_METRICS_ENVIRONMENT_VERSION = appVersion;
+  process.env.GOOGLE_APIS_USER_AGENT = `google-github-actions:deploy-cloudrun/${appVersion}`;
 
   // Warn if pinned to HEAD
   if (isPinnedToHead()) {
