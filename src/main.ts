@@ -38,7 +38,6 @@ import {
   parseKVStringAndFile,
   pinnedToHeadWarning,
   presence,
-  stubEnv,
 } from '@google-github-actions/actions-utils';
 import {
   authenticateGcloudSDK,
@@ -81,10 +80,9 @@ enum ResponseTypes {
  */
 export async function run(): Promise<void> {
   // Register metrics
-  const restoreEnv = stubEnv({
-    CLOUDSDK_METRICS_ENVIRONMENT: 'github-actions-deploy-cloudrun',
-    CLOUDSDK_METRICS_ENVIRONMENT_VERSION: appVersion,
-  });
+  process.env.CLOUDSDK_CORE_DISABLE_PROMPTS = '1';
+  process.env.CLOUDSDK_METRICS_ENVIRONMENT = 'github-actions-deploy-cloudrun';
+  process.env.CLOUDSDK_METRICS_ENVIRONMENT_VERSION = appVersion;
 
   // Warn if pinned to HEAD
   if (isPinnedToHead()) {
@@ -192,7 +190,7 @@ export async function run(): Promise<void> {
           `not covered by the semver backwards compatibility guarantee.`,
       );
 
-      cmd = ['run', 'jobs', 'deploy', job, '--quiet'];
+      cmd = ['run', 'jobs', 'deploy', job];
 
       if (image) {
         cmd.push('--image', image);
@@ -216,7 +214,7 @@ export async function run(): Promise<void> {
         cmd.push('--labels', joinKVStringForGCloud(compiledLabels));
       }
     } else {
-      cmd = ['run', 'deploy', service, '--quiet'];
+      cmd = ['run', 'deploy', service];
 
       if (image) {
         cmd.push('--image', image);
@@ -315,8 +313,6 @@ export async function run(): Promise<void> {
   } catch (err) {
     const msg = errorMessage(err);
     setFailed(`google-github-actions/deploy-cloudrun failed with: ${msg}`);
-  } finally {
-    restoreEnv();
   }
 }
 
