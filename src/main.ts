@@ -18,6 +18,7 @@ import path from 'path';
 
 import {
   addPath,
+  debug as logDebug,
   getInput,
   info as logInfo,
   setFailed,
@@ -295,6 +296,7 @@ export async function run(): Promise<void> {
     const options = { silent: !isDebug, ignoreReturnCode: true };
     const commandString = `${toolCommand} ${cmd.join(' ')}`;
     logInfo(`Running: ${commandString}`);
+    logDebug(JSON.stringify({ toolCommand: toolCommand, args: cmd, options: options }, null, '  '));
 
     // Run gcloud cmd.
     const output = await getExecOutput(toolCommand, cmd, options);

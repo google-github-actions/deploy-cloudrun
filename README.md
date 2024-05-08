@@ -201,6 +201,14 @@ jobs:
       flags: '--add-cloudsql-instances=...'
     ```
 
+    Flags that include other flags must quote the _entire_ outer flag value. For
+    example, to pass `--args=-X=123`:
+
+    ```yaml
+    with:
+      flags: '--add-cloudsql-instances=... "--args=-X=123"'
+    ```
+
     See the [complete list of
     flags](https://cloud.google.com/sdk/gcloud/reference/run/deploy#FLAGS) for
     more information.
