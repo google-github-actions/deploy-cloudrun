@@ -27,6 +27,9 @@ import {
 } from '@actions/core';
 import { getExecOutput } from '@actions/exec';
 import * as toolCache from '@actions/tool-cache';
+import { readFile } from 'fs/promises';
+import { parse as parseYAML } from 'yaml';
+
 import {
   errorMessage,
   isPinnedToHead,
@@ -146,45 +149,17 @@ export async function run(): Promise<void> {
       cmd = ['run', 'services', 'update-traffic', service];
       if (revTraffic) cmd.push('--to-revisions', revTraffic);
       if (tagTraffic) cmd.push('--to-tags', tagTraffic);
-
-      const providedButIgnored: Record<string, boolean> = {
-        image: image !== '',
-        metadata: metadata !== '',
-        source: source !== '',
-        env_vars: envVars !== '',
-        no_traffic: noTraffic,
-        secrets: Object.keys(secrets).length > 0,
-        suffix: suffix !== '',
-        tag: tag !== '',
-        labels: Object.keys(labels).length > 0,
-        timeout: timeout !== '',
-      };
-      for (const key in providedButIgnored) {
-        if (providedButIgnored[key]) {
-          logWarning(`Updating traffic, ignoring "${key}" input`);
-        }
-      }
     } else if (metadata) {
-      cmd = ['run', 'services', 'replace', metadata];
+      const contents = await readFile(metadata, 'utf8');
+      const parsed = parseYAML(contents);
 
-      const providedButIgnored: Record<string, boolean> = {
-        image: image !== '',
-        service: service !== '',
-        source: source !== '',
-        env_vars: envVars !== '',
-        no_traffic: noTraffic,
-        secrets: Object.keys(secrets).length > 0,
-        suffix: suffix !== '',
-        tag: tag !== '',
-        revision_traffic: revTraffic !== '',
-        tag_traffic: revTraffic !== '',
-        labels: Object.keys(labels).length > 0,
-        timeout: timeout !== '',
-      };
-      for (const key in providedButIgnored) {
-        if (providedButIgnored[key]) {
-          logWarning(`Using metadata YAML, ignoring "${key}" input`);
-        }
+      const kind = parsed?.kind;
+      if (kind === 'Service') {
+        cmd = ['run', 'services', 'replace', metadata];
+      } else if (kind === 'Job') {
+        cmd = ['run', 'jobs', 'replace', metadata];
+      } else {
+        throw new Error(`Unkown metadata type "${kind}", expected "Job" or "Service"`);
       }
     } else if (job) {
       logWarning(
@@ -249,17 +224,14 @@ export async function run(): Promise<void> {
 
     // Push common flags
     cmd.push('--format', 'json');
-    if (region) {
-      switch (region.length) {
-        case 0:
-          break;
-        case 1:
-          cmd.push('--region', region[0]);
-          break;
-        default:
-          cmd.push('--region', region.join(','));
-          break;
-      }
+    if (region?.length > 0) {
+      cmd.push(
+        '--region',
+        region
+          .flat()
+          .filter((e) => e !== undefined && e !== null && e !== '')
+          .join(','),
+      );
     }
     if (projectId) cmd.push('--project', projectId);
 

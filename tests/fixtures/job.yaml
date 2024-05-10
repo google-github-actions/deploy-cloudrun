@@ -1,0 +1,25 @@
+apiVersion: 'run.googleapis.com/v1'
+kind: 'Job'
+metadata:
+  name: 'job'
+  labels:
+    cloud.googleapis.com/location: 'us-east1'
+spec:
+  template:
+    metadata:
+      annotations:
+        run.googleapis.com/execution-environment: 'gen2'
+    spec:
+      parallelism: 1
+      taskCount: 1
+      template:
+        spec:
+          containers:
+            - image: 'gcr.io/cloudrun/hello'
+              imagePullPolicy: 'Always'
+              resources:
+                limits:
+                  cpu: '1000m'
+                  memory: '512Mi'
+          maxRetries: 0
+          timeoutSeconds: '3600'

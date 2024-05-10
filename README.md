@@ -262,7 +262,7 @@ jobs:
 ### Custom metadata YAML
 
 For advanced use cases, you can define a custom Cloud Run metadata file. This is
-a YAML description of the Cloud Run service. This allows you to customize your
+a YAML description of the Cloud Run service or job. This allows you to customize your
 service configuration, such as [memory
 limits](https://cloud.google.com/run/docs/configuring/memory-limits), [CPU
 allocation](https://cloud.google.com/run/docs/configuring/cpu), [max
@@ -271,7 +271,7 @@ instances](https://cloud.google.com/run/docs/configuring/max-instances), and
 
 **⚠️ When using a custom metadata YAML file, all other inputs are ignored!**
 
--   `metadata`: (Optional) The path to a Cloud Run service metadata file.
+-   `metadata`: (Optional) The path to a Cloud Run service or job metadata file.
 
 To [deploying a new service](https://cloud.google.com/run/docs/deploying#yaml)
 to create a new YAML service definition:
