@@ -27,6 +27,8 @@ import {
 } from '@actions/core';
 import { getExecOutput } from '@actions/exec';
 import * as toolCache from '@actions/tool-cache';
+import fs from 'fs';
+import { parse } from 'yaml';
 import {
   errorMessage,
   isPinnedToHead,
@@ -65,6 +67,13 @@ const isDebug =
  */
 export interface DeployCloudRunOutputs {
   url?: string | null | undefined; // Type required to match run_v1.Schema$Service.status.url
+}
+
+/**
+ * Metadata kind defition
+ */
+interface Metadata {
+  kind?: string;
 }
 
 /**
@@ -165,8 +174,13 @@ export async function run(): Promise<void> {
         }
       }
     } else if (metadata) {
-      cmd = ['run', 'services', 'replace', metadata];
-
+      cmd = [''];
+      const metadataYaml = identifyMetadataType(metadata);
+      if (metadataYaml.kind === 'Job') {
+        cmd = ['run', 'jobs', 'replace', metadata];
+      } else if (metadataYaml.kind === 'Service') {
+        cmd = ['run', 'services', 'replace', metadata];
+      }
       const providedButIgnored: Record<string, boolean> = {
         image: image !== '',
         service: service !== '',
@@ -347,6 +361,16 @@ function defaultLabels(): KVPair {
   }
 
   return labels;
+}
+
+/**
+ * identify kind of metadata file
+ * Metadata.
+ */
+function identifyMetadataType(metadataFilePath: string): Metadata {
+  const yamlText = fs.readFileSync(metadataFilePath, 'utf8');
+  const metadata: Metadata = parse(yamlText);
+  return metadata;
 }
 
 /**
