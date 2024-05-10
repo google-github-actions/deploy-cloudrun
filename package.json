@@ -33,7 +33,8 @@
     "@actions/exec": "^1.1.1",
     "@actions/tool-cache": "^2.0.1",
     "@google-github-actions/actions-utils": "^0.7.5",
-    "@google-github-actions/setup-cloud-sdk": "^1.1.6"
+    "@google-github-actions/setup-cloud-sdk": "^1.1.6",
+    "yaml": "^2.4.2"
   },
   "devDependencies": {
     "@types/node": "^20.12.11",

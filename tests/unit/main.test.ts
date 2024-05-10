@@ -271,16 +271,28 @@ test('#run', { concurrency: true }, async (suite) => {
     assertMembers(args, ['--source', 'example-app']);
   });
 
-  await suite.test('sets metadata if given', async (t) => {
+  await suite.test('sets service metadata if given', async (t) => {
     const mocks = defaultMocks(t.mock, {
-      metadata: 'yaml',
+      metadata: 'tests/fixtures/service.yaml',
       image: '',
     });
 
     await run();
 
     const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
-    assertMembers(args, ['services', 'replace', 'yaml']);
+    assertMembers(args, ['services', 'replace']);
+  });
+
+  await suite.test('sets job metadata if given', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      metadata: 'tests/fixtures/job.yaml',
+      image: '',
+    });
+
+    await run();
+
+    const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
+    assertMembers(args, ['jobs', 'replace']);
   });
 
   await suite.test('sets timeout if given', async (t) => {
