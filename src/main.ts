@@ -105,7 +105,9 @@ export async function run(): Promise<void> {
     const gcloudComponent = presence(getInput('gcloud_component')); // Cloud SDK component version
     const envVars = getInput('env_vars'); // String of env vars KEY=VALUE,...
     const envVarsFile = getInput('env_vars_file'); // File that is a string of env vars KEY=VALUE,...
+    const envVarsUpdateStrategy = getInput('env_vars_update_strategy') || 'merge';
     const secrets = parseKVString(getInput('secrets')); // String of secrets KEY=VALUE,...
+    const secretsUpdateStrategy = getInput('secrets_update_strategy') || 'merge';
     const region = parseCSV(getInput('region') || 'us-central1');
     const source = getInput('source'); // Source directory
     const suffix = getInput('suffix');
@@ -176,12 +178,18 @@ export async function run(): Promise<void> {
       }
 
       // Set optional flags from inputs
-      const compiledEnvVars = parseKVStringAndFile(envVars, envVarsFile);
-      if (compiledEnvVars && Object.keys(compiledEnvVars).length > 0) {
-        cmd.push('--update-env-vars', joinKVStringForGCloud(compiledEnvVars));
-      }
-      if (secrets && Object.keys(secrets).length > 0) {
-        cmd.push('--set-secrets', joinKVStringForGCloud(secrets));
+      setEnvVarsFlags(cmd, envVars, envVarsFile, envVarsUpdateStrategy);
+      setSecretsFlags(cmd, secrets, secretsUpdateStrategy);
+
+      // There is no --update-secrets flag on jobs, but there will be in the
+      // future. At that point, we can remove this.
+      const idx = cmd.indexOf('--update-secrets');
+      if (idx >= 0) {
+        logWarning(
+          `Cloud Run does not allow updating secrets on jobs, ignoring ` +
+            `"secrets_update_strategy" value of "merge"`,
+        );
+        cmd[idx] = '--set-secrets';
       }
 
       // Compile the labels
@@ -200,13 +208,9 @@ export async function run(): Promise<void> {
       }
 
       // Set optional flags from inputs
-      const compiledEnvVars = parseKVStringAndFile(envVars, envVarsFile);
-      if (compiledEnvVars && Object.keys(compiledEnvVars).length > 0) {
-        cmd.push('--update-env-vars', joinKVStringForGCloud(compiledEnvVars));
-      }
-      if (secrets && Object.keys(secrets).length > 0) {
-        cmd.push('--update-secrets', joinKVStringForGCloud(secrets));
-      }
+      setEnvVarsFlags(cmd, envVars, envVarsFile, envVarsUpdateStrategy);
+      setSecretsFlags(cmd, secrets, secretsUpdateStrategy);
+
       if (tag) {
         cmd.push('--tag', tag);
       }
@@ -331,6 +335,41 @@ async function computeGcloudVersion(str: string): Promise<string> {
     return await getLatestGcloudSDKVersion();
   }
   return str;
+}
+
+function setEnvVarsFlags(cmd: string[], envVars: string, envVarsFile: string, strategy: string) {
+  const compiledEnvVars = parseKVStringAndFile(envVars, envVarsFile);
+  if (compiledEnvVars && Object.keys(compiledEnvVars).length > 0) {
+    let flag = '';
+    if (strategy === 'overwrite') {
+      flag = '--set-env-vars';
+    } else if (strategy === 'merge') {
+      flag = '--update-env-vars';
+    } else {
+      throw new Error(
+        `Invalid "env_vars_update_strategy" value "${strategy}", valid values ` +
+          `are "overwrite" and "merge".`,
+      );
+    }
+    cmd.push(flag, joinKVStringForGCloud(compiledEnvVars));
+  }
+}
+
+function setSecretsFlags(cmd: string[], secrets: KVPair, strategy: string) {
+  if (secrets && Object.keys(secrets).length > 0) {
+    let flag = '';
+    if (strategy === 'overwrite') {
+      flag = '--set-secrets';
+    } else if (strategy === 'merge') {
+      flag = '--update-secrets';
+    } else {
+      throw new Error(
+        `Invalid "secrets_update_strategy" value "${strategy}", valid values ` +
+          `are "overwrite" and "merge".`,
+      );
+    }
+    cmd.push(flag, joinKVStringForGCloud(secrets));
+  }
 }
 
 /**
