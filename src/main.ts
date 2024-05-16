@@ -105,7 +105,9 @@ export async function run(): Promise<void> {
     const gcloudComponent = presence(getInput('gcloud_component')); // Cloud SDK component version
     const envVars = getInput('env_vars'); // String of env vars KEY=VALUE,...
     const envVarsFile = getInput('env_vars_file'); // File that is a string of env vars KEY=VALUE,...
+    const replaceEnvVars = parseBoolean(getInput('replace_env_vars'), false);
     const secrets = parseKVString(getInput('secrets')); // String of secrets KEY=VALUE,...
+    const replaceSecrets = parseBoolean(getInput('replace_secrets'), false);
     const region = parseCSV(getInput('region') || 'us-central1');
     const source = getInput('source'); // Source directory
     const suffix = getInput('suffix');
@@ -176,12 +178,14 @@ export async function run(): Promise<void> {
       }
 
       // Set optional flags from inputs
+      const envVarsParam = replaceEnvVars ? '--set-env-vars' : '--update-env-vars';
       const compiledEnvVars = parseKVStringAndFile(envVars, envVarsFile);
       if (compiledEnvVars && Object.keys(compiledEnvVars).length > 0) {
-        cmd.push('--update-env-vars', joinKVStringForGCloud(compiledEnvVars));
+        cmd.push(envVarsParam, joinKVStringForGCloud(compiledEnvVars));
       }
       if (secrets && Object.keys(secrets).length > 0) {
-        cmd.push('--set-secrets', joinKVStringForGCloud(secrets));
+        const secretsParam = replaceSecrets ? '--set-secrets' : '--update-secrets';
+        cmd.push(secretsParam, joinKVStringForGCloud(secrets));
       }
 
       // Compile the labels
@@ -200,12 +204,14 @@ export async function run(): Promise<void> {
       }
 
       // Set optional flags from inputs
+      const envVarsParam = replaceEnvVars ? '--set-env-vars' : '--update-env-vars';
       const compiledEnvVars = parseKVStringAndFile(envVars, envVarsFile);
       if (compiledEnvVars && Object.keys(compiledEnvVars).length > 0) {
-        cmd.push('--update-env-vars', joinKVStringForGCloud(compiledEnvVars));
+        cmd.push(envVarsParam, joinKVStringForGCloud(compiledEnvVars));
       }
       if (secrets && Object.keys(secrets).length > 0) {
-        cmd.push('--update-secrets', joinKVStringForGCloud(secrets));
+        const secretsParam = replaceSecrets ? '--set-secrets' : '--update-secrets';
+        cmd.push(secretsParam, joinKVStringForGCloud(secrets));
       }
       if (tag) {
         cmd.push('--tag', tag);

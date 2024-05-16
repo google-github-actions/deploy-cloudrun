@@ -15,7 +15,7 @@
  */
 
 import { mock, test } from 'node:test';
-import assert from 'node:assert';
+import assert, { AssertionError } from 'node:assert';
 
 import * as core from '@actions/core';
 import * as exec from '@actions/exec';
@@ -67,6 +67,27 @@ const defaultMocks = (
       return '1.2.3';
     }),
   };
+};
+
+const assertEscapedArgument = (args: string[], param: string, expected: string[]) => {
+  let found = false;
+  let i = 0;
+  for (; i < args.length; i += 1) {
+    if (args[i] === param) {
+      found = true;
+      break;
+    }
+  }
+  assert.ok(found, `could not find param ${param} in args`);
+
+  const actualEscaped = args[i + 1];
+  assert.ok(actualEscaped, `missing values after param ${param}`);
+
+  assert.deepStrictEqual(actualEscaped.charAt(0), '^');
+  const separator = actualEscaped.charAt(1);
+  assert.deepStrictEqual(actualEscaped.charAt(2), '^');
+  const actual = actualEscaped.substring(3).split(separator);
+  assert.deepStrictEqual(actual, expected, `values for param ${param} differ`);
 };
 
 test('#run', { concurrency: true }, async (suite) => {
@@ -329,6 +350,56 @@ test('#run', { concurrency: true }, async (suite) => {
 
     const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
     assertMembers(args, ['--tag', 'test']);
+  });
+
+  await suite.test('sets env vars if given', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      service: 'my-test-service',
+      env_vars: 'FOO=BAR\nZIP=ZAP',
+    });
+
+    await run();
+
+    const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
+    assertEscapedArgument(args, '--update-env-vars', ['FOO=BAR', 'ZIP=ZAP']);
+  });
+
+  await suite.test('replaces env vars if given', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      service: 'my-test-service',
+      env_vars: 'FOO=BAR\nZIP=ZAP',
+      replace_env_vars: 'true',
+    });
+
+    await run();
+
+    const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
+    assertEscapedArgument(args, '--set-env-vars', ['FOO=BAR', 'ZIP=ZAP']);
+  });
+
+  await suite.test('sets secret env vars if given', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      service: 'my-test-service',
+      secrets: 'FOO=BAR:latest\nZIP=ZAP:latest',
+    });
+
+    await run();
+
+    const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
+    assertEscapedArgument(args, '--update-secrets', ['FOO=BAR:latest', 'ZIP=ZAP:latest']);
+  });
+
+  await suite.test('replaces secret env vars if given', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      service: 'my-test-service',
+      secrets: 'FOO=BAR:latest\nZIP=ZAP:latest',
+      replace_secrets: 'true',
+    });
+
+    await run();
+
+    const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
+    assertEscapedArgument(args, '--set-secrets', ['FOO=BAR:latest', 'ZIP=ZAP:latest']);
   });
 
   await suite.test('fails if tag traffic and revision traffic are provided', async (t) => {

@@ -111,6 +111,11 @@ inputs:
       described in `env_vars`. You do not have to escape YAML or JSON.
     required: false
 
+  replace_env_vars:
+    description: |-
+      (Optional) Replace the env var instead of retaining the existing variables.
+    required: false
+
   secrets:
     description: |-
       (Optional) List of key=value pairs to use as secrets. These can either be
@@ -127,6 +132,12 @@ inputs:
 
       The same rules apply for escaping entries as from `env_vars`, but Cloud
       Run is more restrictive with allowed keys and names for secrets.
+    required: false
+
+  replace_secrets_vars:
+    description: |-
+      (Optional) Replace the existing environment secrets and volume mounts
+      instead of retaining the existing ones.
     required: false
 
   labels:
