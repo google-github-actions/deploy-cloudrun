@@ -111,6 +111,16 @@ inputs:
       described in `env_vars`. You do not have to escape YAML or JSON.
     required: false
 
+  env_vars_update_strategy:
+    description: |-
+      (Optional) Controls how the environment variables are set on the Cloud Run
+      service. If set to "merge", then the environment variables are merged with
+      any upstream values. If set to "overwrite", then all environment variables
+      on the Cloud Run service will be replaced with exactly the values given by
+      the GitHub Action (making it authoritative).
+    required: true
+    default: 'merge'
+
   secrets:
     description: |-
       (Optional) List of key=value pairs to use as secrets. These can either be
@@ -128,6 +138,16 @@ inputs:
       The same rules apply for escaping entries as from `env_vars`, but Cloud
       Run is more restrictive with allowed keys and names for secrets.
     required: false
+
+  secrets_update_strategy:
+    description: |-
+      (Optional) Controls how the secrets are set on the Cloud Run service. If
+      set to "merge", then the secrets are merged with any upstream values. If
+      set to "overwrite", then all secrets on the Cloud Run service will be
+      replaced with exactly the values given by the GitHub Action (making it
+      authoritative).
+    required: true
+    default: 'merge'
 
   labels:
     description: |-

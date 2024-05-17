@@ -201,6 +201,60 @@ test('#run', { concurrency: true }, async (suite) => {
     assert.deepStrictEqual(args, 'beta');
   });
 
+  await suite.test('merges envvars', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      service: 'my-test-service',
+      env_vars: 'FOO=BAR',
+    });
+
+    await run();
+
+    const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
+    const envVars = splitKV(args.at(args.indexOf('--update-env-vars') + 1));
+    assert.deepStrictEqual(envVars, { FOO: 'BAR' });
+  });
+
+  await suite.test('overwrites envvars', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      service: 'my-test-service',
+      env_vars: 'FOO=BAR',
+      env_vars_update_strategy: 'overwrite',
+    });
+
+    await run();
+
+    const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
+    const envVars = splitKV(args.at(args.indexOf('--set-env-vars') + 1));
+    assert.deepStrictEqual(envVars, { FOO: 'BAR' });
+  });
+
+  await suite.test('merges secrets', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      service: 'my-test-service',
+      secrets: 'FOO=bar:latest',
+    });
+
+    await run();
+
+    const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
+    const envVars = splitKV(args.at(args.indexOf('--update-secrets') + 1));
+    assert.deepStrictEqual(envVars, { FOO: 'bar:latest' });
+  });
+
+  await suite.test('overwrites secrets', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      service: 'my-test-service',
+      secrets: 'FOO=bar:latest',
+      secrets_update_strategy: 'overwrite',
+    });
+
+    await run();
+
+    const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
+    const envVars = splitKV(args.at(args.indexOf('--set-secrets') + 1));
+    assert.deepStrictEqual(envVars, { FOO: 'bar:latest' });
+  });
+
   await suite.test('sets labels', async (t) => {
     const mocks = defaultMocks(t.mock, {
       service: 'my-test-service',

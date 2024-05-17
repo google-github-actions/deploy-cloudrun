@@ -92,61 +92,46 @@ jobs:
     specifying 'v1' for a service named 'helloworld', would lead to a revision
     named 'helloworld-v1'. The default value is no suffix.
 
--   `env_vars`: (Optional) List of key=value pairs to set as environment
-    variables. All existing environment variables will be retained. If both
-    `env_vars` and `env_vars_file` are specified, the keys in `env_vars` will take
-    precendence over the keys in `env_vars_files`.
+-   `env_vars`, `env_vars_file`, and `env_vars_update_strategy`: (Optional)
+    These values define environment variables and their update strategy.
+
+    `env_vars` is specified as comma-separated or newline-separated key-value
+    pairs, with special characters escaped using a backslash.
 
     ```yaml
     with:
       env_vars: |
-        FOO=bar
-        ZIP=zap
-    ```
-
-    Entries are separated by commas (`,`) and newline characters. Keys and
-    values are separated by `=`. To use `,`, `=`, or newline characters, escape
-    them with a backslash:
-
-    ```yaml
-    with:
-      env_vars: |
+        NAME=person
         EMAILS=foo@bar.com\,zip@zap.com
     ```
 
--   `env_vars_file`: (Optional) Path to a file on disk, relative to the
-    workspace, that defines environment variables. The file can be
-    newline-separated KEY=VALUE pairs, JSON, or YAML format. If both `env_vars`
-    and `env_vars_file` are specified, the keys in env_vars will take
-    precendence over the keys in env_vars_files.
+    `env_vars_file` is the path to a file on disk relative to the workspace that
+    defines newline-separated KEY=VALUE pairs, JSON, or YAML.
 
     ```text
-    FOO=bar
-    ZIP=zap
+    NAME=person
+    EMAILS=foo@bar.com\,zip@zap.com
     ```
 
-    or
+    If both `env_vars` and `env_vars_file` are specified, they are merged and
+    the values from `env_vars` will take precedence on conflict.
 
-    ```json
-    {
-      "FOO": "bar",
-      "ZIP": "zap"
-    }
-    ```
-
-    or
+    `env_vars_update_strategy` controls how the environment variables are set on
+    the Cloud Run service. If `env_vars_update_strategy` is set to "merge", then
+    the environment variables are _merged_ with any upstream values. If set to
+    "overwrite", then all environment variables on the Cloud Run service will be
+    replaced with exactly the values given by the GitHub Action (making it
+    authoritative). The default value is "merge".
 
     ```yaml
-    FOO: 'bar'
-    ZIP: 'zap'
+    with:
+      env_vars_update_strategy: 'overwrite'
     ```
 
-    When specified as KEY=VALUE pairs, the same escaping rules apply as
-    described in `env_vars`. You do not have to escape YAML or JSON.
-
--   `secrets`: (Optional) List of key=value pairs to use as secrets. These can
-    either be injected as environment variables or mounted as volumes. All
-    existing environment secrets and volume mounts will be retained.
+-   `secrets`, `secrets_update_strategy`: (Optional) List of key=value pairs to
+    use as secrets. These can either be injected as environment variables or
+    mounted as volumes. All existing environment secrets and volume mounts will
+    be retained.
 
     ```yaml
     with:
@@ -160,6 +145,18 @@ jobs:
 
     The same rules apply for escaping entries as from `env_vars`, but Cloud Run
     is more restrictive with allowed keys and names for secrets.
+
+    `secrets_update_strategy` controls how the secrets are set on the Cloud Run
+    service. If `secrets_update_strategy` is set to "merge", then the secrets
+    are _merged_ with any upstream values. If set to "overwrite", then all
+    secrets on the Cloud Run service will be replaced with exactly the values
+    given by the GitHub Action (making it authoritative). The default value is
+    "merge".
+
+    ```yaml
+    with:
+      secrets_update_strategy: 'overwrite'
+    ```
 
 -   `labels`: (Optional) List of key=value pairs to set as labels on the Cloud
     Run service. Existing labels will be overwritten.

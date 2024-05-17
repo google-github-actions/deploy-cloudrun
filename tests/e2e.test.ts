@@ -73,6 +73,8 @@ test(
         }
         metadata = service.spec!.template!.metadata!;
         spec = service.spec!.template!.spec!;
+      } else {
+        throw new Error(`missing service or job`);
       }
     });
 
