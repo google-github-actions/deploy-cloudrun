@@ -20,9 +20,20 @@ description: |-
 inputs:
   service:
     description: |-
-      (Required, unless providing `metadata` or `job`) ID of the service or
-      fully-qualified identifier of the service. Only one of `service` or `job`
-      may be specified.
+      ID of the service or fully-qualified identifier of the service. This is
+      required unless providing `metadata` or `job`.
+    required: false
+
+  job:
+    description: |-
+      ID of the job or fully-qualified identifier of the job. This is required
+      unless providing `metadata` or `service`.
+    required: false
+
+  metadata:
+    description: |-
+      YAML service description for the Cloud Run service. This is required
+      unless providing `service` or `job`.
     required: false
 
   image:
@@ -43,158 +54,164 @@ inputs:
       to deploy. If specified, this will deploy the Cloud Run service from the
       code specified at the given source directory.
 
-      This requires the Artifact Registry API to be enabled. Furthermore, the
-      deploying service account must have the `Cloud Build Service Account`
-      role. The initial deployment will create an Artifact Registry repository
-      which requires the `Artifact Registry Admin` role.
-    required: false
-
-  job:
-    description: |-
-      (Required, unless providing `metadata` or `service`) ID of the job or
-      fully-qualified identifier of the job.
+      Learn more about the required permissions in [Deploying from source
+      code](https://cloud.google.com/run/docs/deploying-source-code).
     required: false
 
   suffix:
     description: |-
-      (Optional) String suffix to append to the revision name. Revision names
-      always start with the service name automatically. For example, specifying
-      'v1' for a service named 'helloworld', would lead to a revision named
-      'helloworld-v1'. The default value is no suffix.
+      String suffix to append to the revision name. Revision names always start
+      with the service name automatically. For example, specifying 'v1' for a
+      service named 'helloworld', would lead to a revision named
+      'helloworld-v1'.
     required: false
 
   env_vars:
     description: |-
-      (Optional) List of key=value pairs to set as environment variables. All
-      existing environment variables will be retained. If both `env_vars` and
-      `env_vars_file` are specified, the keys in `env_vars` will take
-      precendence over the keys in `env_vars_files`.
+      List of environment variables that should be set in the environment.
+      These are comma-separated or newline-separated `KEY=VALUE`. Keys or values
+      that contain separators must be escaped with a backslash (e.g. `\,` or
+      `\\n`) unless quoted. Any leading or trailing whitespace is trimmed unless
+      values are quoted.
 
-          with:
-            env_vars: |
-              FOO=bar
-              ZIP=zap
+          env_vars: |-
+            FRUIT=apple
+            SENTENCE=" this will retain leading and trailing spaces "
 
-      Entries are separated by commas (`,`) and newline characters. Keys and
-      values are separated by `=`. To use `,`, `=`, or newline characters,
-      escape them with a backslash:
+      This value will only be set if the input is a non-empty value. If a
+      non-empty value is given, the field values will be overwritten (not
+      merged). To remove all values, set the value to the literal string `{}`.
 
-          with:
-            env_vars: |
-              EMAILS=foo@bar.com\,zip@zap.com
+      If both `env_vars` and `env_vars_file` are specified, the keys in
+      `env_vars` will take precendence over the keys in `env_vars_files`.
     required: false
 
   env_vars_file:
     description: |-
-      (Optional) Path to a file on disk, relative to the workspace, that defines
+      Path to a file on disk, relative to the workspace, that defines
       environment variables. The file can be newline-separated KEY=VALUE pairs,
       JSON, or YAML format. If both `env_vars` and `env_vars_file` are
       specified, the keys in env_vars will take precendence over the keys in
       env_vars_files.
 
-          FOO=bar
-          ZIP=zap
-
-      or
-
-          {
-            "FOO": "bar",
-            "ZIP": "zap"
-          }
-
-      or
-
-          FOO: 'bar'
-          ZIP: 'zap'
+          NAME=person
+          EMAILS=foo@bar.com\,zip@zap.com
 
       When specified as KEY=VALUE pairs, the same escaping rules apply as
       described in `env_vars`. You do not have to escape YAML or JSON.
+
+      If both `env_vars` and `env_vars_file` are specified, the keys in
+      `env_vars` will take precendence over the keys in `env_vars_files`.
+
+      **⚠️ DEPRECATION NOTICE:** This input is deprecated and will be removed in
+      the next major version release.
     required: false
 
   env_vars_update_strategy:
     description: |-
-      (Optional) Controls how the environment variables are set on the Cloud Run
-      service. If set to "merge", then the environment variables are merged with
-      any upstream values. If set to "overwrite", then all environment variables
-      on the Cloud Run service will be replaced with exactly the values given by
+      Controls how the environment variables are set on the Cloud Run service.
+      If set to "merge", then the environment variables are _merged_ with any
+      upstream values. If set to "overwrite", then all environment variables on
+      the Cloud Run service will be replaced with exactly the values given by
       the GitHub Action (making it authoritative).
-    required: true
     default: 'merge'
+    required: true
 
   secrets:
     description: |-
-      (Optional) List of key=value pairs to use as secrets. These can either be
-      injected as environment variables or mounted as volumes. All existing
-      environment secrets and volume mounts will be retained.
+      List of KEY=VALUE pairs to use as secrets. These are comma-separated or
+      newline-separated `KEY=VALUE`. Keys or values that contain separators must
+      be escaped with a backslash (e.g. `\,` or `\\n`) unless quoted. Any
+      leading or trailing whitespace is trimmed unless values are quoted.
 
-        with:
-          secrets: |
-            # As an environment variable:
-            KEY1=secret-key-1:latest
+      These can either be injected as environment variables or mounted as
+      volumes. Keys starting with a forward slash '/' are mount paths. All other
+      keys correspond to environment variables:
 
-            # As a volume mount:
-            /secrets/api/key=secret-key-2:latest
+          with:
+            secrets: |-
+              # As an environment variable:
+              KEY1=secret-key-1:latest
 
-      The same rules apply for escaping entries as from `env_vars`, but Cloud
-      Run is more restrictive with allowed keys and names for secrets.
+              # As a volume mount:
+              /secrets/api/key=secret-key-2:latest
+
+      This value will only be set if the input is a non-empty value. If a
+      non-empty value is given, the field values will be overwritten (not
+      merged). To remove all values, set the value to the literal string `{}`.
     required: false
 
   secrets_update_strategy:
     description: |-
-      (Optional) Controls how the secrets are set on the Cloud Run service. If
-      set to "merge", then the secrets are merged with any upstream values. If
-      set to "overwrite", then all secrets on the Cloud Run service will be
-      replaced with exactly the values given by the GitHub Action (making it
+      Controls how the secrets are set on the Cloud Run service. If set to
+      `merge`, then the secrets are merged with any upstream values. If set to
+      `overwrite`, then all secrets on the Cloud Run service will be replaced
+      with exactly the values given by the GitHub Action (making it
       authoritative).
-    required: true
     default: 'merge'
+    required: true
 
   labels:
     description: |-
-      (Optional) List of key=value pairs to set as labels on the Cloud
-      Run service. Existing labels will be overwritten.
+      List of labels that should be set on the function. These are
+      comma-separated or newline-separated `KEY=VALUE`. Keys or values that
+      contain separators must be escaped with a backslash (e.g. `\,` or `\\n`)
+      unless quoted. Any leading or trailing whitespace is trimmed unless values
+      are quoted.
 
-        with:
           labels: |-
-            my-label=my-value
+            labela=my-label
+            labelb=my-other-label
 
-      The same rules apply for escaping entries as from `env_vars`, but labels
-      have strict naming and casing requirements.
+      This value will only be set if the input is a non-empty value. If a
+      non-empty value is given, the field values will be overwritten (not
+      merged). To remove all values, set the value to the literal string `{}`.
+
+      Google Cloud restricts the allowed values and length for labels. Please
+      see the Google Cloud documentation for labels for more information.
     required: false
 
   skip_default_labels:
     description: |-
-      (Optional) Skip applying the special annotation labels that indicate the
-      deployment came from GitHub Actions. The GitHub Action will automatically
-      apply the following labels which Cloud Run uses to enhance the user
-      experience:
+      Skip applying the special annotation labels that indicate the deployment
+      came from GitHub Actions. The GitHub Action will automatically apply the
+      following labels which Cloud Run uses to enhance the user experience:
 
           managed-by: github-actions
           commit-sha: <sha>
 
-      Setting this to `true` will skip adding these special labels. The default
-      value is `false`.
+      Setting this to `true` will skip adding these special labels.
     required: false
-    default: false
+    default: 'false'
 
   tag:
     description: |-
-      (Optional) Traffic tag to assign to the newly-created revision.
+      Traffic tag to assign to the newly-created revision.
     required: false
 
   timeout:
     description: |-
-      (Optional) Maximum request execution time, specified as a duration like
-      "10m5s" for ten minutes and 5 seconds.
+      Maximum request execution time, specified as a duration like "10m5s" for
+      ten minutes and 5 seconds.
     required: false
 
   flags:
     description: |-
-      (Optional) Space separate list of other Cloud Run flags. This can be used
-      to access features that are not exposed via this GitHub Action.
+      Space separate list of other Cloud Run flags. This can be used to access
+      features that are not exposed via this GitHub Action.
 
-        with:
-          flags: '--add-cloudsql-instances=...'
+          with:
+            flags: '--add-cloudsql-instances=...'
+
+      Flags that include other flags must quote the _entire_ outer flag value. For
+      example, to pass `--args=-X=123`:
+
+          with:
+            flags: '--add-cloudsql-instances=... "--args=-X=123"'
+
+      See the [complete list of
+      flags](https://cloud.google.com/sdk/gcloud/reference/run/deploy#FLAGS) for
+      more information.
 
       Please note, this GitHub Action does not parse or validate the flags. You
       are responsible for making sure the flags are available on the gcloud
@@ -205,15 +222,13 @@ inputs:
 
   no_traffic:
     description: |-
-      (Optional) If true, the newly deployed revision will not receive traffic.
-      The default value is false.
-    default: false
+      If true, the newly deployed revision will not receive traffic.
+    default: 'false'
     required: false
 
   revision_traffic:
     description: |-
-      (Optional, mutually-exclusive with `tag_traffic`) Comma-separated list of
-      revision traffic assignments.
+      Comma-separated list of revision traffic assignments.
 
           with:
             revision_traffic: 'my-revision=10' # percentage
@@ -222,29 +237,31 @@ inputs:
 
           with:
             revision_traffic: 'LATEST=100'
+
+      This is mutually-exclusive with `tag_traffic`.
     required: false
 
   tag_traffic:
     description: |-
-      (Optional, mutually-exclusive with `revision_traffic`) Comma-separated
-      list of tag traffic assignments.
+      Comma-separated list of tag traffic assignments.
 
           with:
             tag_traffic: 'my-tag=10' # percentage
+
+      This is mutually-exclusive with `revision_traffic`.
     required: false
 
   project_id:
     description: |-
-      (Optional) ID of the Google Cloud project in which to deploy the service.
-      The default value is computed from the environment.
+      ID of the Google Cloud project in which to deploy the service.
     required: false
 
   region:
     description: |-
-      (Optional) Regions in which the Cloud Run services are deployed. This can
-      be a single region or a comma-separated list of regions.
-    required: false
+      Regions in which the Cloud Run services are deployed. This can be a single
+      region or a comma-separated list of regions.
     default: 'us-central1'
+    required: false
 
   gcloud_version:
     description: |-
@@ -255,20 +272,13 @@ inputs:
 
   gcloud_component:
     description: |-
-      Version of the Cloud SDK components to install and use. If unspecified, the latest
-      or released version will be used. This is the equivalent of running
-      'gcloud alpha run' or 'gcloud beta run'. Valid values are `alpha` or `beta`.
-    required: false
-
-  metadata:
-    description: |-
-      YAML service description for the Cloud Run service.
+      Version of the Cloud SDK components to install and use.
     required: false
 
 outputs:
   url:
     description: |-
-      The URL of your Cloud Run service
+      The URL of the Cloud Run service.
 
 branding:
   icon: 'chevrons-right'

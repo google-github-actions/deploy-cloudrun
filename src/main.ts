@@ -137,6 +137,17 @@ export async function run(): Promise<void> {
       throw new Error('Only one of `service` or `job` inputs can be set.');
     }
 
+    // Deprecation notices
+    if (envVarsFile) {
+      logWarning(
+        `The "env_vars_file" input is deprecated and will be removed in a ` +
+          `future major release. To source values from a file, read the file ` +
+          `in a separate GitHub Actions step and set the contents as an output. ` +
+          `Alternatively, there are many community actions that automate ` +
+          `reading files.`,
+      );
+    }
+
     // Validate gcloud component input
     if (gcloudComponent && gcloudComponent !== 'alpha' && gcloudComponent !== 'beta') {
       throw new Error(`invalid input received for gcloud_component: ${gcloudComponent}`);
