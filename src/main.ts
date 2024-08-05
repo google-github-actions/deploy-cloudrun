@@ -56,7 +56,6 @@ import { parseDeployResponse, parseUpdateTrafficResponse } from './output-parser
 
 // Do not listen to the linter - this can NOT be rewritten as an ES6 import
 // statement.
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const { version: appVersion } = require('../package.json');
 
 // isDebug returns true if runner debugging or step debugging is enabled.
@@ -366,7 +365,7 @@ function setEnvVarsFlags(cmd: string[], envVars: string, envVarsFile: string, st
   }
 }
 
-function setSecretsFlags(cmd: string[], secrets: KVPair, strategy: string) {
+function setSecretsFlags(cmd: string[], secrets: KVPair | undefined, strategy: string) {
   if (secrets && Object.keys(secrets).length > 0) {
     let flag = '';
     if (strategy === 'overwrite') {
