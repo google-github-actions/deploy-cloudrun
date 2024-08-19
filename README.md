@@ -229,8 +229,7 @@ jobs:
 
 -   <a name="project_id"></a><a href="#user-content-project_id"><code>project_id</code></a>: _(Optional)_ ID of the Google Cloud project in which to deploy the service.
 
--   <a name="region"></a><a href="#user-content-region"><code>region</code></a>: _(Optional, default: `us-central1`)_ Regions in which the Cloud Run services are deployed. This can be a single
-    region or a comma-separated list of regions.
+-   <a name="region"></a><a href="#user-content-region"><code>region</code></a>: _(Optional, default: `us-central1`)_ Region in which the Cloud Run services are deployed.
 
 -   <a name="gcloud_version"></a><a href="#user-content-gcloud_version"><code>gcloud_version</code></a>: _(Optional)_ Version of the Cloud SDK to install. If unspecified or set to "latest",
     the latest available gcloud SDK version for the target platform will be
