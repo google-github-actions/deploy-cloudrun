@@ -81,9 +81,9 @@ jobs:
     code](https://cloud.google.com/run/docs/deploying-source-code).
 
 -   <a name="suffix"></a><a href="#user-content-suffix"><code>suffix</code></a>: _(Optional)_ String suffix to append to the revision name. Revision names always start
-    with the service name automatically. For example, specifying 'v1' for a
-    service named 'helloworld', would lead to a revision named
-    'helloworld-v1'.
+    with the service name automatically. For example, specifying `v1` for a
+    service named `helloworld`, would lead to a revision named
+    `helloworld-v1`. This option is only applies to services.
 
 -   <a name="env_vars"></a><a href="#user-content-env_vars"><code>env_vars</code></a>: _(Optional)_ List of environment variables that should be set in the environment.
     These are comma-separated or newline-separated `KEY=VALUE`. Keys or values
@@ -179,7 +179,8 @@ jobs:
 
     Setting this to `true` will skip adding these special labels.
 
--   <a name="tag"></a><a href="#user-content-tag"><code>tag</code></a>: _(Optional)_ Traffic tag to assign to the newly-created revision.
+-   <a name="tag"></a><a href="#user-content-tag"><code>tag</code></a>: _(Optional)_ Traffic tag to assign to the newly-created revision. This option is only
+    applies to services.
 
 -   <a name="timeout"></a><a href="#user-content-timeout"><code>timeout</code></a>: _(Optional)_ Maximum request execution time, specified as a duration like "10m5s" for
     ten minutes and 5 seconds.
@@ -202,11 +203,12 @@ jobs:
 
     Please note, this GitHub Action does not parse or validate the flags. You
     are responsible for making sure the flags are available on the gcloud
-    version and subcommand. When using `tag_traffic` or `revision_traffic`,
-    the subcommand is `gcloud run services update-traffic`. For all other
-    values, the subcommand is `gcloud run deploy`.
+    version and subcommand. The provided flags will be appended to the
+    `deploy` command. When `revision_traffic` or `tag_traffic` are set, the
+    flags will also be appended to the subsequent `update-traffic` command.
 
--   <a name="no_traffic"></a><a href="#user-content-no_traffic"><code>no_traffic</code></a>: _(Optional, default: `false`)_ If true, the newly deployed revision will not receive traffic.
+-   <a name="no_traffic"></a><a href="#user-content-no_traffic"><code>no_traffic</code></a>: _(Optional, default: `false`)_ If true, the newly deployed revision will not receive traffic. This option
+    is only applies to services.
 
 -   <a name="revision_traffic"></a><a href="#user-content-revision_traffic"><code>revision_traffic</code></a>: _(Optional)_ Comma-separated list of revision traffic assignments.
 
@@ -218,14 +220,16 @@ jobs:
         with:
           revision_traffic: 'LATEST=100'
 
-    This is mutually-exclusive with `tag_traffic`.
+    This is mutually-exclusive with `tag_traffic`. This option is only applies
+    to services.
 
 -   <a name="tag_traffic"></a><a href="#user-content-tag_traffic"><code>tag_traffic</code></a>: _(Optional)_ Comma-separated list of tag traffic assignments.
 
         with:
           tag_traffic: 'my-tag=10' # percentage
 
-    This is mutually-exclusive with `revision_traffic`.
+    This is mutually-exclusive with `revision_traffic`. This option is only
+    applies to services.
 
 -   <a name="project_id"></a><a href="#user-content-project_id"><code>project_id</code></a>: _(Optional)_ ID of the Google Cloud project in which to deploy the service.
 
