@@ -258,8 +258,7 @@ inputs:
 
   region:
     description: |-
-      Regions in which the Cloud Run services are deployed. This can be a single
-      region or a comma-separated list of regions.
+      Region in which the Cloud Run services are deployed.
     default: 'us-central1'
     required: false
 
