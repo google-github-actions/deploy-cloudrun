@@ -119,8 +119,7 @@ export async function run(): Promise<void> {
     const skipDefaultLabels = parseBoolean(getInput('skip_default_labels'));
     const flags = getInput('flags');
 
-    let responseType = ResponseTypes.DEPLOY; // Default response type for output parsing
-    let cmd;
+    let deployCmd: string[] = [];
 
     // Throw errors if inputs aren't valid
     if (revTraffic && tagTraffic) {
@@ -153,23 +152,15 @@ export async function run(): Promise<void> {
     }
 
     // Find base command
-    if (revTraffic || tagTraffic) {
-      // Set response type for output parsing
-      responseType = ResponseTypes.UPDATE_TRAFFIC;
-
-      // Update traffic
-      cmd = ['run', 'services', 'update-traffic', service];
-      if (revTraffic) cmd.push('--to-revisions', revTraffic);
-      if (tagTraffic) cmd.push('--to-tags', tagTraffic);
-    } else if (metadata) {
+    if (metadata) {
       const contents = await readFile(metadata, 'utf8');
       const parsed = parseYAML(contents);
 
       const kind = parsed?.kind;
       if (kind === 'Service') {
-        cmd = ['run', 'services', 'replace', metadata];
+        deployCmd = ['run', 'services', 'replace', metadata];
       } else if (kind === 'Job') {
-        cmd = ['run', 'jobs', 'replace', metadata];
+        deployCmd = ['run', 'jobs', 'replace', metadata];
       } else {
         throw new Error(`Unkown metadata type "${kind}", expected "Job" or "Service"`);
       }
@@ -179,80 +170,92 @@ export async function run(): Promise<void> {
           `not covered by the semver backwards compatibility guarantee.`,
       );
 
-      cmd = ['run', 'jobs', 'deploy', job];
+      deployCmd = ['run', 'jobs', 'deploy', job];
 
       if (image) {
-        cmd.push('--image', image);
+        deployCmd.push('--image', image);
       } else if (source) {
-        cmd.push('--source', source);
+        deployCmd.push('--source', source);
       }
 
       // Set optional flags from inputs
-      setEnvVarsFlags(cmd, envVars, envVarsFile, envVarsUpdateStrategy);
-      setSecretsFlags(cmd, secrets, secretsUpdateStrategy);
+      setEnvVarsFlags(deployCmd, envVars, envVarsFile, envVarsUpdateStrategy);
+      setSecretsFlags(deployCmd, secrets, secretsUpdateStrategy);
 
       // There is no --update-secrets flag on jobs, but there will be in the
       // future. At that point, we can remove this.
-      const idx = cmd.indexOf('--update-secrets');
+      const idx = deployCmd.indexOf('--update-secrets');
       if (idx >= 0) {
         logWarning(
           `Cloud Run does not allow updating secrets on jobs, ignoring ` +
             `"secrets_update_strategy" value of "merge"`,
         );
-        cmd[idx] = '--set-secrets';
+        deployCmd[idx] = '--set-secrets';
       }
 
       // Compile the labels
       const defLabels = skipDefaultLabels ? {} : defaultLabels();
       const compiledLabels = Object.assign({}, defLabels, labels);
       if (compiledLabels && Object.keys(compiledLabels).length > 0) {
-        cmd.push('--labels', joinKVStringForGCloud(compiledLabels));
+        deployCmd.push('--labels', joinKVStringForGCloud(compiledLabels));
       }
     } else {
-      cmd = ['run', 'deploy', service];
+      deployCmd = ['run', 'deploy', service];
 
       if (image) {
-        cmd.push('--image', image);
+        deployCmd.push('--image', image);
       } else if (source) {
-        cmd.push('--source', source);
+        deployCmd.push('--source', source);
       }
 
       // Set optional flags from inputs
-      setEnvVarsFlags(cmd, envVars, envVarsFile, envVarsUpdateStrategy);
-      setSecretsFlags(cmd, secrets, secretsUpdateStrategy);
+      setEnvVarsFlags(deployCmd, envVars, envVarsFile, envVarsUpdateStrategy);
+      setSecretsFlags(deployCmd, secrets, secretsUpdateStrategy);
 
       if (tag) {
-        cmd.push('--tag', tag);
+        deployCmd.push('--tag', tag);
       }
-      if (suffix) cmd.push('--revision-suffix', suffix);
-      if (noTraffic) cmd.push('--no-traffic');
-      if (timeout) cmd.push('--timeout', timeout);
+      if (suffix) deployCmd.push('--revision-suffix', suffix);
+      if (noTraffic) deployCmd.push('--no-traffic');
+      if (timeout) deployCmd.push('--timeout', timeout);
 
       // Compile the labels
       const defLabels = skipDefaultLabels ? {} : defaultLabels();
       const compiledLabels = Object.assign({}, defLabels, labels);
       if (compiledLabels && Object.keys(compiledLabels).length > 0) {
-        cmd.push('--update-labels', joinKVStringForGCloud(compiledLabels));
+        deployCmd.push('--update-labels', joinKVStringForGCloud(compiledLabels));
       }
     }
 
+    // Traffic flags
+    let updateTrafficCmd = ['run', 'services', 'update-traffic', service];
+    if (revTraffic) updateTrafficCmd.push('--to-revisions', revTraffic);
+    if (tagTraffic) updateTrafficCmd.push('--to-tags', tagTraffic);
+
     // Push common flags
-    cmd.push('--format', 'json');
+    deployCmd.push('--format', 'json');
+    updateTrafficCmd.push('--format', 'json');
+
     if (region?.length > 0) {
-      cmd.push(
-        '--region',
-        region
-          .flat()
-          .filter((e) => e !== undefined && e !== null && e !== '')
-          .join(','),
-      );
+      const regions = region
+        .flat()
+        .filter((e) => e !== undefined && e !== null && e !== '')
+        .join(',');
+      deployCmd.push('--region', regions);
+      updateTrafficCmd.push('--region', regions);
     }
-    if (projectId) cmd.push('--project', projectId);
+    if (projectId) {
+      deployCmd.push('--project', projectId);
+      updateTrafficCmd.push('--project', projectId);
+    }
 
     // Add optional flags
     if (flags) {
       const flagList = parseFlags(flags);
-      if (flagList) cmd = cmd.concat(flagList);
+      if (flagList) {
+        deployCmd = deployCmd.concat(flagList);
+        updateTrafficCmd = updateTrafficCmd.concat(flagList);
+      }
     }
 
     // Install gcloud if not already installed.
@@ -266,7 +269,8 @@ export async function run(): Promise<void> {
     // Install gcloud component if needed and prepend the command
     if (gcloudComponent) {
       await installGcloudComponent(gcloudComponent);
-      cmd.unshift(gcloudComponent);
+      deployCmd.unshift(gcloudComponent);
+      updateTrafficCmd.unshift(gcloudComponent);
     }
 
     // Authenticate - this comes from google-github-actions/auth.
@@ -280,25 +284,33 @@ export async function run(): Promise<void> {
 
     const toolCommand = getToolCommand();
     const options = { silent: !isDebug, ignoreReturnCode: true };
-    const commandString = `${toolCommand} ${cmd.join(' ')}`;
+    const commandString = `${toolCommand} ${deployCmd.join(' ')}`;
     logInfo(`Running: ${commandString}`);
-    logDebug(JSON.stringify({ toolCommand: toolCommand, args: cmd, options: options }, null, '  '));
+    logDebug(
+      JSON.stringify({ toolCommand: toolCommand, args: deployCmd, options: options }, null, '  '),
+    );
 
-    // Run gcloud cmd.
-    const output = await getExecOutput(toolCommand, cmd, options);
-    if (output.exitCode !== 0) {
-      const errMsg = output.stderr || `command exited ${output.exitCode}, but stderr had no output`;
+    // Run deploy command
+    const deployCmdExec = await getExecOutput(toolCommand, deployCmd, options);
+    if (deployCmdExec.exitCode !== 0) {
+      const errMsg =
+        deployCmdExec.stderr ||
+        `command exited ${deployCmdExec.exitCode}, but stderr had no output`;
       throw new Error(`failed to execute gcloud command \`${commandString}\`: ${errMsg}`);
     }
+    setActionOutputs(parseDeployResponse(deployCmdExec.stdout, { tag: tag }));
 
-    // Map outputs by response type
-    const outputs: DeployCloudRunOutputs =
-      responseType === ResponseTypes.UPDATE_TRAFFIC
-        ? parseUpdateTrafficResponse(output.stdout)
-        : parseDeployResponse(output.stdout, { tag: tag });
-
-    // Map outputs to GitHub actions output
-    setActionOutputs(outputs);
+    // Run revision/tag command
+    if (revTraffic || tagTraffic) {
+      const updateTrafficExec = await getExecOutput(toolCommand, updateTrafficCmd, options);
+      if (updateTrafficExec.exitCode !== 0) {
+        const errMsg =
+          updateTrafficExec.stderr ||
+          `command exited ${updateTrafficExec.exitCode}, but stderr had no output`;
+        throw new Error(`failed to execute gcloud command \`${commandString}\`: ${errMsg}`);
+      }
+      setActionOutputs(parseUpdateTrafficResponse(updateTrafficExec.stdout));
+    }
   } catch (err) {
     const msg = errorMessage(err);
     setFailed(`google-github-actions/deploy-cloudrun failed with: ${msg}`);

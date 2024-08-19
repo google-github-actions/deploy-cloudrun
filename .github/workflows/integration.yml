@@ -113,6 +113,7 @@ jobs:
           env_vars_update_strategy: 'overwrite'
           secrets: /api/secrets/my-secret=${{ vars.SECRET_NAME }}:latest
           secrets_update_strategy: 'overwrite'
+          to_revision: 'LATEST=100'
 
       - name: 'Run re-deploy tests'
         run: 'npm run e2e-tests'
@@ -201,6 +202,7 @@ jobs:
         with:
           image: 'gcr.io/cloudrun/hello'
           service: '${{ env.SERVICE_NAME }}'
+          to_revision: 'LATEST=100'
 
       - name: 'Run re-deploy tests'
         run: 'npm run e2e-tests' # Check that config isn't overwritten

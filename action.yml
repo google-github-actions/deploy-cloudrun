@@ -61,9 +61,9 @@ inputs:
   suffix:
     description: |-
       String suffix to append to the revision name. Revision names always start
-      with the service name automatically. For example, specifying 'v1' for a
-      service named 'helloworld', would lead to a revision named
-      'helloworld-v1'.
+      with the service name automatically. For example, specifying `v1` for a
+      service named `helloworld`, would lead to a revision named
+      `helloworld-v1`. This option is only applies to services.
     required: false
 
   env_vars:
@@ -186,7 +186,8 @@ inputs:
 
   tag:
     description: |-
-      Traffic tag to assign to the newly-created revision.
+      Traffic tag to assign to the newly-created revision. This option is only
+      applies to services.
     required: false
 
   timeout:
@@ -215,14 +216,15 @@ inputs:
 
       Please note, this GitHub Action does not parse or validate the flags. You
       are responsible for making sure the flags are available on the gcloud
-      version and subcommand. When using `tag_traffic` or `revision_traffic`,
-      the subcommand is `gcloud run services update-traffic`. For all other
-      values, the subcommand is `gcloud run deploy`.
+      version and subcommand. The provided flags will be appended to the
+      `deploy` command. When `revision_traffic` or `tag_traffic` are set, the
+      flags will also be appended to the subsequent `update-traffic` command.
     required: false
 
   no_traffic:
     description: |-
-      If true, the newly deployed revision will not receive traffic.
+      If true, the newly deployed revision will not receive traffic. This option
+      is only applies to services.
     default: 'false'
     required: false
 
@@ -238,7 +240,8 @@ inputs:
           with:
             revision_traffic: 'LATEST=100'
 
-      This is mutually-exclusive with `tag_traffic`.
+      This is mutually-exclusive with `tag_traffic`. This option is only applies
+      to services.
     required: false
 
   tag_traffic:
@@ -248,7 +251,8 @@ inputs:
           with:
             tag_traffic: 'my-tag=10' # percentage
 
-      This is mutually-exclusive with `revision_traffic`.
+      This is mutually-exclusive with `revision_traffic`. This option is only
+      applies to services.
     required: false
 
   project_id:

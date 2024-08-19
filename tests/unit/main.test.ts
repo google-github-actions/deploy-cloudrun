@@ -101,7 +101,7 @@ test('#run', { concurrency: true }, async (suite) => {
     });
     await run();
 
-    const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
+    const args = mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1);
     assertMembers(args, ['--project', 'my-test-project']);
   });
 
@@ -112,7 +112,7 @@ test('#run', { concurrency: true }, async (suite) => {
     });
     await run();
 
-    const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
+    const args = mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1);
     assertMembers(args, ['--region', 'us-central1']);
   });
 
@@ -123,7 +123,7 @@ test('#run', { concurrency: true }, async (suite) => {
     });
     await run();
 
-    const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
+    const args = mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1);
     assertMembers(args, ['--region', 'us-central1,us-east1']);
   });
 
@@ -209,7 +209,7 @@ test('#run', { concurrency: true }, async (suite) => {
 
     await run();
 
-    const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
+    const args = mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1);
     const envVars = splitKV(args.at(args.indexOf('--update-env-vars') + 1));
     assert.deepStrictEqual(envVars, { FOO: 'BAR' });
   });
@@ -223,7 +223,7 @@ test('#run', { concurrency: true }, async (suite) => {
 
     await run();
 
-    const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
+    const args = mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1);
     const envVars = splitKV(args.at(args.indexOf('--set-env-vars') + 1));
     assert.deepStrictEqual(envVars, { FOO: 'BAR' });
   });
@@ -236,7 +236,7 @@ test('#run', { concurrency: true }, async (suite) => {
 
     await run();
 
-    const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
+    const args = mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1);
     const envVars = splitKV(args.at(args.indexOf('--update-secrets') + 1));
     assert.deepStrictEqual(envVars, { FOO: 'bar:latest' });
   });
@@ -250,7 +250,7 @@ test('#run', { concurrency: true }, async (suite) => {
 
     await run();
 
-    const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
+    const args = mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1);
     const envVars = splitKV(args.at(args.indexOf('--set-secrets') + 1));
     assert.deepStrictEqual(envVars, { FOO: 'bar:latest' });
   });
@@ -271,7 +271,7 @@ test('#run', { concurrency: true }, async (suite) => {
       'foo': 'bar',
       'zip': 'zap',
     };
-    const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
+    const args = mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1);
     const labels = splitKV(args.at(args.indexOf('--update-labels') + 1));
     assert.deepStrictEqual(labels, expectedLabels);
   });
@@ -289,7 +289,7 @@ test('#run', { concurrency: true }, async (suite) => {
       foo: 'bar',
       zip: 'zap',
     };
-    const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
+    const args = mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1);
     const labels = splitKV(args.at(args.indexOf('--update-labels') + 1));
     assert.deepStrictEqual(labels, expectedLabels);
   });
@@ -307,7 +307,7 @@ test('#run', { concurrency: true }, async (suite) => {
       'managed-by': 'github-actions',
       'commit-sha': 'custom-value',
     };
-    const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
+    const args = mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1);
     const labels = splitKV(args.at(args.indexOf('--update-labels') + 1));
     assert.deepStrictEqual(labels, expectedLabels);
   });
@@ -321,7 +321,7 @@ test('#run', { concurrency: true }, async (suite) => {
 
     await run();
 
-    const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
+    const args = mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1);
     assertMembers(args, ['--source', 'example-app']);
   });
 
@@ -333,7 +333,7 @@ test('#run', { concurrency: true }, async (suite) => {
 
     await run();
 
-    const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
+    const args = mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1);
     assertMembers(args, ['services', 'replace']);
   });
 
@@ -345,7 +345,7 @@ test('#run', { concurrency: true }, async (suite) => {
 
     await run();
 
-    const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
+    const args = mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1);
     assertMembers(args, ['jobs', 'replace']);
   });
 
@@ -357,7 +357,7 @@ test('#run', { concurrency: true }, async (suite) => {
 
     await run();
 
-    const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
+    const args = mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1);
     assertMembers(args, ['--timeout', '55m12s']);
   });
 
@@ -369,20 +369,23 @@ test('#run', { concurrency: true }, async (suite) => {
 
     await run();
 
-    const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
+    const args = mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1);
     assertMembers(args, ['--tag', 'test']);
   });
 
   await suite.test('sets tag traffic if given', async (t) => {
     const mocks = defaultMocks(t.mock, {
       service: 'my-test-service',
-      tag: 'test',
+      tag_traffic: 'TEST=100',
     });
 
     await run();
 
-    const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
-    assertMembers(args, ['--tag', 'test']);
+    const deployArgs = mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1);
+    assertMembers(deployArgs, ['run', 'deploy', 'my-test-service']);
+
+    const updateTrafficArgs = mocks.getExecOutput.mock.calls?.at(1)?.arguments?.at(1);
+    assertMembers(updateTrafficArgs, ['--to-tags', 'TEST=100']);
   });
 
   await suite.test('fails if tag traffic and revision traffic are provided', async (t) => {
@@ -412,6 +415,21 @@ test('#run', { concurrency: true }, async (suite) => {
       },
       { message: /no service name set/ },
     );
+  });
+
+  await suite.test('sets revision traffic if given', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      service: 'my-test-service',
+      revision_traffic: 'TEST=100',
+    });
+
+    await run();
+
+    const deployArgs = mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1);
+    assertMembers(deployArgs, ['run', 'deploy', 'my-test-service']);
+
+    const updateTrafficArgs = mocks.getExecOutput.mock.calls?.at(1)?.arguments?.at(1);
+    assertMembers(updateTrafficArgs, ['--to-revisions', 'TEST=100']);
   });
 
   await suite.test('fails if service is not provided with revision traffic', async (t) => {
@@ -449,7 +467,7 @@ test('#run', { concurrency: true }, async (suite) => {
 
     await run();
 
-    const args = mocks.getExecOutput.mock.calls?.at(0).arguments?.at(1);
+    const args = mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1);
     assertMembers(args, ['run', 'jobs', 'deploy', 'my-test-job']);
   });
 });
