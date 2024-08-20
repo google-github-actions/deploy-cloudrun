@@ -96,7 +96,7 @@ export async function run(): Promise<void> {
   try {
     // Get action inputs
     const image = getInput('image'); // Image ie gcr.io/...
-    const service = getInput('service'); // Service name
+    let service = getInput('service'); // Service name
     const job = getInput('job'); // Job name
     const metadata = getInput('metadata'); // YAML file
     const projectId = getInput('project_id');
@@ -155,6 +155,19 @@ export async function run(): Promise<void> {
     if (metadata) {
       const contents = await readFile(metadata, 'utf8');
       const parsed = parseYAML(contents);
+
+      // Extract service name from metadata template
+      const name = parsed?.metadata?.name;
+      if (!name) {
+        throw new Error(`${metadata} is missing 'metadata.name'`);
+      }
+      if (service && service != name) {
+        throw new Error(
+          `service name in ${metadata} ("${name}") does not match GitHub ` +
+            `Actions service input ("${service}")`,
+        );
+      }
+      service = name;
 
       const kind = parsed?.kind;
       if (kind === 'Service') {

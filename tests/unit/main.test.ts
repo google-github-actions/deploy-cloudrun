@@ -337,6 +337,31 @@ test('#run', { concurrency: true }, async (suite) => {
     assertMembers(args, ['services', 'replace']);
   });
 
+  await suite.test('errors if metadata is given and the service names do not match', async (t) => {
+    defaultMocks(t.mock, {
+      metadata: 'tests/fixtures/service.yaml',
+      service: 'not-a-match',
+    });
+
+    await assert.rejects(
+      async () => {
+        await run();
+      },
+      { message: /does not match/ },
+    );
+  });
+
+  await suite.test('does not error if metadata is given and the service names match', async (t) => {
+    defaultMocks(t.mock, {
+      metadata: 'tests/fixtures/service.yaml',
+      service: 'run-full-yaml',
+    });
+
+    await assert.doesNotReject(async () => {
+      await run();
+    });
+  });
+
   await suite.test('sets job metadata if given', async (t) => {
     const mocks = defaultMocks(t.mock, {
       metadata: 'tests/fixtures/job.yaml',
