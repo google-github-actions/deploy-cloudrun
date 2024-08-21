@@ -118,6 +118,7 @@ export async function run(): Promise<void> {
     const labels = parseKVString(getInput('labels'));
     const skipDefaultLabels = parseBoolean(getInput('skip_default_labels'));
     const flags = getInput('flags');
+    const updateTrafficFlags = getInput('update_traffic_flags');
 
     let deployCmd: string[] = [];
 
@@ -262,11 +263,18 @@ export async function run(): Promise<void> {
       updateTrafficCmd.push('--project', projectId);
     }
 
-    // Add optional flags
+    // Add optional deploy flags
     if (flags) {
       const flagList = parseFlags(flags);
       if (flagList) {
         deployCmd = deployCmd.concat(flagList);
+      }
+    }
+
+    // Add optional update-traffic flags
+    if (updateTrafficFlags) {
+      const flagList = parseFlags(updateTrafficFlags);
+      if (flagList) {
         updateTrafficCmd = updateTrafficCmd.concat(flagList);
       }
     }

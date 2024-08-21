@@ -185,8 +185,11 @@ jobs:
 -   <a name="timeout"></a><a href="#user-content-timeout"><code>timeout</code></a>: _(Optional)_ Maximum request execution time, specified as a duration like "10m5s" for
     ten minutes and 5 seconds.
 
--   <a name="flags"></a><a href="#user-content-flags"><code>flags</code></a>: _(Optional)_ Space separate list of other Cloud Run flags. This can be used to access
-    features that are not exposed via this GitHub Action.
+-   <a name="flags"></a><a href="#user-content-flags"><code>flags</code></a>: _(Optional)_ Space separate list of additional Cloud Run flags to pass to the deploy
+    command. This can be used to apply advanced features that are not exposed
+    via this GitHub Action. For Cloud Run services, this command will be
+    `gcloud run deploy`. For Cloud Run jobs, this command will be `gcloud jobs
+    deploy.
 
         with:
           flags: '--add-cloudsql-instances=...'
@@ -203,9 +206,7 @@ jobs:
 
     Please note, this GitHub Action does not parse or validate the flags. You
     are responsible for making sure the flags are available on the gcloud
-    version and subcommand. The provided flags will be appended to the
-    `deploy` command. When `revision_traffic` or `tag_traffic` are set, the
-    flags will also be appended to the subsequent `update-traffic` command.
+    version and subcommand.
 
 -   <a name="no_traffic"></a><a href="#user-content-no_traffic"><code>no_traffic</code></a>: _(Optional, default: `false`)_ If true, the newly deployed revision will not receive traffic. This option
     is only applies to services.
@@ -230,6 +231,28 @@ jobs:
 
     This is mutually-exclusive with `revision_traffic`. This option is only
     applies to services.
+
+-   <a name="update_traffic_flags"></a><a href="#user-content-update_traffic_flags"><code>update_traffic_flags</code></a>: _(Optional)_ Space separate list of additional Cloud Run flags to pass to the `gcloud
+    run services update-traffic` command. This can be used to apply advanced
+    features that are not exposed via this GitHub Action. This flag only
+    applies with `revision_traffic` or `tag_traffic` is set.
+
+        with:
+          traffic_flags: '--set-tags=...'
+
+    Flags that include other flags must quote the _entire_ outer flag value. For
+    example, to pass `--args=-X=123`:
+
+        with:
+          flags: '--set-tags=... "--args=-X=123"'
+
+    See the [complete list of
+    flags](https://cloud.google.com/sdk/gcloud/reference/run/services/update#FLAGS)
+    for more information.
+
+    Please note, this GitHub Action does not parse or validate the flags. You
+    are responsible for making sure the flags are available on the gcloud
+    version and subcommand.
 
 -   <a name="project_id"></a><a href="#user-content-project_id"><code>project_id</code></a>: _(Optional)_ ID of the Google Cloud project in which to deploy the service.
 
