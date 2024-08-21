@@ -398,6 +398,18 @@ test('#run', { concurrency: true }, async (suite) => {
     assertMembers(args, ['--tag', 'test']);
   });
 
+  await suite.test('sets additional flags on the deploy command', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      service: 'my-test-service',
+      flags: '--arg1=1 --arg2=2',
+    });
+
+    await run();
+
+    const args = mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1);
+    assertMembers(args, ['--arg1', '1', '--arg2', '2']);
+  });
+
   await suite.test('sets tag traffic if given', async (t) => {
     const mocks = defaultMocks(t.mock, {
       service: 'my-test-service',
@@ -455,6 +467,19 @@ test('#run', { concurrency: true }, async (suite) => {
 
     const updateTrafficArgs = mocks.getExecOutput.mock.calls?.at(1)?.arguments?.at(1);
     assertMembers(updateTrafficArgs, ['--to-revisions', 'TEST=100']);
+  });
+
+  await suite.test('sets additional flags on the update-traffic command', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      service: 'my-test-service',
+      tag_traffic: 'test',
+      update_traffic_flags: '--arg1=1 --arg2=2',
+    });
+
+    await run();
+
+    const args = mocks.getExecOutput.mock.calls?.at(1)?.arguments?.at(1);
+    assertMembers(args, ['--arg1', '1', '--arg2', '2']);
   });
 
   await suite.test('fails if service is not provided with revision traffic', async (t) => {
