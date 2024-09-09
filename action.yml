@@ -83,7 +83,7 @@ inputs:
       merged). To remove all values, set the value to the literal string `{}`.
 
       If both `env_vars` and `env_vars_file` are specified, the keys in
-      `env_vars` will take precendence over the keys in `env_vars_files`.
+      `env_vars` will take precendence over the keys in `env_vars_file`.
     required: false
 
   env_vars_file:
@@ -92,7 +92,7 @@ inputs:
       environment variables. The file can be newline-separated KEY=VALUE pairs,
       JSON, or YAML format. If both `env_vars` and `env_vars_file` are
       specified, the keys in env_vars will take precendence over the keys in
-      env_vars_files.
+      env_vars_file.
 
           NAME=person
           EMAILS=foo@bar.com\,zip@zap.com
@@ -101,7 +101,7 @@ inputs:
       described in `env_vars`. You do not have to escape YAML or JSON.
 
       If both `env_vars` and `env_vars_file` are specified, the keys in
-      `env_vars` will take precendence over the keys in `env_vars_files`.
+      `env_vars` will take precendence over the keys in `env_vars_file`.
 
       **⚠️ DEPRECATION NOTICE:** This input is deprecated and will be removed in
       the next major version release.
