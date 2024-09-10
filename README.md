@@ -100,13 +100,13 @@ jobs:
     merged). To remove all values, set the value to the literal string `{}`.
 
     If both `env_vars` and `env_vars_file` are specified, the keys in
-    `env_vars` will take precendence over the keys in `env_vars_files`.
+    `env_vars` will take precendence over the keys in `env_vars_file`.
 
 -   <a name="env_vars_file"></a><a href="#user-content-env_vars_file"><code>env_vars_file</code></a>: _(Optional)_ Path to a file on disk, relative to the workspace, that defines
     environment variables. The file can be newline-separated KEY=VALUE pairs,
     JSON, or YAML format. If both `env_vars` and `env_vars_file` are
     specified, the keys in env_vars will take precendence over the keys in
-    env_vars_files.
+    env_vars_file.
 
         NAME=person
         EMAILS=foo@bar.com\,zip@zap.com
@@ -115,7 +115,7 @@ jobs:
     described in `env_vars`. You do not have to escape YAML or JSON.
 
     If both `env_vars` and `env_vars_file` are specified, the keys in
-    `env_vars` will take precendence over the keys in `env_vars_files`.
+    `env_vars` will take precendence over the keys in `env_vars_file`.
 
     **⚠️ DEPRECATION NOTICE:** This input is deprecated and will be removed in
     the next major version release.
