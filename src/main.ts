@@ -67,6 +67,7 @@ const isDebug =
  */
 export interface DeployCloudRunOutputs {
   url?: string | null | undefined; // Type required to match run_v1.Schema$Service.status.url
+  revision?: string | null | undefined; // Latest created revision name from the deployment
 }
 
 /**
