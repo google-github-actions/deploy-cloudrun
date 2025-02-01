@@ -63,7 +63,7 @@ inputs:
       String suffix to append to the revision name. Revision names always start
       with the service name automatically. For example, specifying `v1` for a
       service named `helloworld`, would lead to a revision named
-      `helloworld-v1`. This option is only applies to services.
+      `helloworld-v1`. This option only applies to services.
     required: false
 
   env_vars:
@@ -83,7 +83,7 @@ inputs:
       merged). To remove all values, set the value to the literal string `{}`.
 
       If both `env_vars` and `env_vars_file` are specified, the keys in
-      `env_vars` will take precendence over the keys in `env_vars_file`.
+      `env_vars` will take precedence over the keys in `env_vars_file`.
     required: false
 
   env_vars_file:
@@ -91,7 +91,7 @@ inputs:
       Path to a file on disk, relative to the workspace, that defines
       environment variables. The file can be newline-separated KEY=VALUE pairs,
       JSON, or YAML format. If both `env_vars` and `env_vars_file` are
-      specified, the keys in env_vars will take precendence over the keys in
+      specified, the keys in env_vars will take precedence over the keys in
       env_vars_file.
 
           NAME=person
@@ -101,7 +101,7 @@ inputs:
       described in `env_vars`. You do not have to escape YAML or JSON.
 
       If both `env_vars` and `env_vars_file` are specified, the keys in
-      `env_vars` will take precendence over the keys in `env_vars_file`.
+      `env_vars` will take precedence over the keys in `env_vars_file`.
 
       **⚠️ DEPRECATION NOTICE:** This input is deprecated and will be removed in
       the next major version release.
@@ -186,7 +186,7 @@ inputs:
 
   tag:
     description: |-
-      Traffic tag to assign to the newly-created revision. This option is only
+      Traffic tag to assign to the newly-created revision. This option only
       applies to services.
     required: false
 
@@ -202,7 +202,7 @@ inputs:
       command. This can be used to apply advanced features that are not exposed
       via this GitHub Action. For Cloud Run services, this command will be
       `gcloud run deploy`. For Cloud Run jobs, this command will be `gcloud jobs
-      deploy.
+      deploy`.
 
           with:
             flags: '--add-cloudsql-instances=...'
@@ -225,7 +225,7 @@ inputs:
   no_traffic:
     description: |-
       If true, the newly deployed revision will not receive traffic. This option
-      is only applies to services.
+      only applies to services.
     default: 'false'
     required: false
 
@@ -241,7 +241,7 @@ inputs:
           with:
             revision_traffic: 'LATEST=100'
 
-      This is mutually-exclusive with `tag_traffic`. This option is only applies
+      This is mutually-exclusive with `tag_traffic`. This option only applies
       to services.
     required: false
 
@@ -252,7 +252,7 @@ inputs:
           with:
             tag_traffic: 'my-tag=10' # percentage
 
-      This is mutually-exclusive with `revision_traffic`. This option is only
+      This is mutually-exclusive with `revision_traffic`. This option only
       applies to services.
     required: false
 
@@ -261,7 +261,7 @@ inputs:
       Space separate list of additional Cloud Run flags to pass to the `gcloud
       run services update-traffic` command. This can be used to apply advanced
       features that are not exposed via this GitHub Action. This flag only
-      applies with `revision_traffic` or `tag_traffic` is set.
+      applies when `revision_traffic` or `tag_traffic` is set.
 
           with:
             traffic_flags: '--set-tags=...'
