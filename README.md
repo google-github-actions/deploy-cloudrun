@@ -83,7 +83,7 @@ jobs:
 -   <a name="suffix"></a><a href="#user-content-suffix"><code>suffix</code></a>: _(Optional)_ String suffix to append to the revision name. Revision names always start
     with the service name automatically. For example, specifying `v1` for a
     service named `helloworld`, would lead to a revision named
-    `helloworld-v1`. This option is only applies to services.
+    `helloworld-v1`. This option only applies to services.
 
 -   <a name="env_vars"></a><a href="#user-content-env_vars"><code>env_vars</code></a>: _(Optional)_ List of environment variables that should be set in the environment.
     These are comma-separated or newline-separated `KEY=VALUE`. Keys or values
@@ -100,12 +100,12 @@ jobs:
     merged). To remove all values, set the value to the literal string `{}`.
 
     If both `env_vars` and `env_vars_file` are specified, the keys in
-    `env_vars` will take precendence over the keys in `env_vars_file`.
+    `env_vars` will take precedence over the keys in `env_vars_file`.
 
 -   <a name="env_vars_file"></a><a href="#user-content-env_vars_file"><code>env_vars_file</code></a>: _(Optional)_ Path to a file on disk, relative to the workspace, that defines
     environment variables. The file can be newline-separated KEY=VALUE pairs,
     JSON, or YAML format. If both `env_vars` and `env_vars_file` are
-    specified, the keys in env_vars will take precendence over the keys in
+    specified, the keys in env_vars will take precedence over the keys in
     env_vars_file.
 
         NAME=person
@@ -115,7 +115,7 @@ jobs:
     described in `env_vars`. You do not have to escape YAML or JSON.
 
     If both `env_vars` and `env_vars_file` are specified, the keys in
-    `env_vars` will take precendence over the keys in `env_vars_file`.
+    `env_vars` will take precedence over the keys in `env_vars_file`.
 
     **⚠️ DEPRECATION NOTICE:** This input is deprecated and will be removed in
     the next major version release.
@@ -179,7 +179,7 @@ jobs:
 
     Setting this to `true` will skip adding these special labels.
 
--   <a name="tag"></a><a href="#user-content-tag"><code>tag</code></a>: _(Optional)_ Traffic tag to assign to the newly-created revision. This option is only
+-   <a name="tag"></a><a href="#user-content-tag"><code>tag</code></a>: _(Optional)_ Traffic tag to assign to the newly-created revision. This option only
     applies to services.
 
 -   <a name="timeout"></a><a href="#user-content-timeout"><code>timeout</code></a>: _(Optional)_ Maximum request execution time, specified as a duration like "10m5s" for
@@ -189,7 +189,7 @@ jobs:
     command. This can be used to apply advanced features that are not exposed
     via this GitHub Action. For Cloud Run services, this command will be
     `gcloud run deploy`. For Cloud Run jobs, this command will be `gcloud jobs
-    deploy.
+    deploy`.
 
         with:
           flags: '--add-cloudsql-instances=...'
@@ -209,7 +209,7 @@ jobs:
     version and subcommand.
 
 -   <a name="no_traffic"></a><a href="#user-content-no_traffic"><code>no_traffic</code></a>: _(Optional, default: `false`)_ If true, the newly deployed revision will not receive traffic. This option
-    is only applies to services.
+    only applies to services.
 
 -   <a name="revision_traffic"></a><a href="#user-content-revision_traffic"><code>revision_traffic</code></a>: _(Optional)_ Comma-separated list of revision traffic assignments.
 
@@ -221,7 +221,7 @@ jobs:
         with:
           revision_traffic: 'LATEST=100'
 
-    This is mutually-exclusive with `tag_traffic`. This option is only applies
+    This is mutually-exclusive with `tag_traffic`. This option only applies
     to services.
 
 -   <a name="tag_traffic"></a><a href="#user-content-tag_traffic"><code>tag_traffic</code></a>: _(Optional)_ Comma-separated list of tag traffic assignments.
@@ -229,13 +229,13 @@ jobs:
         with:
           tag_traffic: 'my-tag=10' # percentage
 
-    This is mutually-exclusive with `revision_traffic`. This option is only
+    This is mutually-exclusive with `revision_traffic`. This option only
     applies to services.
 
 -   <a name="update_traffic_flags"></a><a href="#user-content-update_traffic_flags"><code>update_traffic_flags</code></a>: _(Optional)_ Space separate list of additional Cloud Run flags to pass to the `gcloud
     run services update-traffic` command. This can be used to apply advanced
     features that are not exposed via this GitHub Action. This flag only
-    applies with `revision_traffic` or `tag_traffic` is set.
+    applies when `revision_traffic` or `tag_traffic` is set.
 
         with:
           traffic_flags: '--set-tags=...'
