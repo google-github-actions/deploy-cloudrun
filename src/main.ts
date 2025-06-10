@@ -231,7 +231,7 @@ export async function run(): Promise<void> {
       }
       if (suffix) deployCmd.push('--revision-suffix', suffix);
       if (noTraffic) deployCmd.push('--no-traffic');
-      if (timeout) deployCmd.push('--timeout', timeout);
+      if (timeout) deployCmd.push('--task-timeout', timeout);
 
       // Compile the labels
       const defLabels = skipDefaultLabels ? {} : defaultLabels();
