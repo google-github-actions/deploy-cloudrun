@@ -12,11 +12,11 @@ spec:
     spec:
       containerConcurrency: 20
       containers:
-      - image: 'gcr.io/cloudrun/hello'
-        ports:
-        - containerPort: 8080
-        resources:
-          limits:
-            cpu: '2'
-            memory: '1Gi'
+        - image: 'gcr.io/cloudrun/hello'
+          ports:
+            - containerPort: 8080
+          resources:
+            limits:
+              cpu: '2'
+              memory: '1Gi'
       timeoutSeconds: 300
