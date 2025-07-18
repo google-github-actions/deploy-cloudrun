@@ -38,12 +38,14 @@ jobs:
       - uses: 'actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683' # ratchet:actions/checkout@v4
 
       - name: 'Compute service name'
+        env:
+          MATRIX_NAME: '${{ matrix.name }}'
         run: |-
-          echo "SERVICE_NAME=${GITHUB_JOB}-${{ matrix.name }}-${GITHUB_SHA::7}-${GITHUB_RUN_NUMBER}" >> ${GITHUB_ENV}
+          echo "SERVICE_NAME=${GITHUB_JOB}-${MATRIX_NAME}-${GITHUB_SHA::7}-${GITHUB_RUN_NUMBER}" >> "${GITHUB_ENV}"
 
       - uses: 'actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a' # ratchet:actions/setup-node@v4
         with:
-          node-version: '20.12.x' # https://github.com/nodejs/node/issues/53033
+          node-version-file: 'package.json'
 
       - run: 'npm ci && npm run build'
 
@@ -75,7 +77,7 @@ jobs:
       - name: 'Run initial deploy tests'
         run: 'npm run e2e-tests'
         env:
-          PROJECT_ID: ${{ vars.PROJECT_ID }}
+          PROJECT_ID: '${{ vars.PROJECT_ID }}'
           SERVICE: '${{ env.SERVICE_NAME }}'
           ENV: |-
             {
@@ -111,14 +113,14 @@ jobs:
             ABC=123
             DEF=456
           env_vars_update_strategy: 'overwrite'
-          secrets: /api/secrets/my-secret=${{ vars.SECRET_NAME }}:latest
+          secrets: '/api/secrets/my-secret=${{ vars.SECRET_NAME }}:latest'
           secrets_update_strategy: 'overwrite'
-          to_revision: 'LATEST=100'
+          revision_traffic: 'LATEST=100'
 
       - name: 'Run re-deploy tests'
         run: 'npm run e2e-tests'
         env:
-          PROJECT_ID: ${{ vars.PROJECT_ID }}
+          PROJECT_ID: '${{ vars.PROJECT_ID }}'
           SERVICE: '${{ env.SERVICE_NAME }}'
           ENV: |-
             {
@@ -153,7 +155,7 @@ jobs:
 
       - name: 'Compute service name'
         run: |-
-          echo "SERVICE_NAME=${GITHUB_JOB}-metadata-${GITHUB_SHA::7}-${GITHUB_RUN_NUMBER}" >> ${GITHUB_ENV}
+          echo "SERVICE_NAME=${GITHUB_JOB}-metadata-${GITHUB_SHA::7}-${GITHUB_RUN_NUMBER}" >> "${GITHUB_ENV}"
 
       - name: 'Set service name in metadata YAML'
         run: |-
@@ -161,7 +163,7 @@ jobs:
 
       - uses: 'actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a' # ratchet:actions/setup-node@v4
         with:
-          node-version: '20.12.x' # https://github.com/nodejs/node/issues/53033
+          node-version-file: 'package.json'
 
       - run: 'npm ci && npm run build'
 
@@ -202,7 +204,7 @@ jobs:
         with:
           image: 'gcr.io/cloudrun/hello'
           service: '${{ env.SERVICE_NAME }}'
-          to_revision: 'LATEST=100'
+          revision_traffic: 'LATEST=100'
 
       - name: 'Run re-deploy tests'
         run: 'npm run e2e-tests' # Check that config isn't overwritten
@@ -229,11 +231,11 @@ jobs:
 
       - name: 'Compute job name'
         run: |-
-          echo "JOB_NAME=${GITHUB_JOB}-job-${GITHUB_SHA::7}-${GITHUB_RUN_NUMBER}" >> ${GITHUB_ENV}
+          echo "JOB_NAME=${GITHUB_JOB}-job-${GITHUB_SHA::7}-${GITHUB_RUN_NUMBER}" >> "${GITHUB_ENV}"
 
       - uses: 'actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a' # ratchet:actions/setup-node@v4
         with:
-          node-version: '20.12.x' # https://github.com/nodejs/node/issues/53033
+          node-version-file: 'package.json'
 
       - run: 'npm ci && npm run build'
 
@@ -264,7 +266,7 @@ jobs:
       - name: 'Run initial deploy tests'
         run: 'npm run e2e-tests'
         env:
-          PROJECT_ID: ${{ vars.PROJECT_ID }}
+          PROJECT_ID: '${{ vars.PROJECT_ID }}'
           JOB: '${{ env.JOB_NAME }}'
           ENV: |-
             {
@@ -294,12 +296,13 @@ jobs:
             ABC=123
             DEF=456
           env_vars_update_strategy: 'overwrite'
-          secrets: /api/secrets/my-secret=${{ vars.SECRET_NAME }}:latest
+          secrets: |-
+            /api/secrets/my-secret=${{ vars.SECRET_NAME }}:latest
 
       - name: 'Run re-deploy tests'
         run: 'npm run e2e-tests'
         env:
-          PROJECT_ID: ${{ vars.PROJECT_ID }}
+          PROJECT_ID: '${{ vars.PROJECT_ID }}'
           JOB: '${{ env.JOB_NAME }}'
           ENV: |-
             {

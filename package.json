@@ -11,6 +11,10 @@
     "test": "node --require ts-node/register --test-reporter spec --test tests/unit/main.test.ts tests/unit/output-parser.test.ts",
     "e2e-tests": "node --require ts-node/register --test-reporter spec --test tests/e2e.test.ts"
   },
+  "engines": {
+    "node": "20.x",
+    "npm": "10.x"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/google-github-actions/deploy-cloudrun.git"
