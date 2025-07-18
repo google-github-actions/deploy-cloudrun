@@ -308,6 +308,9 @@ outputs:
   url:
     description: |-
       The URL of the Cloud Run service.
+  revision:
+    description: |-
+      The name of the latest created revision from the deployment.
 
 branding:
   icon: 'chevrons-right'
