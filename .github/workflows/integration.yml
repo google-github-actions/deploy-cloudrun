@@ -19,6 +19,10 @@ permissions:
   contents: 'read'
   id-token: 'write'
 
+defaults:
+  run:
+    shell: 'bash'
+
 jobs:
   deploy:
     runs-on: 'ubuntu-latest'
@@ -43,7 +47,7 @@ jobs:
         run: |-
           echo "SERVICE_NAME=${GITHUB_JOB}-${MATRIX_NAME}-${GITHUB_SHA::7}-${GITHUB_RUN_NUMBER}" >> "${GITHUB_ENV}"
 
-      - uses: 'actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a' # ratchet:actions/setup-node@v4
+      - uses: 'actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020' # ratchet:actions/setup-node@v4
         with:
           node-version-file: 'package.json'
 
@@ -161,7 +165,7 @@ jobs:
         run: |-
           sed -i "s/run-full-yaml/${{ env.SERVICE_NAME }}/" ./tests/fixtures/service.yaml
 
-      - uses: 'actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a' # ratchet:actions/setup-node@v4
+      - uses: 'actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020' # ratchet:actions/setup-node@v4
         with:
           node-version-file: 'package.json'
 
@@ -233,7 +237,7 @@ jobs:
         run: |-
           echo "JOB_NAME=${GITHUB_JOB}-job-${GITHUB_SHA::7}-${GITHUB_RUN_NUMBER}" >> "${GITHUB_ENV}"
 
-      - uses: 'actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a' # ratchet:actions/setup-node@v4
+      - uses: 'actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020' # ratchet:actions/setup-node@v4
         with:
           node-version-file: 'package.json'
 
