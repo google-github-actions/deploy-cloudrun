@@ -104,6 +104,7 @@ export function parseDeployResponse(
     // Set outputs
     const outputs: DeployCloudRunOutputs = {
       url: outputJSON?.status?.url,
+      revision: outputJSON?.status?.latestCreatedRevisionName,
     };
 
     // Maintain current logic to use tag url if provided
