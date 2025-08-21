@@ -317,7 +317,7 @@ export async function run(): Promise<void> {
       const errMsg =
         deployCmdExec.stderr ||
         `command exited ${deployCmdExec.exitCode}, but stderr had no output`;
-      throw new Error(`failed to execute gcloud command \`${commandString}\`: ${errMsg}`);
+      throw new Error(`failed to deploy: ${errMsg}, full command: \`${commandString}\``);
     }
     setActionOutputs(parseDeployResponse(deployCmdExec.stdout, { tag: tag }));
 
@@ -328,7 +328,7 @@ export async function run(): Promise<void> {
         const errMsg =
           updateTrafficExec.stderr ||
           `command exited ${updateTrafficExec.exitCode}, but stderr had no output`;
-        throw new Error(`failed to execute gcloud command \`${commandString}\`: ${errMsg}`);
+        throw new Error(`failed to update traffic: ${errMsg}, full command: \`${commandString}\``);
       }
       setActionOutputs(parseUpdateTrafficResponse(updateTrafficExec.stdout));
     }
