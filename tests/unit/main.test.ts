@@ -27,7 +27,7 @@ import { assertMembers } from '@google-github-actions/actions-utils';
 import { run } from '../../src/main';
 
 const fakeInputs: { [key: string]: string } = {
-  image: 'gcr.io/cloudrun/hello',
+  image: 'us-docker.pkg.dev/cloudrun/container/hello:latest',
   project_id: 'test',
 };
 

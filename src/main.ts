@@ -95,7 +95,7 @@ export async function run(): Promise<void> {
 
   try {
     // Get action inputs
-    const image = getInput('image'); // Image ie gcr.io/...
+    const image = getInput('image'); // Image ie us-docker.pkg.dev/...
     let service = getInput('service'); // Service name
     const job = getInput('job'); // Job name
     const metadata = getInput('metadata'); // YAML file
