@@ -26,13 +26,14 @@ defaults:
 jobs:
   deploy:
     runs-on: 'ubuntu-latest'
+    timeout-minutes: 7
 
     strategy:
       fail-fast: false
       matrix:
         include:
           - name: 'image'
-            image: 'gcr.io/cloudrun/hello'
+            image: 'us-docker.pkg.dev/cloudrun/container/hello:latest'
           - name: 'source'
             source: 'example-app'
 
@@ -153,6 +154,7 @@ jobs:
 
   metadata:
     runs-on: 'ubuntu-latest'
+    timeout-minutes: 7
 
     steps:
       - uses: 'actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683' # ratchet:actions/checkout@v4
@@ -206,7 +208,7 @@ jobs:
         name: 'Deploy again'
         uses: './'
         with:
-          image: 'gcr.io/cloudrun/hello'
+          image: 'us-docker.pkg.dev/cloudrun/container/hello:latest'
           service: '${{ env.SERVICE_NAME }}'
           revision_traffic: 'LATEST=100'
 
@@ -229,6 +231,7 @@ jobs:
 
   jobs:
     runs-on: 'ubuntu-latest'
+    timeout-minutes: 7
 
     steps:
       - uses: 'actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683' # ratchet:actions/checkout@v4
@@ -252,7 +255,7 @@ jobs:
         name: 'Deploy'
         uses: './'
         with:
-          image: 'gcr.io/cloudrun/hello'
+          image: 'us-docker.pkg.dev/cloudrun/container/job:latest'
           job: '${{ env.JOB_NAME }}'
           env_vars: |-
             FOO=bar
@@ -294,7 +297,7 @@ jobs:
         name: 'Deploy again'
         uses: './'
         with:
-          image: 'gcr.io/cloudrun/hello'
+          image: 'us-docker.pkg.dev/cloudrun/container/job:latest'
           job: '${{ env.JOB_NAME }}'
           env_vars: |-
             ABC=123

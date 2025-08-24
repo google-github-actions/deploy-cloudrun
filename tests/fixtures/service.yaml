@@ -12,7 +12,7 @@ spec:
     spec:
       containerConcurrency: 20
       containers:
-        - image: 'gcr.io/cloudrun/hello'
+        - image: 'us-docker.pkg.dev/cloudrun/container/hello:latest'
           ports:
             - containerPort: 8080
           resources:

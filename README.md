@@ -45,7 +45,7 @@ jobs:
       uses: 'google-github-actions/deploy-cloudrun@v2'
       with:
         service: 'hello-cloud-run'
-        image: 'gcr.io/cloudrun/hello'
+        image: 'us-docker.pkg.dev/cloudrun/container/hello:latest'
 
     - name: 'Use output'
       run: 'curl "${{ steps.deploy.outputs.url }}"'
@@ -67,7 +67,7 @@ jobs:
 -   <a name="image"></a><a href="#user-content-image"><code>image</code></a>: _(Optional)_ (Required, unless providing `metadata` or `source`) Fully-qualified name
     of the container image to deploy. For example:
 
-        gcr.io/cloudrun/hello:latest
+        us-docker.pkg.dev/cloudrun/container/hello:latest
 
     or
 
@@ -362,7 +362,7 @@ jobs:
 
     - uses: 'google-github-actions/deploy-cloudrun@v2'
       with:
-        image: 'gcr.io/cloudrun/hello'
+        image: 'us-docker.pkg.dev/cloudrun/container/hello:latest'
         service: 'hello-cloud-run'
 ```
 
@@ -381,7 +381,7 @@ jobs:
 
     - uses: 'google-github-actions/deploy-cloudrun@v2'
       with:
-        image: 'gcr.io/cloudrun/hello'
+        image: 'us-docker.pkg.dev/cloudrun/container/hello:latest'
         service: 'hello-cloud-run'
 ```
 

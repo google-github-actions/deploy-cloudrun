@@ -27,7 +27,7 @@ import { assertMembers } from '@google-github-actions/actions-utils';
 import { run } from '../../src/main';
 
 const fakeInputs: { [key: string]: string } = {
-  image: 'gcr.io/cloudrun/hello',
+  image: 'us-docker.pkg.dev/cloudrun/container/hello:latest',
   project_id: 'test',
 };
 
@@ -519,6 +519,30 @@ test('#run', { concurrency: true }, async (suite) => {
 
     const args = mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1);
     assertMembers(args, ['run', 'jobs', 'deploy', 'my-test-job']);
+  });
+
+  await suite.test('deploys a job with --wait', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      job: 'my-test-job',
+      wait: 'true',
+    });
+
+    await run();
+
+    const args = mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1);
+    assert.ok(args?.includes('--wait'));
+  });
+
+  await suite.test('deploys a job without --wait', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      job: 'my-test-job',
+      wait: 'false',
+    });
+
+    await run();
+
+    const args = mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1);
+    assert.ok(!args.includes('--wait'));
   });
 });
 

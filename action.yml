@@ -41,7 +41,7 @@ inputs:
       (Required, unless providing `metadata` or `source`) Fully-qualified name
       of the container image to deploy. For example:
 
-          gcr.io/cloudrun/hello:latest
+          us-docker.pkg.dev/cloudrun/container/hello:latest
 
       or
 
@@ -227,6 +227,13 @@ inputs:
       If true, the newly deployed revision will not receive traffic. This option
       only applies to services.
     default: 'false'
+    required: false
+
+  wait:
+    description: |-
+      If true, the action will wait for the job to complete before exiting. This
+      option only applies to jobs.
+    default: 'true'
     required: false
 
   revision_traffic:

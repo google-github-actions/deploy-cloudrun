@@ -33,6 +33,7 @@ jobs:
           - 'windows-latest'
           - 'macos-latest'
     runs-on: '${{ matrix.os }}'
+    timeout-minutes: 7
 
     steps:
       - uses: 'actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683' # ratchet:actions/checkout@v4
