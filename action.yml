@@ -229,6 +229,13 @@ inputs:
     default: 'false'
     required: false
 
+  wait:
+    description: |-
+      If true, the action will wait for the job to complete before exiting. This
+      option only applies to jobs.
+    default: 'true'
+    required: false
+
   revision_traffic:
     description: |-
       Comma-separated list of revision traffic assignments.

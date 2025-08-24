@@ -113,6 +113,7 @@ export async function run(): Promise<void> {
     const tag = getInput('tag');
     const timeout = getInput('timeout');
     const noTraffic = (getInput('no_traffic') || '').toLowerCase() === 'true';
+    const wait = parseBoolean(getInput('wait'));
     const revTraffic = getInput('revision_traffic');
     const tagTraffic = getInput('tag_traffic');
     const labels = parseKVString(getInput('labels'));
@@ -195,6 +196,10 @@ export async function run(): Promise<void> {
       // Set optional flags from inputs
       setEnvVarsFlags(deployCmd, envVars, envVarsFile, envVarsUpdateStrategy);
       setSecretsFlags(deployCmd, secrets, secretsUpdateStrategy);
+
+      if (wait) {
+        deployCmd.push('--wait');
+      }
 
       // There is no --update-secrets flag on jobs, but there will be in the
       // future. At that point, we can remove this.
