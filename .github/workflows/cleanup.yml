@@ -43,7 +43,6 @@ jobs:
       - uses: 'google-github-actions/setup-gcloud@v2' # ratchet:exclude
         with:
           version: 'latest'
-          skip_tool_cache: true
 
       - name: 'Delete ${{ matrix.target }}'
         env:
