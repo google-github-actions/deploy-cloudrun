@@ -12,8 +12,8 @@
     "e2e-tests": "node --require ts-node/register --test-reporter spec --test tests/e2e.test.ts"
   },
   "engines": {
-    "node": "20.x",
-    "npm": "10.x"
+    "node": ">= 20.x",
+    "npm": ">= 11.x"
   },
   "repository": {
     "type": "git",
@@ -37,8 +37,8 @@
     "@actions/core": "^1.11.1",
     "@actions/exec": "^1.1.1",
     "@actions/tool-cache": "^2.0.2",
-    "@google-github-actions/actions-utils": "^0.8.8",
-    "@google-github-actions/setup-cloud-sdk": "^1.2.0",
+    "@google-github-actions/actions-utils": "^0.8.10",
+    "@google-github-actions/setup-cloud-sdk": "^1.2.3",
     "yaml": "^2.8.0"
   },
   "devDependencies": {
