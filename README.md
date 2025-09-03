@@ -16,7 +16,7 @@ support](https://cloud.google.com/support).**
     the secrets being requested. See [Authorization](#authorization) for more
     information.
 
--   This action runs using Node 20. If you are using self-hosted GitHub Actions
+-   This action runs using Node 24. If you are using self-hosted GitHub Actions
     runners, you must use a [runner
     version](https://github.com/actions/virtual-environments) that supports this
     version or newer.
@@ -36,13 +36,13 @@ jobs:
     steps:
     - uses: 'actions/checkout@v4'
 
-    - uses: 'google-github-actions/auth@v2'
+    - uses: 'google-github-actions/auth@v3'
       with:
         workload_identity_provider: 'projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider'
         service_account: 'my-service-account@my-project.iam.gserviceaccount.com'
 
     - id: 'deploy'
-      uses: 'google-github-actions/deploy-cloudrun@v2'
+      uses: 'google-github-actions/deploy-cloudrun@v3'
       with:
         service: 'hello-cloud-run'
         image: 'us-docker.pkg.dev/cloudrun/container/hello:latest'
@@ -358,12 +358,12 @@ jobs:
 
     # ...
 
-    - uses: 'google-github-actions/auth@v2'
+    - uses: 'google-github-actions/auth@v3'
       with:
         workload_identity_provider: 'projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider'
         service_account: 'my-service-account@my-project.iam.gserviceaccount.com'
 
-    - uses: 'google-github-actions/deploy-cloudrun@v2'
+    - uses: 'google-github-actions/deploy-cloudrun@v3'
       with:
         image: 'us-docker.pkg.dev/cloudrun/container/hello:latest'
         service: 'hello-cloud-run'
@@ -382,7 +382,7 @@ jobs:
     steps:
     # ...
 
-    - uses: 'google-github-actions/deploy-cloudrun@v2'
+    - uses: 'google-github-actions/deploy-cloudrun@v3'
       with:
         image: 'us-docker.pkg.dev/cloudrun/container/hello:latest'
         service: 'hello-cloud-run'

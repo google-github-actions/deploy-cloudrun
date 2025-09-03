@@ -1,2 +1,0 @@
-TEXT_FOO=bar
-TEXT_ZIP=zap\,with|separators\,and&stuff

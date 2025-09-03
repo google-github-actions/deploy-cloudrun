@@ -54,7 +54,7 @@ jobs:
 
       - run: 'npm ci && npm run build'
 
-      - uses: 'google-github-actions/auth@v2' # ratchet:exclude
+      - uses: 'google-github-actions/auth@v3' # ratchet:exclude
         with:
           workload_identity_provider: '${{ vars.WIF_PROVIDER_NAME }}'
           service_account: '${{ vars.SERVICE_ACCOUNT_EMAIL }}'
@@ -69,7 +69,6 @@ jobs:
           env_vars: |-
             FOO=bar
             ZIP=zap\,with|separators\,and&stuff
-          env_vars_file: './tests/fixtures/env_vars.txt'
           secrets: |-
             MY_SECRET=${{ vars.SECRET_NAME }}:latest
             MY_SECOND_SECRET=${{ vars.SECRET_NAME }}:1
@@ -87,9 +86,7 @@ jobs:
           ENV: |-
             {
               "FOO": "bar",
-              "ZIP": "zap,with|separators,and&stuff",
-              "TEXT_FOO": "bar",
-              "TEXT_ZIP": "zap,with|separators,and&stuff"
+              "ZIP": "zap,with|separators,and&stuff"
             }
           SECRET_ENV: |-
             {
@@ -173,7 +170,7 @@ jobs:
 
       - run: 'npm ci && npm run build'
 
-      - uses: 'google-github-actions/auth@v2' # ratchet:exclude
+      - uses: 'google-github-actions/auth@v3' # ratchet:exclude
         with:
           workload_identity_provider: '${{ vars.WIF_PROVIDER_NAME }}'
           service_account: '${{ vars.SERVICE_ACCOUNT_EMAIL }}'
@@ -246,7 +243,7 @@ jobs:
 
       - run: 'npm ci && npm run build'
 
-      - uses: 'google-github-actions/auth@v2' # ratchet:exclude
+      - uses: 'google-github-actions/auth@v3' # ratchet:exclude
         with:
           workload_identity_provider: '${{ vars.WIF_PROVIDER_NAME }}'
           service_account: '${{ vars.SERVICE_ACCOUNT_EMAIL }}'
@@ -260,7 +257,6 @@ jobs:
           env_vars: |-
             FOO=bar
             ZIP=zap\,with|separators\,and&stuff
-          env_vars_file: './tests/fixtures/env_vars.txt'
           secrets: |-
             MY_SECRET=${{ vars.SECRET_NAME }}:latest
             MY_SECOND_SECRET=${{ vars.SECRET_NAME }}:1
@@ -278,9 +274,7 @@ jobs:
           ENV: |-
             {
               "FOO": "bar",
-              "ZIP": "zap,with|separators,and&stuff",
-              "TEXT_FOO": "bar",
-              "TEXT_ZIP": "zap,with|separators,and&stuff"
+              "ZIP": "zap,with|separators,and&stuff"
             }
           SECRET_ENV: |-
             {
