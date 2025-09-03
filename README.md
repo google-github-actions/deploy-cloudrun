@@ -91,9 +91,11 @@ jobs:
     `\\n`) unless quoted. Any leading or trailing whitespace is trimmed unless
     values are quoted.
 
-        env_vars: |-
-          FRUIT=apple
-          SENTENCE=" this will retain leading and trailing spaces "
+    ```yaml
+    env_vars: |-
+      FRUIT=apple
+      SENTENCE=" this will retain leading and trailing spaces "
+    ```
 
     This value will only be set if the input is a non-empty value. If a
     non-empty value is given, the field values will be overwritten (not
@@ -101,24 +103,6 @@ jobs:
 
     If both `env_vars` and `env_vars_file` are specified, the keys in
     `env_vars` will take precedence over the keys in `env_vars_file`.
-
--   <a name="__input_env_vars_file"></a><a href="#user-content-__input_env_vars_file"><code>env_vars_file</code></a>: _(Optional)_ Path to a file on disk, relative to the workspace, that defines
-    environment variables. The file can be newline-separated KEY=VALUE pairs,
-    JSON, or YAML format. If both `env_vars` and `env_vars_file` are
-    specified, the keys in env_vars will take precedence over the keys in
-    env_vars_file.
-
-        NAME=person
-        EMAILS=foo@bar.com\,zip@zap.com
-
-    When specified as KEY=VALUE pairs, the same escaping rules apply as
-    described in `env_vars`. You do not have to escape YAML or JSON.
-
-    If both `env_vars` and `env_vars_file` are specified, the keys in
-    `env_vars` will take precedence over the keys in `env_vars_file`.
-
-    **⚠️ DEPRECATION NOTICE:** This input is deprecated and will be removed in
-    the next major version release.
 
 -   <a name="__input_env_vars_update_strategy"></a><a href="#user-content-__input_env_vars_update_strategy"><code>env_vars_update_strategy</code></a>: _(Required, default: `merge`)_ Controls how the environment variables are set on the Cloud Run service.
     If set to "merge", then the environment variables are _merged_ with any
@@ -135,13 +119,15 @@ jobs:
     volumes. Keys starting with a forward slash '/' are mount paths. All other
     keys correspond to environment variables:
 
-        with:
-          secrets: |-
-            # As an environment variable:
-            KEY1=secret-key-1:latest
+    ```yaml
+    with:
+      secrets: |-
+        # As an environment variable:
+        KEY1=secret-key-1:latest
 
-            # As a volume mount:
-            /secrets/api/key=secret-key-2:latest
+        # As a volume mount:
+        /secrets/api/key=secret-key-2:latest
+    ```
 
     This value will only be set if the input is a non-empty value. If a
     non-empty value is given, the field values will be overwritten (not
@@ -159,9 +145,11 @@ jobs:
     unless quoted. Any leading or trailing whitespace is trimmed unless values
     are quoted.
 
-        labels: |-
-          labela=my-label
-          labelb=my-other-label
+    ```yaml
+    labels: |-
+      labela=my-label
+      labelb=my-other-label
+    ```
 
     This value will only be set if the input is a non-empty value. If a
     non-empty value is given, the field values will be overwritten (not
@@ -191,14 +179,18 @@ jobs:
     `gcloud run deploy`. For Cloud Run jobs, this command will be `gcloud jobs
     deploy`.
 
-        with:
-          flags: '--add-cloudsql-instances=...'
+    ```yaml
+    with:
+      flags: '--add-cloudsql-instances=...'
+    ```
 
     Flags that include other flags must quote the _entire_ outer flag value. For
     example, to pass `--args=-X=123`:
 
-        with:
-          flags: '--add-cloudsql-instances=... "--args=-X=123"'
+    ```yaml
+    with:
+      flags: '--add-cloudsql-instances=... "--args=-X=123"'
+    ```
 
     See the [complete list of
     flags](https://cloud.google.com/sdk/gcloud/reference/run/deploy#FLAGS) for
@@ -216,21 +208,27 @@ jobs:
 
 -   <a name="__input_revision_traffic"></a><a href="#user-content-__input_revision_traffic"><code>revision_traffic</code></a>: _(Optional)_ Comma-separated list of revision traffic assignments.
 
-        with:
-          revision_traffic: 'my-revision=10' # percentage
+    ```yaml
+    with:
+      revision_traffic: 'my-revision=10' # percentage
+    ```
 
     To update traffic to the latest revision, use the special tag "LATEST":
 
-        with:
-          revision_traffic: 'LATEST=100'
+    ```yaml
+    with:
+      revision_traffic: 'LATEST=100'
+    ```
 
     This is mutually-exclusive with `tag_traffic`. This option only applies
     to services.
 
 -   <a name="__input_tag_traffic"></a><a href="#user-content-__input_tag_traffic"><code>tag_traffic</code></a>: _(Optional)_ Comma-separated list of tag traffic assignments.
 
-        with:
-          tag_traffic: 'my-tag=10' # percentage
+    ```yaml
+    with:
+      tag_traffic: 'my-tag=10' # percentage
+    ```
 
     This is mutually-exclusive with `revision_traffic`. This option only
     applies to services.
@@ -240,14 +238,18 @@ jobs:
     features that are not exposed via this GitHub Action. This flag only
     applies when `revision_traffic` or `tag_traffic` is set.
 
-        with:
-          traffic_flags: '--set-tags=...'
+    ```yaml
+    with:
+      traffic_flags: '--set-tags=...'
+    ```
 
     Flags that include other flags must quote the _entire_ outer flag value. For
     example, to pass `--args=-X=123`:
 
-        with:
-          flags: '--set-tags=... "--args=-X=123"'
+    ```yaml
+    with:
+      flags: '--set-tags=... "--args=-X=123"'
+    ```
 
     See the [complete list of
     flags](https://cloud.google.com/sdk/gcloud/reference/run/services/update#FLAGS)
