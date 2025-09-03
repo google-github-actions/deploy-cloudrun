@@ -55,16 +55,16 @@ jobs:
 
 <!-- BEGIN_AUTOGEN_INPUTS -->
 
--   <a name="service"></a><a href="#user-content-service"><code>service</code></a>: _(Optional)_ ID of the service or fully-qualified identifier of the service. This is
+-   <a name="__input_service"></a><a href="#user-content-__input_service"><code>service</code></a>: _(Optional)_ ID of the service or fully-qualified identifier of the service. This is
     required unless providing `metadata` or `job`.
 
--   <a name="job"></a><a href="#user-content-job"><code>job</code></a>: _(Optional)_ ID of the job or fully-qualified identifier of the job. This is required
+-   <a name="__input_job"></a><a href="#user-content-__input_job"><code>job</code></a>: _(Optional)_ ID of the job or fully-qualified identifier of the job. This is required
     unless providing `metadata` or `service`.
 
--   <a name="metadata"></a><a href="#user-content-metadata"><code>metadata</code></a>: _(Optional)_ YAML service description for the Cloud Run service. This is required
+-   <a name="__input_metadata"></a><a href="#user-content-__input_metadata"><code>metadata</code></a>: _(Optional)_ YAML service description for the Cloud Run service. This is required
     unless providing `service` or `job`.
 
--   <a name="image"></a><a href="#user-content-image"><code>image</code></a>: _(Optional)_ (Required, unless providing `metadata` or `source`) Fully-qualified name
+-   <a name="__input_image"></a><a href="#user-content-__input_image"><code>image</code></a>: _(Optional)_ (Required, unless providing `metadata` or `source`) Fully-qualified name
     of the container image to deploy. For example:
 
         us-docker.pkg.dev/cloudrun/container/hello:latest
@@ -73,19 +73,19 @@ jobs:
 
         us-docker.pkg.dev/my-project/my-container/image:1.2.3
 
--   <a name="source"></a><a href="#user-content-source"><code>source</code></a>: _(Optional)_ (Required, unless providing `metadata`, `image`, or `job`) Path to source
+-   <a name="__input_source"></a><a href="#user-content-__input_source"><code>source</code></a>: _(Optional)_ (Required, unless providing `metadata`, `image`, or `job`) Path to source
     to deploy. If specified, this will deploy the Cloud Run service from the
     code specified at the given source directory.
 
     Learn more about the required permissions in [Deploying from source
     code](https://cloud.google.com/run/docs/deploying-source-code).
 
--   <a name="suffix"></a><a href="#user-content-suffix"><code>suffix</code></a>: _(Optional)_ String suffix to append to the revision name. Revision names always start
+-   <a name="__input_suffix"></a><a href="#user-content-__input_suffix"><code>suffix</code></a>: _(Optional)_ String suffix to append to the revision name. Revision names always start
     with the service name automatically. For example, specifying `v1` for a
     service named `helloworld`, would lead to a revision named
     `helloworld-v1`. This option only applies to services.
 
--   <a name="env_vars"></a><a href="#user-content-env_vars"><code>env_vars</code></a>: _(Optional)_ List of environment variables that should be set in the environment.
+-   <a name="__input_env_vars"></a><a href="#user-content-__input_env_vars"><code>env_vars</code></a>: _(Optional)_ List of environment variables that should be set in the environment.
     These are comma-separated or newline-separated `KEY=VALUE`. Keys or values
     that contain separators must be escaped with a backslash (e.g. `\,` or
     `\\n`) unless quoted. Any leading or trailing whitespace is trimmed unless
@@ -102,7 +102,7 @@ jobs:
     If both `env_vars` and `env_vars_file` are specified, the keys in
     `env_vars` will take precedence over the keys in `env_vars_file`.
 
--   <a name="env_vars_file"></a><a href="#user-content-env_vars_file"><code>env_vars_file</code></a>: _(Optional)_ Path to a file on disk, relative to the workspace, that defines
+-   <a name="__input_env_vars_file"></a><a href="#user-content-__input_env_vars_file"><code>env_vars_file</code></a>: _(Optional)_ Path to a file on disk, relative to the workspace, that defines
     environment variables. The file can be newline-separated KEY=VALUE pairs,
     JSON, or YAML format. If both `env_vars` and `env_vars_file` are
     specified, the keys in env_vars will take precedence over the keys in
@@ -120,13 +120,13 @@ jobs:
     **⚠️ DEPRECATION NOTICE:** This input is deprecated and will be removed in
     the next major version release.
 
--   <a name="env_vars_update_strategy"></a><a href="#user-content-env_vars_update_strategy"><code>env_vars_update_strategy</code></a>: _(Required, default: `merge`)_ Controls how the environment variables are set on the Cloud Run service.
+-   <a name="__input_env_vars_update_strategy"></a><a href="#user-content-__input_env_vars_update_strategy"><code>env_vars_update_strategy</code></a>: _(Required, default: `merge`)_ Controls how the environment variables are set on the Cloud Run service.
     If set to "merge", then the environment variables are _merged_ with any
     upstream values. If set to "overwrite", then all environment variables on
     the Cloud Run service will be replaced with exactly the values given by
     the GitHub Action (making it authoritative).
 
--   <a name="secrets"></a><a href="#user-content-secrets"><code>secrets</code></a>: _(Optional)_ List of KEY=VALUE pairs to use as secrets. These are comma-separated or
+-   <a name="__input_secrets"></a><a href="#user-content-__input_secrets"><code>secrets</code></a>: _(Optional)_ List of KEY=VALUE pairs to use as secrets. These are comma-separated or
     newline-separated `KEY=VALUE`. Keys or values that contain separators must
     be escaped with a backslash (e.g. `\,` or `\\n`) unless quoted. Any
     leading or trailing whitespace is trimmed unless values are quoted.
@@ -147,13 +147,13 @@ jobs:
     non-empty value is given, the field values will be overwritten (not
     merged). To remove all values, set the value to the literal string `{}`.
 
--   <a name="secrets_update_strategy"></a><a href="#user-content-secrets_update_strategy"><code>secrets_update_strategy</code></a>: _(Required, default: `merge`)_ Controls how the secrets are set on the Cloud Run service. If set to
+-   <a name="__input_secrets_update_strategy"></a><a href="#user-content-__input_secrets_update_strategy"><code>secrets_update_strategy</code></a>: _(Required, default: `merge`)_ Controls how the secrets are set on the Cloud Run service. If set to
     `merge`, then the secrets are merged with any upstream values. If set to
     `overwrite`, then all secrets on the Cloud Run service will be replaced
     with exactly the values given by the GitHub Action (making it
     authoritative).
 
--   <a name="labels"></a><a href="#user-content-labels"><code>labels</code></a>: _(Optional)_ List of labels that should be set on the function. These are
+-   <a name="__input_labels"></a><a href="#user-content-__input_labels"><code>labels</code></a>: _(Optional)_ List of labels that should be set on the function. These are
     comma-separated or newline-separated `KEY=VALUE`. Keys or values that
     contain separators must be escaped with a backslash (e.g. `\,` or `\\n`)
     unless quoted. Any leading or trailing whitespace is trimmed unless values
@@ -170,7 +170,7 @@ jobs:
     Google Cloud restricts the allowed values and length for labels. Please
     see the Google Cloud documentation for labels for more information.
 
--   <a name="skip_default_labels"></a><a href="#user-content-skip_default_labels"><code>skip_default_labels</code></a>: _(Optional, default: `false`)_ Skip applying the special annotation labels that indicate the deployment
+-   <a name="__input_skip_default_labels"></a><a href="#user-content-__input_skip_default_labels"><code>skip_default_labels</code></a>: _(Optional, default: `false`)_ Skip applying the special annotation labels that indicate the deployment
     came from GitHub Actions. The GitHub Action will automatically apply the
     following labels which Cloud Run uses to enhance the user experience:
 
@@ -179,13 +179,13 @@ jobs:
 
     Setting this to `true` will skip adding these special labels.
 
--   <a name="tag"></a><a href="#user-content-tag"><code>tag</code></a>: _(Optional)_ Traffic tag to assign to the newly-created revision. This option only
+-   <a name="__input_tag"></a><a href="#user-content-__input_tag"><code>tag</code></a>: _(Optional)_ Traffic tag to assign to the newly-created revision. This option only
     applies to services.
 
--   <a name="timeout"></a><a href="#user-content-timeout"><code>timeout</code></a>: _(Optional)_ Maximum request execution time, specified as a duration like "10m5s" for
+-   <a name="__input_timeout"></a><a href="#user-content-__input_timeout"><code>timeout</code></a>: _(Optional)_ Maximum request execution time, specified as a duration like "10m5s" for
     ten minutes and 5 seconds.
 
--   <a name="flags"></a><a href="#user-content-flags"><code>flags</code></a>: _(Optional)_ Space separate list of additional Cloud Run flags to pass to the deploy
+-   <a name="__input_flags"></a><a href="#user-content-__input_flags"><code>flags</code></a>: _(Optional)_ Space separate list of additional Cloud Run flags to pass to the deploy
     command. This can be used to apply advanced features that are not exposed
     via this GitHub Action. For Cloud Run services, this command will be
     `gcloud run deploy`. For Cloud Run jobs, this command will be `gcloud jobs
@@ -208,10 +208,13 @@ jobs:
     are responsible for making sure the flags are available on the gcloud
     version and subcommand.
 
--   <a name="no_traffic"></a><a href="#user-content-no_traffic"><code>no_traffic</code></a>: _(Optional, default: `false`)_ If true, the newly deployed revision will not receive traffic. This option
+-   <a name="__input_no_traffic"></a><a href="#user-content-__input_no_traffic"><code>no_traffic</code></a>: _(Optional, default: `false`)_ If true, the newly deployed revision will not receive traffic. This option
     only applies to services.
 
--   <a name="revision_traffic"></a><a href="#user-content-revision_traffic"><code>revision_traffic</code></a>: _(Optional)_ Comma-separated list of revision traffic assignments.
+-   <a name="__input_wait"></a><a href="#user-content-__input_wait"><code>wait</code></a>: _(Optional, default: `true`)_ If true, the action will wait for the job to complete before exiting. This
+    option only applies to jobs.
+
+-   <a name="__input_revision_traffic"></a><a href="#user-content-__input_revision_traffic"><code>revision_traffic</code></a>: _(Optional)_ Comma-separated list of revision traffic assignments.
 
         with:
           revision_traffic: 'my-revision=10' # percentage
@@ -224,7 +227,7 @@ jobs:
     This is mutually-exclusive with `tag_traffic`. This option only applies
     to services.
 
--   <a name="tag_traffic"></a><a href="#user-content-tag_traffic"><code>tag_traffic</code></a>: _(Optional)_ Comma-separated list of tag traffic assignments.
+-   <a name="__input_tag_traffic"></a><a href="#user-content-__input_tag_traffic"><code>tag_traffic</code></a>: _(Optional)_ Comma-separated list of tag traffic assignments.
 
         with:
           tag_traffic: 'my-tag=10' # percentage
@@ -232,7 +235,7 @@ jobs:
     This is mutually-exclusive with `revision_traffic`. This option only
     applies to services.
 
--   <a name="update_traffic_flags"></a><a href="#user-content-update_traffic_flags"><code>update_traffic_flags</code></a>: _(Optional)_ Space separate list of additional Cloud Run flags to pass to the `gcloud
+-   <a name="__input_update_traffic_flags"></a><a href="#user-content-__input_update_traffic_flags"><code>update_traffic_flags</code></a>: _(Optional)_ Space separate list of additional Cloud Run flags to pass to the `gcloud
     run services update-traffic` command. This can be used to apply advanced
     features that are not exposed via this GitHub Action. This flag only
     applies when `revision_traffic` or `tag_traffic` is set.
@@ -254,15 +257,15 @@ jobs:
     are responsible for making sure the flags are available on the gcloud
     version and subcommand.
 
--   <a name="project_id"></a><a href="#user-content-project_id"><code>project_id</code></a>: _(Optional)_ ID of the Google Cloud project in which to deploy the service.
+-   <a name="__input_project_id"></a><a href="#user-content-__input_project_id"><code>project_id</code></a>: _(Optional)_ ID of the Google Cloud project in which to deploy the service.
 
--   <a name="region"></a><a href="#user-content-region"><code>region</code></a>: _(Optional, default: `us-central1`)_ Region in which the Cloud Run services are deployed.
+-   <a name="__input_region"></a><a href="#user-content-__input_region"><code>region</code></a>: _(Optional, default: `us-central1`)_ Region in which the Cloud Run services are deployed.
 
--   <a name="gcloud_version"></a><a href="#user-content-gcloud_version"><code>gcloud_version</code></a>: _(Optional)_ Version of the Cloud SDK to install. If unspecified or set to "latest",
+-   <a name="__input_gcloud_version"></a><a href="#user-content-__input_gcloud_version"><code>gcloud_version</code></a>: _(Optional)_ Version of the Cloud SDK to install. If unspecified or set to "latest",
     the latest available gcloud SDK version for the target platform will be
     installed. Example: "290.0.1".
 
--   <a name="gcloud_component"></a><a href="#user-content-gcloud_component"><code>gcloud_component</code></a>: _(Optional)_ Version of the Cloud SDK components to install and use.
+-   <a name="__input_gcloud_component"></a><a href="#user-content-__input_gcloud_component"><code>gcloud_component</code></a>: _(Optional)_ Version of the Cloud SDK components to install and use.
 
 
 <!-- END_AUTOGEN_INPUTS -->
@@ -314,7 +317,7 @@ automatically private services, while deploying a revision of a public
 
 <!-- BEGIN_AUTOGEN_OUTPUTS -->
 
--   `url`: The URL of the Cloud Run service.
+-   <a name="__output_url"></a><a href="#user-content-__output_url"><code>url</code></a>: The URL of the Cloud Run service.
 
 
 <!-- END_AUTOGEN_OUTPUTS -->
