@@ -231,9 +231,9 @@ inputs:
 
   wait:
     description: |-
-      If true, the action will wait for the job to complete before exiting. This
-      option only applies to jobs.
-    default: 'true'
+      If true, the action will execute and wait for the job to complete before
+      exiting. This option only applies to jobs.
+    default: 'false'
     required: false
 
   revision_traffic:

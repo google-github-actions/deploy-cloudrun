@@ -211,8 +211,8 @@ jobs:
 -   <a name="__input_no_traffic"></a><a href="#user-content-__input_no_traffic"><code>no_traffic</code></a>: _(Optional, default: `false`)_ If true, the newly deployed revision will not receive traffic. This option
     only applies to services.
 
--   <a name="__input_wait"></a><a href="#user-content-__input_wait"><code>wait</code></a>: _(Optional, default: `true`)_ If true, the action will wait for the job to complete before exiting. This
-    option only applies to jobs.
+-   <a name="__input_wait"></a><a href="#user-content-__input_wait"><code>wait</code></a>: _(Optional, default: `false`)_ If true, the action will execute and wait for the job to complete before
+    exiting. This option only applies to jobs.
 
 -   <a name="__input_revision_traffic"></a><a href="#user-content-__input_revision_traffic"><code>revision_traffic</code></a>: _(Optional)_ Comma-separated list of revision traffic assignments.
 
