@@ -218,7 +218,7 @@ export async function run(): Promise<void> {
         deployCmd.push('--labels', joinKVStringForGCloud(compiledLabels));
       }
     } else if (workerPool) {
-      deployCmd = ['run', 'worker-pools', workerPool];
+      deployCmd = ['run', 'worker-pools', 'deploy', workerPool];
 
       if (image) {
         deployCmd.push('--image', image);
