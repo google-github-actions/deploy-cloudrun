@@ -98,7 +98,7 @@ export async function run(): Promise<void> {
     const image = getInput('image'); // Image ie gcr.io/...
     let service = getInput('service'); // Service name
     const job = getInput('job'); // Job name
-    const workerPool = getInput('worker_pool'); // Job name
+    const workerPool = getInput('worker_pool'); // Worker pool name
     const metadata = getInput('metadata'); // YAML file
     const projectId = getInput('project_id');
     const gcloudVersion = await computeGcloudVersion(getInput('gcloud_version'));
