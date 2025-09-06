@@ -273,7 +273,7 @@ export async function run(): Promise<void> {
     deployCmd.push('--format', 'json');
     updateTrafficCmd.push('--format', 'json');
 
-    if (region?.length > 0) {
+    if (region?.length > 0 && (!metadata || !deployCmd.includes("worker-pools"))) {
       const regions = region
         .flat()
         .filter((e) => e !== undefined && e !== null && e !== '')
