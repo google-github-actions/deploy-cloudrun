@@ -544,6 +544,75 @@ test('#run', { concurrency: true }, async (suite) => {
     const args = mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1);
     assert.ok(!args.includes('--wait'));
   });
+
+  await suite.test('deploys a worker pool if worker_pool is specified', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      worker_pool: 'my-worker-pool',
+    });
+
+    await run();
+
+    const args = mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1);
+    assertMembers(args, ['run', 'worker-pools', 'deploy', 'my-worker-pool']);
+  });
+
+  await suite.test('deploys a worker pool with --image', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      worker_pool: 'my-worker-pool',
+      image: 'us-docker.pkg.dev/cloudrun/container/worker-pool:latest',
+    });
+
+    await run();
+
+    const args = mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1);
+    assertMembers(args, ['--image', 'us-docker.pkg.dev/cloudrun/container/worker-pool:latest']);
+  });
+
+  await suite.test('deploys a worker pool with --source', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      worker_pool: 'my-worker-pool',
+      source: 'worker-source',
+      image: '',
+    });
+
+    await run();
+
+    const args = mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1);
+    assertMembers(args, ['--source', 'worker-source']);
+  });
+
+  await suite.test('sets labels for worker pool', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      worker_pool: 'my-worker-pool',
+      labels: 'foo=bar,zip=zap',
+    });
+
+    process.env.GITHUB_SHA = 'abcdef123456';
+
+    await run();
+
+    const expectedLabels = {
+      'managed-by': 'github-actions',
+      'commit-sha': 'abcdef123456',
+      'foo': 'bar',
+      'zip': 'zap',
+    };
+    const args = mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1);
+    const labels = splitKV(args.at(args.indexOf('--update-labels') + 1));
+    assert.deepStrictEqual(labels, expectedLabels);
+  });
+
+  await suite.test('deploys a worker pool using metadata YAML', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      metadata: 'tests/fixtures/worker-pools.yaml',
+      image: '',
+    });
+
+    await run();
+
+    const args = mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1);
+    assertMembers(args, ['worker-pools', 'replace']);
+  });
 });
 
 const splitKV = (s: string): Record<string, string> => {
