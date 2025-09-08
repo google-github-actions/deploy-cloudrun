@@ -279,7 +279,7 @@ export async function run(): Promise<void> {
     updateTrafficCmd.push('--format', 'json');
 
     // Worker pool replace doesn't have region flag https://cloud.google.com/sdk/gcloud/reference/beta/run/worker-pools/replace
-    let isWorkerPoolMetadata = (metadata && deployCmd.includes("worker-pools"))
+    const isWorkerPoolMetadata = metadata && deployCmd.includes('worker-pools');
 
     if (region?.length > 0 && !isWorkerPoolMetadata) {
       const regions = region

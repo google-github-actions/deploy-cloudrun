@@ -210,11 +210,15 @@ test(
       assert.deepStrictEqual(actual, expected);
     });
 
-    await suite.test('has the worker_pool name', { skip: skipIfMissingEnv('WORKER_POOL') }, async () => {
-      const expected = process.env.WORKER_POOL! as string;
-      const actual = worker_pool.metadata?.name;
-      assert.deepStrictEqual(actual, expected);
-    });
+    await suite.test(
+      'has the worker_pool name',
+      { skip: skipIfMissingEnv('WORKER_POOL') },
+      async () => {
+        const expected = process.env.WORKER_POOL! as string;
+        const actual = worker_pool.metadata?.name;
+        assert.deepStrictEqual(actual, expected);
+      },
+    );
 
     await suite.test('has the job name', { skip: skipIfMissingEnv('JOB') }, async () => {
       const expected = process.env.JOB! as string;
