@@ -95,7 +95,7 @@ export async function run(): Promise<void> {
 
   try {
     // Get action inputs
-    const image = getInput('image'); // Image ie gcr.io/...
+    const image = getInput('image'); // Image ie us-docker.pkg.dev/...
     let service = getInput('service'); // Service name
     const job = getInput('job'); // Job name
     const workerPool = getInput('worker_pool'); // Worker pool name
@@ -114,6 +114,7 @@ export async function run(): Promise<void> {
     const tag = getInput('tag');
     const timeout = getInput('timeout');
     const noTraffic = (getInput('no_traffic') || '').toLowerCase() === 'true';
+    const wait = parseBoolean(getInput('wait'));
     const revTraffic = getInput('revision_traffic');
     const tagTraffic = getInput('tag_traffic');
     const labels = parseKVString(getInput('labels'));
@@ -199,6 +200,10 @@ export async function run(): Promise<void> {
       // Set optional flags from inputs
       setEnvVarsFlags(deployCmd, envVars, envVarsFile, envVarsUpdateStrategy);
       setSecretsFlags(deployCmd, secrets, secretsUpdateStrategy);
+
+      if (wait) {
+        deployCmd.push('--wait');
+      }
 
       // There is no --update-secrets flag on jobs, but there will be in the
       // future. At that point, we can remove this.

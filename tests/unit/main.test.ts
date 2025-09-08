@@ -506,7 +506,7 @@ test('#run', { concurrency: true }, async (suite) => {
       async () => {
         await run();
       },
-      { message: /only one of `service` or `job` inputs can be set/ },
+      { message: /google-github-actions\/deploy-cloudrun failed with: only one of `service`, `job`, or `worker_pool` inputs can be set./ },
     );
   });
 
