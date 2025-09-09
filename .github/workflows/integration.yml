@@ -321,3 +321,101 @@ jobs:
               "commit-sha": "${{ github.sha }}",
               "managed-by": "github-actions"
             }
+
+  worker_pools:
+    runs-on: 'ubuntu-latest'
+    timeout-minutes: 7
+
+    steps:
+      - uses: 'actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683' # ratchet:actions/checkout@v4
+
+      - name: 'Compute worker_pool name'
+        run: |-
+          echo "WORKER_POOL_NAME=${GITHUB_JOB}-worker-pool-${GITHUB_SHA::7}-${GITHUB_RUN_NUMBER}" >> "${GITHUB_ENV}"
+
+      - uses: 'actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020' # ratchet:actions/setup-node@v4
+        with:
+          node-version-file: 'package.json'
+
+      - run: 'npm ci && npm run build'
+
+      - uses: 'google-github-actions/auth@v3' # ratchet:exclude
+        with:
+          workload_identity_provider: '${{ vars.WIF_PROVIDER_NAME }}'
+          service_account: '${{ vars.SERVICE_ACCOUNT_EMAIL }}'
+
+      - id: 'deploy-cloudrun'
+        name: 'Deploy'
+        uses: './'
+        with:
+          image: 'us-docker.pkg.dev/cloudrun/container/worker-pool:latest'
+          gcloud_component: beta
+          worker_pool: '${{ env.WORKER_POOL_NAME }}'
+          env_vars: |-
+            FOO=bar
+            ZIP=zap\,with|separators\,and&stuff
+          secrets: |-
+            MY_SECRET=${{ vars.SECRET_NAME }}:latest
+            MY_SECOND_SECRET=${{ vars.SECRET_NAME }}:1
+          labels: |-
+            label1=value1
+            label2=value2
+          skip_default_labels: true
+          flags: '--cpu=2'
+
+      - name: 'Run initial deploy tests'
+        run: 'npm run e2e-tests'
+        env:
+          PROJECT_ID: '${{ vars.PROJECT_ID }}'
+          WORKER_POOL: '${{ env.WORKER_POOL_NAME }}'
+          ENV: |-
+            {
+              "FOO": "bar",
+              "ZIP": "zap,with|separators,and&stuff"
+            }
+          SECRET_ENV: |-
+            {
+              "MY_SECRET": "${{ vars.SECRET_NAME }}:latest",
+              "MY_SECOND_SECRET": "${{ vars.SECRET_NAME }}:1"
+            }
+          LABELS: |-
+            {
+              "label1": "value1",
+              "label2": "value2"
+            }
+
+      - id: 'deploy-cloudrun-again'
+        name: 'Deploy again'
+        uses: './'
+        with:
+          image: 'us-docker.pkg.dev/cloudrun/container/worker-pool:latest'
+          gcloud_component: beta
+          worker_pool: '${{ env.WORKER_POOL_NAME }}'
+          env_vars: |-
+            ABC=123
+            DEF=456
+          env_vars_update_strategy: 'overwrite'
+          secrets: |-
+            /api/secrets/my-secret=${{ vars.SECRET_NAME }}:latest
+
+      - name: 'Run re-deploy tests'
+        run: 'npm run e2e-tests'
+        env:
+          PROJECT_ID: '${{ vars.PROJECT_ID }}'
+          WORKER_POOL: '${{ env.WORKER_POOL_NAME }}'
+          ENV: |-
+            {
+              "ABC": "123",
+              "DEF": "456"
+            }
+          SECRET_VOLUMES: |-
+            {
+              "/api/secrets/my-secret": "${{ vars.SECRET_NAME }}:latest"
+            }
+          LABELS: |-
+            {
+              "label1": "value1",
+              "label2": "value2",
+              "commit-sha": "${{ github.sha }}",
+              "managed-by": "github-actions"
+            }

@@ -56,13 +56,16 @@ jobs:
 <!-- BEGIN_AUTOGEN_INPUTS -->
 
 -   <a name="__input_service"></a><a href="#user-content-__input_service"><code>service</code></a>: _(Optional)_ ID of the service or fully-qualified identifier of the service. This is
-    required unless providing `metadata` or `job`.
+    required unless providing `metadata`, `worker-pool` or `job`.
 
 -   <a name="__input_job"></a><a href="#user-content-__input_job"><code>job</code></a>: _(Optional)_ ID of the job or fully-qualified identifier of the job. This is required
-    unless providing `metadata` or `service`.
+    unless providing `metadata`, `worker-pool` or `service`.
+
+-   <a name="__input_worker_pool"></a><a href="#user-content-__input_service"><code>worker-pool</code></a>: _(Optional)_ ID of the service or fully-qualified identifier of the worker-pool. This is
+    required unless providing `metadata`, `service` or `job`.
 
 -   <a name="__input_metadata"></a><a href="#user-content-__input_metadata"><code>metadata</code></a>: _(Optional)_ YAML service description for the Cloud Run service. This is required
-    unless providing `service` or `job`.
+    unless providing `service`, `worker-pool` or `job`.
 
 -   <a name="__input_image"></a><a href="#user-content-__input_image"><code>image</code></a>: _(Optional)_ (Required, unless providing `metadata` or `source`) Fully-qualified name
     of the container image to deploy. For example:

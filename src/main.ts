@@ -98,11 +98,13 @@ export async function run(): Promise<void> {
     const image = getInput('image'); // Image ie us-docker.pkg.dev/...
     let service = getInput('service'); // Service name
     const job = getInput('job'); // Job name
+    const workerPool = getInput('worker_pool'); // Worker pool name
     const metadata = getInput('metadata'); // YAML file
     const projectId = getInput('project_id');
     const gcloudVersion = await computeGcloudVersion(getInput('gcloud_version'));
     const gcloudComponent = presence(getInput('gcloud_component')); // Cloud SDK component version
     const envVars = getInput('env_vars'); // String of env vars KEY=VALUE,...
+    const envVarsFile = getInput('env_vars_file'); // File that is a string of env vars KEY=VALUE,...
     const envVarsUpdateStrategy = getInput('env_vars_update_strategy') || 'merge';
     const secrets = parseKVString(getInput('secrets')); // String of secrets KEY=VALUE,...
     const secretsUpdateStrategy = getInput('secrets_update_strategy') || 'merge';
@@ -132,8 +134,20 @@ export async function run(): Promise<void> {
     if (source && image) {
       throw new Error('Only one of `source` or `image` inputs can be set.');
     }
-    if (service && job) {
-      throw new Error('Only one of `service` or `job` inputs can be set.');
+    const exclusiveKindInputs = [service, job, workerPool].filter(Boolean);
+    if (exclusiveKindInputs.length > 1) {
+      throw new Error('Only one of `service`, `job`, or `worker_pool` inputs can be set.');
+    }
+
+    // Deprecation notices
+    if (envVarsFile) {
+      logWarning(
+        `The "env_vars_file" input is deprecated and will be removed in a ` +
+          `future major release. To source values from a file, read the file ` +
+          `in a separate GitHub Actions step and set the contents as an output. ` +
+          `Alternatively, there are many community actions that automate ` +
+          `reading files.`,
+      );
     }
 
     // Validate gcloud component input
@@ -164,6 +178,8 @@ export async function run(): Promise<void> {
         deployCmd = ['run', 'services', 'replace', metadata];
       } else if (kind === 'Job') {
         deployCmd = ['run', 'jobs', 'replace', metadata];
+      } else if (kind === 'WorkerPool') {
+        deployCmd = ['run', 'worker-pools', 'replace', metadata];
       } else {
         throw new Error(`Unkown metadata type "${kind}", expected "Job" or "Service"`);
       }
@@ -182,7 +198,7 @@ export async function run(): Promise<void> {
       }
 
       // Set optional flags from inputs
-      setEnvVarsFlags(deployCmd, envVars, envVarsUpdateStrategy);
+      setEnvVarsFlags(deployCmd, envVars, envVarsFile, envVarsUpdateStrategy);
       setSecretsFlags(deployCmd, secrets, secretsUpdateStrategy);
 
       if (wait) {
@@ -206,6 +222,25 @@ export async function run(): Promise<void> {
       if (compiledLabels && Object.keys(compiledLabels).length > 0) {
         deployCmd.push('--labels', joinKVStringForGCloud(compiledLabels));
       }
+    } else if (workerPool) {
+      deployCmd = ['run', 'worker-pools', 'deploy', workerPool];
+
+      if (image) {
+        deployCmd.push('--image', image);
+      } else if (source) {
+        deployCmd.push('--source', source);
+      }
+
+      // Set optional flags from inputs
+      setEnvVarsFlags(deployCmd, envVars, envVarsFile, envVarsUpdateStrategy);
+      setSecretsFlags(deployCmd, secrets, secretsUpdateStrategy);
+
+      // Compile the labels
+      const defLabels = skipDefaultLabels ? {} : defaultLabels();
+      const compiledLabels = Object.assign({}, defLabels, labels);
+      if (compiledLabels && Object.keys(compiledLabels).length > 0) {
+        deployCmd.push('--update-labels', joinKVStringForGCloud(compiledLabels));
+      }
     } else {
       deployCmd = ['run', 'deploy', service];
 
@@ -216,7 +251,7 @@ export async function run(): Promise<void> {
       }
 
       // Set optional flags from inputs
-      setEnvVarsFlags(deployCmd, envVars, envVarsUpdateStrategy);
+      setEnvVarsFlags(deployCmd, envVars, envVarsFile, envVarsUpdateStrategy);
       setSecretsFlags(deployCmd, secrets, secretsUpdateStrategy);
 
       if (tag) {
@@ -243,7 +278,10 @@ export async function run(): Promise<void> {
     deployCmd.push('--format', 'json');
     updateTrafficCmd.push('--format', 'json');
 
-    if (region?.length > 0) {
+    // Worker pool replace doesn't have region flag https://cloud.google.com/sdk/gcloud/reference/beta/run/worker-pools/replace
+    const isWorkerPoolMetadata = metadata && deployCmd.includes('worker-pools');
+
+    if (region?.length > 0 && !isWorkerPoolMetadata) {
       const regions = region
         .flat()
         .filter((e) => e !== undefined && e !== null && e !== '')
@@ -310,7 +348,7 @@ export async function run(): Promise<void> {
       const errMsg =
         deployCmdExec.stderr ||
         `command exited ${deployCmdExec.exitCode}, but stderr had no output`;
-      throw new Error(`failed to deploy: ${errMsg}, full command:\n\t${commandString}`);
+      throw new Error(`failed to execute gcloud command \`${commandString}\`: ${errMsg}`);
     }
     setActionOutputs(parseDeployResponse(deployCmdExec.stdout, { tag: tag }));
 
@@ -321,7 +359,7 @@ export async function run(): Promise<void> {
         const errMsg =
           updateTrafficExec.stderr ||
           `command exited ${updateTrafficExec.exitCode}, but stderr had no output`;
-        throw new Error(`failed to update traffic: ${errMsg}, full command:\n\t${commandString}`);
+        throw new Error(`failed to execute gcloud command \`${commandString}\`: ${errMsg}`);
       }
       setActionOutputs(parseUpdateTrafficResponse(updateTrafficExec.stdout));
     }
@@ -373,8 +411,8 @@ async function computeGcloudVersion(str: string): Promise<string> {
   return str;
 }
 
-function setEnvVarsFlags(cmd: string[], envVars: string, strategy: string) {
-  const compiledEnvVars = parseKVString(envVars);
+function setEnvVarsFlags(cmd: string[], envVars: string, envVarsFile: string, strategy: string) {
+  const compiledEnvVars = parseKVStringAndFile(envVars, envVarsFile);
   if (compiledEnvVars && Object.keys(compiledEnvVars).length > 0) {
     let flag = '';
     if (strategy === 'overwrite') {

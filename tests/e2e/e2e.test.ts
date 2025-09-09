@@ -31,6 +31,7 @@ test(
   async (suite) => {
     let service: run_v1.Schema$Service;
     let job: run_v1.Schema$Job;
+    let worker_pool: run_v1.Schema$WorkerPool;
     let metadata: run_v1.Schema$ObjectMeta;
     let spec: run_v1.Schema$TaskSpec | run_v1.Schema$RevisionSpec;
 
@@ -73,8 +74,28 @@ test(
         }
         metadata = service.spec!.template!.metadata!;
         spec = service.spec!.template!.spec!;
+      } else if (process.env.WORKER_POOL) {
+        const output = await getExecOutput('gcloud', [
+          'beta',
+          'run',
+          'worker-pools',
+          'describe',
+          process.env.WORKER_POOL!,
+          '--project',
+          process.env.PROJECT_ID!,
+          '--format',
+          'json',
+          '--region',
+          'us-central1',
+        ]);
+        worker_pool = JSON.parse(output.stdout) as run_v1.Schema$Service;
+        if (!worker_pool) {
+          throw new Error('failed to find worker_pool definition');
+        }
+        metadata = worker_pool.spec!.template!.metadata!;
+        spec = worker_pool.spec!.template!.spec!;
       } else {
-        throw new Error(`missing service or job`);
+        throw new Error(`missing service, job or worker_pool`);
       }
     });
 
@@ -188,6 +209,16 @@ test(
       const actual = service.metadata?.name;
       assert.deepStrictEqual(actual, expected);
     });
+
+    await suite.test(
+      'has the worker_pool name',
+      { skip: skipIfMissingEnv('WORKER_POOL') },
+      async () => {
+        const expected = process.env.WORKER_POOL! as string;
+        const actual = worker_pool.metadata?.name;
+        assert.deepStrictEqual(actual, expected);
+      },
+    );
 
     await suite.test('has the job name', { skip: skipIfMissingEnv('JOB') }, async () => {
       const expected = process.env.JOB! as string;
