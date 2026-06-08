@@ -299,8 +299,8 @@ inputs:
       service](https://docs.cloud.google.com/run/docs/multiple-regions#deploy)
 
       Please note, this GitHub Action cannot parse regions provided in the metadata
-      YAML file and will always fallback to the region provided here, defaulting always
-      to `us-central1` if none is given. This is a known issue but this behavior being 
+      YAML file and will always fallback to the region provided here, defaulting
+      to `us-central1` if none is given. This is a known issue but this behavior is 
       kept to avoid breaking existing actions.
 
     default: 'us-central1'
