@@ -248,12 +248,14 @@ export async function run(): Promise<void> {
         .flat()
         .filter((e) => e !== undefined && e !== null && e !== '')
         .join(',');
-      deployCmd.push('--region', regions);
-      updateTrafficCmd.push('--region', regions);
-    }
-    if (projectId) {
-      deployCmd.push('--project', projectId);
-      updateTrafficCmd.push('--project', projectId);
+
+      if (region?.length > 1) {
+        deployCmd.push('--regions', regions);
+        updateTrafficCmd.push('--regions', regions);
+      } else {
+        deployCmd.push('--region', regions);
+        updateTrafficCmd.push('--region', regions);
+      }
     }
 
     // Add optional deploy flags
