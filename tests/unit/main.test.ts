@@ -228,6 +228,33 @@ test('#run', { concurrency: true }, async (suite) => {
     assert.deepStrictEqual(envVars, { FOO: 'BAR' });
   });
 
+  await suite.test('sets envvars from a file', async (t) => {
+    const mocks = defaultMocks(t.mock, {
+      service: 'my-test-service',
+      env_vars_file: 'tests/fixtures/env_vars.yaml',
+    });
+
+    await run();
+
+    const args = mocks.getExecOutput.mock.calls?.at(0)?.arguments?.at(1);
+    assertMembers(args, ['--env-vars-file', 'tests/fixtures/env_vars.yaml']);
+  });
+
+  await suite.test('fails if env_vars and env_vars_file are both provided', async (t) => {
+    defaultMocks(t.mock, {
+      service: 'my-test-service',
+      env_vars: 'FOO=BAR',
+      env_vars_file: 'tests/fixtures/env_vars.yaml',
+    });
+
+    await assert.rejects(
+      async () => {
+        await run();
+      },
+      { message: /only one of .env_vars. or .env_vars_file. inputs can be set/ },
+    );
+  });
+
   await suite.test('merges secrets', async (t) => {
     const mocks = defaultMocks(t.mock, {
       service: 'my-test-service',

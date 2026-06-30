@@ -39,7 +39,6 @@ import {
   parseCSV,
   parseFlags,
   parseKVString,
-  parseKVStringAndFile,
   pinnedToHeadWarning,
   presence,
 } from '@google-github-actions/actions-utils';
@@ -103,6 +102,7 @@ export async function run(): Promise<void> {
     const gcloudVersion = await computeGcloudVersion(getInput('gcloud_version'));
     const gcloudComponent = presence(getInput('gcloud_component')); // Cloud SDK component version
     const envVars = getInput('env_vars'); // String of env vars KEY=VALUE,...
+    const envVarsFile = getInput('env_vars_file'); // Path to a file with env vars
     const envVarsUpdateStrategy = getInput('env_vars_update_strategy') || 'merge';
     const secrets = parseKVString(getInput('secrets')); // String of secrets KEY=VALUE,...
     const secretsUpdateStrategy = getInput('secrets_update_strategy') || 'merge';
@@ -134,6 +134,9 @@ export async function run(): Promise<void> {
     }
     if (service && job) {
       throw new Error('Only one of `service` or `job` inputs can be set.');
+    }
+    if (envVars && envVarsFile) {
+      throw new Error('Only one of `env_vars` or `env_vars_file` inputs can be set.');
     }
 
     // Validate gcloud component input
@@ -182,7 +185,7 @@ export async function run(): Promise<void> {
       }
 
       // Set optional flags from inputs
-      setEnvVarsFlags(deployCmd, envVars, envVarsUpdateStrategy);
+      setEnvVarsFlags(deployCmd, envVars, envVarsFile, envVarsUpdateStrategy);
       setSecretsFlags(deployCmd, secrets, secretsUpdateStrategy);
 
       if (wait) {
@@ -216,7 +219,7 @@ export async function run(): Promise<void> {
       }
 
       // Set optional flags from inputs
-      setEnvVarsFlags(deployCmd, envVars, envVarsUpdateStrategy);
+      setEnvVarsFlags(deployCmd, envVars, envVarsFile, envVarsUpdateStrategy);
       setSecretsFlags(deployCmd, secrets, secretsUpdateStrategy);
 
       if (tag) {
@@ -373,7 +376,12 @@ async function computeGcloudVersion(str: string): Promise<string> {
   return str;
 }
 
-function setEnvVarsFlags(cmd: string[], envVars: string, strategy: string) {
+function setEnvVarsFlags(cmd: string[], envVars: string, envVarsFile: string, strategy: string) {
+  if (envVarsFile) {
+    cmd.push('--env-vars-file', envVarsFile);
+    return;
+  }
+
   const compiledEnvVars = parseKVString(envVars);
   if (compiledEnvVars && Object.keys(compiledEnvVars).length > 0) {
     let flag = '';

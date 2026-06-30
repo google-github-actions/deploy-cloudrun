@@ -101,8 +101,30 @@ jobs:
     non-empty value is given, the field values will be overwritten (not
     merged). To remove all values, set the value to the literal string `{}`.
 
-    If both `env_vars` and `env_vars_file` are specified, the keys in
-    `env_vars` will take precedence over the keys in `env_vars_file`.
+    This is mutually-exclusive with `env_vars_file`.
+
+-   <a name="__input_env_vars_file"></a><a href="#user-content-__input_env_vars_file"><code>env_vars_file</code></a>: _(Optional)_ Path to a local file with definitions for all environment variables. This
+    is passed directly to the `--env-vars-file` flag of the underlying `gcloud
+    run deploy` command, which accepts either a YAML file or a `.env` file:
+
+    ```yaml
+    # YAML file
+    env_vars_file: '/path/to/env.yaml'
+
+    # .env file
+    env_vars_file: '/path/to/production.env'
+    ```
+
+    In a YAML file, each variable is a `KEY: VALUE` mapping. In a `.env` file,
+    each variable is a `KEY=VALUE` line.
+
+    Note that, consistent with `gcloud`, providing this file causes all
+    existing environment variables on the Cloud Run service to be removed
+    before the values from the file are applied (the file is authoritative).
+    For this reason, `env_vars_update_strategy` does not apply to
+    `env_vars_file`.
+
+    This is mutually-exclusive with `env_vars`.
 
 -   <a name="__input_env_vars_update_strategy"></a><a href="#user-content-__input_env_vars_update_strategy"><code>env_vars_update_strategy</code></a>: _(Required, default: `merge`)_ Controls how the environment variables are set on the Cloud Run service.
     If set to "merge", then the environment variables are _merged_ with any
