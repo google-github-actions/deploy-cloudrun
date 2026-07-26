@@ -168,11 +168,6 @@ export async function run(): Promise<void> {
         throw new Error(`Unkown metadata type "${kind}", expected "Job" or "Service"`);
       }
     } else if (job) {
-      logWarning(
-        `Support for Cloud Run jobs in this GitHub Action is in beta and is ` +
-          `not covered by the semver backwards compatibility guarantee.`,
-      );
-
       deployCmd = ['run', 'jobs', 'deploy', job];
 
       if (image) {
@@ -187,17 +182,6 @@ export async function run(): Promise<void> {
 
       if (wait) {
         deployCmd.push('--wait');
-      }
-
-      // There is no --update-secrets flag on jobs, but there will be in the
-      // future. At that point, we can remove this.
-      const idx = deployCmd.indexOf('--update-secrets');
-      if (idx >= 0) {
-        logWarning(
-          `Cloud Run does not allow updating secrets on jobs, ignoring ` +
-            `"secrets_update_strategy" value of "merge"`,
-        );
-        deployCmd[idx] = '--set-secrets';
       }
 
       // Compile the labels
